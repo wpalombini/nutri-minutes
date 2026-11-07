@@ -4,11 +4,12 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+import pytest
 from sqlalchemy import Engine, text
 
 from pipeline.europe_pmc import FIRST_CURSOR, EuropePmcError, SearchPage
 from pipeline.notify import Alert, Severity
-from pipeline.runs import agent_lock, start_run
+from pipeline.runs import agent_lock, record_error, start_run
 from pipeline.scout.run import AGENT, Window, next_window, run_scout
 from pipeline.scout.settings import ScoutSettings
 from tests.records import record
@@ -185,3 +186,56 @@ def test_rerunning_a_window_creates_no_duplicates(clean_engine: Engine) -> None:
         assert conn.execute(text("SELECT count(*) FROM article_licences")).scalar_one() == 3
     second = _runs(clean_engine)[1]
     assert second.counts["unchanged"] == 3
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        record(id="bad", pubTypeList=["Review"]),
+        record(id="bad", journalInfo="Journal"),
+        record(id="bad", commentCorrectionList=["x"]),
+        "not a record",
+    ],
+)
+def test_malformed_records_dont_fail_the_run(clean_engine: Engine, bad: Any) -> None:
+    client = FakeClient(pages={FIRST_CURSOR: SearchPage([bad, *_records(1)], None, 2)})
+    results = run_scout(clean_engine, client, FakeNotifier(), SETTINGS, TODAY)
+
+    assert results is not None and results[0].status == "partial"
+    [run] = _runs(clean_engine)
+    assert (run.counts["inserted"], run.counts["failed"]) == (1, 1)
+
+
+def test_record_with_nul_characters_is_stored(clean_engine: Engine) -> None:
+    client = FakeClient(pages={FIRST_CURSOR: SearchPage([record(title="Diet\x00 study")], None, 1)})
+    results = run_scout(clean_engine, client, FakeNotifier(), SETTINGS, TODAY)
+    assert results is not None and results[0].status == "succeeded"
+    with clean_engine.connect() as conn:
+        assert conn.execute(text("SELECT title FROM articles")).scalar_one() == "Diet study"
+
+
+def test_unexpected_errors_are_record_failures(
+    clean_engine: Engine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(record: Any) -> Any:
+        raise KeyError("surprise")
+
+    monkeypatch.setattr("pipeline.scout.run.normalise", broken)
+    client = FakeClient(pages={FIRST_CURSOR: SearchPage(_records(1), None, 1)})
+    results = run_scout(clean_engine, client, FakeNotifier(), SETTINGS, TODAY)
+
+    assert results is not None and results[0].status == "partial"
+    with clean_engine.connect() as conn:
+        error = conn.execute(text("SELECT error FROM pipeline_run_errors")).scalar_one()
+    assert error == "Unexpected KeyError while processing the record"
+
+
+def test_error_log_falls_back_when_the_raw_record_cant_be_stored(clean_engine: Engine) -> None:
+    with clean_engine.begin() as conn:
+        run = start_run(conn, AGENT, {"query": "x"})
+        # A lone surrogate is valid JSON text but Postgres jsonb rejects it.
+        record_error(
+            conn, run, source="europe_pmc", source_record_id="1", error="bad", raw_record="\ud800"
+        )
+        stored = conn.execute(text("SELECT error, raw_record FROM pipeline_run_errors")).one()
+    assert (stored.error, stored.raw_record) == ("bad", None)

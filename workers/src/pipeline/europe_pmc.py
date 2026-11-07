@@ -5,6 +5,7 @@ They never sort: sorted `cursorMark` requests returned 503 on every attempt in t
 """
 
 import logging
+import random
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 SEARCH_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 FIRST_CURSOR = "*"
 RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
+MAX_RETRY_AFTER_SECONDS = 120.0
 
 
 class EuropePmcError(Exception):
@@ -58,12 +60,14 @@ class EuropePmcClient:
         transport: httpx.BaseTransport | None = None,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
+        jitter: Callable[[float], float] = lambda limit: random.uniform(0, limit),  # noqa: S311
     ) -> None:
         if not settings.contact.strip():
             raise ValueError("A contact address is required for Europe PMC requests")
         self._settings = settings
         self._sleep = sleep
         self._clock = clock
+        self._jitter = jitter
         self._last_request_at: float | None = None
         self._http = httpx.Client(
             transport=transport,
@@ -113,6 +117,7 @@ class EuropePmcClient:
         attempts = self._settings.max_attempts
         for attempt in range(1, attempts + 1):
             self._wait_for_turn()
+            retry_after: float | None = None
             try:
                 response = self._http.get(SEARCH_URL, params=params)
             except httpx.TransportError as exc:
@@ -121,17 +126,24 @@ class EuropePmcClient:
                 if response.status_code == 200:
                     try:
                         body = response.json()
-                    except ValueError as exc:
-                        raise EuropePmcError("Search response was not JSON") from exc
-                    if not isinstance(body, dict):
-                        raise EuropePmcError("Unexpected search response shape")
-                    return body
-                if response.status_code not in RETRYABLE_STATUS:
+                    except ValueError:
+                        # Proxies sometimes return an HTML error page with a 200.
+                        problem = "a response that wasn't JSON"
+                    else:
+                        if not isinstance(body, dict):
+                            raise EuropePmcError("Unexpected search response shape")
+                        return body
+                elif response.status_code not in RETRYABLE_STATUS:
                     raise EuropePmcError(f"Search request failed with HTTP {response.status_code}")
-                problem = f"HTTP {response.status_code}"
+                else:
+                    problem = f"HTTP {response.status_code}"
+                    retry_after = _retry_after(response)
             if attempt == attempts:
                 raise EuropePmcError(f"Search request failed after {attempts} attempts: {problem}")
             backoff = self._settings.backoff_base_seconds * 2 ** (attempt - 1)
+            backoff += self._jitter(backoff / 4)
+            if retry_after is not None:
+                backoff = max(backoff, retry_after)
             logger.warning(
                 "Europe PMC request failed (%s), retrying in %.0fs (attempt %d of %d)",
                 problem,
@@ -141,3 +153,15 @@ class EuropePmcClient:
             )
             self._sleep(backoff)
         raise AssertionError("unreachable")
+
+
+def _retry_after(response: httpx.Response) -> float | None:
+    """The server's requested wait in seconds, capped, if it sent one we can read."""
+    value = response.headers.get("Retry-After")
+    if value is None:
+        return None
+    try:
+        seconds = float(value)
+    except ValueError:
+        return None
+    return min(max(seconds, 0.0), MAX_RETRY_AFTER_SECONDS)

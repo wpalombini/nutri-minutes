@@ -54,6 +54,8 @@ def agent_lock(engine: Engine, agent: str) -> Iterator[AgentLock | None]:
     """Yield the lock if it was free, or None if another worker holds it."""
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
         key = lock_key(agent)
+        # Bound every statement on this connection, so a lock check can't hang forever.
+        connection.execute(text("SET statement_timeout = '30s'"))
         acquired = connection.execute(
             text("SELECT pg_try_advisory_lock(:key)"), {"key": key}
         ).scalar_one()
@@ -110,15 +112,18 @@ def mark_resumed(conn: Connection, run: Run) -> None:
     )
 
 
-def save_progress(conn: Connection, run: Run) -> None:
+def save_progress(
+    conn: Connection, run: Run, checkpoint: dict[str, Any], counts: dict[str, int]
+) -> None:
+    """Save progress in the caller's transaction. Update `run` only after it commits."""
     conn.execute(
         text(
             "UPDATE pipeline_runs SET checkpoint = CAST(:checkpoint AS jsonb), "
             "counts = CAST(:counts AS jsonb) WHERE id = :id AND status = 'running'"
         ),
         {
-            "checkpoint": json.dumps(run.checkpoint) if run.checkpoint is not None else None,
-            "counts": json.dumps(run.counts),
+            "checkpoint": json.dumps(checkpoint),
+            "counts": json.dumps(counts),
             "id": run.id,
         },
     )
@@ -146,20 +151,29 @@ def record_error(
     error: str,
     raw_record: Any,
 ) -> None:
+    """Log a failed record. If the raw record itself can't be stored, log it without it."""
     try:
         raw = json.dumps(raw_record)
     except TypeError, ValueError:
         raw = None
-    conn.execute(
-        text(
-            "INSERT INTO pipeline_run_errors (run_id, source, source_record_id, error, raw_record) "
-            "VALUES (:run_id, :source, :source_record_id, :error, CAST(:raw AS jsonb))"
-        ),
-        {
-            "run_id": run.id,
-            "source": source,
-            "source_record_id": source_record_id,
-            "error": error,
-            "raw": raw,
-        },
+    statement = text(
+        "INSERT INTO pipeline_run_errors (run_id, source, source_record_id, error, raw_record) "
+        "VALUES (:run_id, :source, :source_record_id, :error, CAST(:raw AS jsonb))"
     )
+    params = {
+        "run_id": run.id,
+        "source": source,
+        "source_record_id": source_record_id,
+        "error": error,
+        "raw": raw,
+    }
+    savepoint = conn.begin_nested()
+    try:
+        conn.execute(statement, params)
+    except DBAPIError:
+        savepoint.rollback()
+        if raw is None:
+            raise
+        conn.execute(statement, {**params, "raw": None})
+    else:
+        savepoint.commit()

@@ -9,11 +9,12 @@ import sys
 from datetime import UTC, date, datetime
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import DBAPIError
 
 from pipeline.db import database_url
 from pipeline.europe_pmc import EuropePmcClient
-from pipeline.notify import LoggingNotifier
-from pipeline.scout.run import Window, run_scout
+from pipeline.notify import Alert, LoggingNotifier, Severity
+from pipeline.scout.run import RunResult, Window, run_scout
 from pipeline.scout.settings import ScoutSettings, client_settings_from_env
 
 
@@ -39,17 +40,45 @@ def main(argv: list[str] | None = None) -> int:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     today = datetime.now(UTC).date()
     window = _parse_args(sys.argv[1:] if argv is None else argv, today)
-    engine = create_engine(database_url(), pool_pre_ping=True)
+    notifier = LoggingNotifier()
     try:
-        with EuropePmcClient(client_settings_from_env()) as client:
-            results = run_scout(
-                engine, client, LoggingNotifier(), ScoutSettings.from_env(), today, window
-            )
-    finally:
-        engine.dispose()
+        results = _run(notifier, today, window)
+    except Exception as exc:
+        # Configuration, database and lost-lock errors end up here. Database errors are kept
+        # short so record content never reaches the alert.
+        if isinstance(exc, DBAPIError):
+            detail = f"Database error: {type(exc.orig).__name__}"
+        else:
+            detail = f"{type(exc).__name__}: {exc}"[:300]
+        notifier.send(Alert(Severity.ERROR, "Scout couldn't run", detail))
+        return 1
     if results is None:
         return 0
     return 1 if any(result.status == "failed" for result in results) else 0
+
+
+def _run(notifier: LoggingNotifier, today: date, window: Window | None) -> list[RunResult] | None:
+    settings = ScoutSettings.from_env()
+    client_settings = client_settings_from_env()
+    engine = create_engine(
+        database_url(),
+        pool_pre_ping=True,
+        # Keep record content out of error messages, logs and alerts.
+        hide_parameters=True,
+        # Notice a dead connection, such as the lock connection, instead of hanging.
+        connect_args={
+            "connect_timeout": 10,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 3,
+        },
+    )
+    try:
+        with EuropePmcClient(client_settings) as client:
+            return run_scout(engine, client, notifier, settings, today, window)
+    finally:
+        engine.dispose()
 
 
 if __name__ == "__main__":

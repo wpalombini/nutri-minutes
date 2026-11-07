@@ -25,7 +25,7 @@ from pipeline.runs import (
     save_progress,
     start_run,
 )
-from pipeline.scout.normalise import SOURCE, RecordError, normalise, record_id
+from pipeline.scout.normalise import SOURCE, RecordError, normalise, record_id, strip_nuls
 from pipeline.scout.settings import ScoutSettings
 from pipeline.scout.store import store
 
@@ -73,7 +73,51 @@ def next_window(engine: Engine, settings: ScoutSettings, today: date) -> Window:
 
 
 def _error_text(exc: BaseException) -> str:
-    return f"{type(exc).__name__}: {exc}"[:500]
+    """A short error for runs and alerts. Database errors never include record content."""
+    if isinstance(exc, DBAPIError):
+        return f"Database error: {type(exc.orig).__name__}"
+    return f"{type(exc).__name__}: {exc}"[:300]
+
+
+def _record_failure(exc: Exception) -> str:
+    if isinstance(exc, RecordError):
+        return str(exc)
+    if isinstance(exc, DBAPIError):
+        return f"Database rejected the record: {type(exc.orig).__name__}"
+    return f"Unexpected {type(exc).__name__} while processing the record"
+
+
+def _process_page(
+    engine: Engine, lock: AgentLock, run: Run, page: SearchPage, cursor: str
+) -> dict[str, int]:
+    """Store one page and its progress in one transaction. Returns the new counts."""
+    counts = dict(run.counts)
+    with engine.begin() as conn:
+        for record in page.records:
+            counts["fetched"] += 1
+            savepoint = conn.begin_nested()
+            try:
+                outcome = store(conn, normalise(record))
+            except Exception as exc:
+                # One bad record must not fail the run: log it and carry on.
+                savepoint.rollback()
+                message = _record_failure(exc)
+                logger.warning("Scout run %d: record failed: %s", run.id, message)
+                record_error(
+                    conn,
+                    run,
+                    source=SOURCE,
+                    source_record_id=record_id(record),
+                    error=message,
+                    raw_record=strip_nuls(record),
+                )
+                counts["failed"] += 1
+            else:
+                savepoint.commit()
+                counts[outcome.value] += 1
+        save_progress(conn, run, {"cursor": page.next_cursor or cursor}, counts)
+        lock.check()
+    return counts
 
 
 def _execute(
@@ -86,43 +130,27 @@ def _execute(
     try:
         while True:
             page = client.search(query, cursor)
-            with engine.begin() as conn:
-                for record in page.records:
-                    run.counts["fetched"] += 1
-                    savepoint = conn.begin_nested()
-                    try:
-                        outcome = store(conn, normalise(record))
-                    except (RecordError, DBAPIError) as exc:
-                        savepoint.rollback()
-                        if isinstance(exc, DBAPIError):
-                            message = f"Database rejected the record: {type(exc.orig).__name__}"
-                        else:
-                            message = str(exc)
-                        record_error(
-                            conn,
-                            run,
-                            source=SOURCE,
-                            source_record_id=record_id(record),
-                            error=message,
-                            raw_record=record,
-                        )
-                        run.counts["failed"] += 1
-                    else:
-                        savepoint.commit()
-                        run.counts[outcome.value] += 1
-                run.checkpoint = {"cursor": page.next_cursor or cursor}
-                save_progress(conn, run)
-                lock.check()
+            run.counts = _process_page(engine, lock, run, page, cursor)
+            run.checkpoint = {"cursor": page.next_cursor or cursor}
             if page.next_cursor is None or not page.records:
                 break
             cursor = page.next_cursor
     except LockLost:
+        logger.error("Scout run %d lost its lock connection; it will resume next time", run.id)
+        notifier.send(
+            Alert(
+                Severity.WARNING,
+                f"Scout run {run.id} stopped",
+                "It lost its database lock connection and will resume on the next run.",
+            )
+        )
         raise
     except Exception as exc:
         logger.exception("Scout run %d failed", run.id)
+        # Alert first, so the alert still goes out if the database is the problem.
+        notifier.send(Alert(Severity.ERROR, f"Scout run {run.id} failed", _error_text(exc)))
         with engine.begin() as conn:
             finish_run(conn, run, "failed", _error_text(exc))
-        notifier.send(Alert(Severity.ERROR, f"Scout run {run.id} failed", _error_text(exc)))
         return "failed"
 
     status = "partial" if run.counts["failed"] else "succeeded"

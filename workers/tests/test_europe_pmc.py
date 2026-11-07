@@ -20,6 +20,7 @@ def _client(handler: httpx.MockTransport, sleeps: list[float]) -> EuropePmcClien
         transport=handler,
         sleep=sleeps.append,
         clock=lambda: 0.0,
+        jitter=lambda limit: 0.0,
     )
 
 
@@ -123,3 +124,29 @@ def test_unexpected_shapes_raise(body: object) -> None:
 def test_contact_is_required() -> None:
     with pytest.raises(ValueError, match="contact"):
         EuropePmcClient(ClientSettings(contact=" "))
+
+
+def test_retry_after_is_honoured() -> None:
+    statuses = [429, 200]
+    sleeps: list[float] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        if statuses.pop(0) == 429:
+            return httpx.Response(429, headers={"Retry-After": "30"})
+        return httpx.Response(200, json=search_body([], None))
+
+    with _client(httpx.MockTransport(handle), sleeps) as client:
+        client.search("diet")
+    assert 30.0 in sleeps
+
+
+def test_non_json_ok_response_is_retried() -> None:
+    responses = [httpx.Response(200, text="<html>busy</html>"), None]
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        response = responses.pop(0)
+        return response or httpx.Response(200, json=search_body([], None))
+
+    with _client(httpx.MockTransport(handle), []) as client:
+        client.search("diet")
+    assert responses == []

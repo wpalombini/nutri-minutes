@@ -63,7 +63,7 @@ One row per paper, whichever source it came from.
 - At least one of the three must be present.
 - Check constraints enforce the identifier formats, so two spellings of one identifier can't become two articles.
 
-**Canonical DOIs:** lowercase, with any `https://doi.org/`, `http://dx.doi.org/` or `doi:` prefix removed.
+**Canonical DOIs:** lowercase and starting with `10.`. Any `doi:` prefix or `doi.org` or `dx.doi.org` URL prefix is removed first, whatever its case or scheme.
 
 ### `article_licences`
 The licences we have seen for each article. Old rows are kept when a licence changes, so we can show what the licence was at any point.
@@ -80,7 +80,7 @@ The licences we have seen for each article. Old rows are kept when a licence cha
 | `last_seen_at` | `timestamptz` | No | |
 
 **Writing and reading:**
-- **Same licence seen again:** if `licence_code` and `raw_value` match the source's current row, only `last_seen_at` is updated.
+- **Same licence seen again:** if `licence_code` and `raw_value` match the source's current row, only `last_seen_at` is updated. Two nulls count as a match, so compare with `IS NOT DISTINCT FROM`.
 - **Different licence:** anything else adds a new row, so a licence that changes and changes back is still recorded correctly.
 - **Current licence:** for each source, it's the row with the latest `last_seen_at`.
 
@@ -105,7 +105,7 @@ The licences we have seen for each article. Old rows are kept when a licence cha
 `full_text_reuse_allowed` fails closed: anything other than `cc0` or `cc-by` is not reusable, including a licence value we don't recognise, which is stored as `other`. `CC BY-SA` is excluded because its share-alike terms make it more restrictive than `CC BY`. All these papers can still be summarised in our own words from abstracts and metadata.
 
 ### `pipeline_runs`
-One row per run of an agent. This is how a failed run resumes and how runs are monitored.
+One row per run of an agent. This is how a crashed run resumes, how the next run knows where to start, and how runs are monitored.
 
 | Column | Type | Null | Notes |
 |---|---|---|---|
@@ -125,7 +125,9 @@ One row per run of an agent. This is how a failed run resumes and how runs are m
 - A check constraint limits `status` to the values above.
 - A partial unique index allows only one `running` row per agent.
 
-**Resuming:** a worker holds a Postgres advisory lock for its agent while it runs, and the lock is released if the process dies. A worker that takes the lock and finds a `running` row knows that run is dead, so it resumes in that row from its checkpoint.
+**Crashed runs:** a worker holds a session-level Postgres advisory lock for its agent on a dedicated connection while it runs, and stops if that connection is lost. The lock is released if the process dies. A worker that takes the lock and finds a `running` row knows that run is dead, so it resumes in that row from its checkpoint.
+
+**Failed runs and the next window:** `failed` is final, and the row is never resumed. Each new Scout run's window starts where the last `succeeded` or `partial` run's window ended, less a small overlap. A failed run's papers are therefore fetched again by the next run, and reruns don't create duplicates.
 
 ### `pipeline_run_errors`
 Records that failed during a run. One bad record doesn't stop the run, and it may have no usable identifiers, so this table doesn't reference `articles`.
@@ -143,6 +145,8 @@ Records that failed during a run. One bad record doesn't stop the run, and it ma
 **Indexes:**
 - An index on `run_id` finds a run's errors, because Postgres doesn't index foreign keys automatically.
 
+A resumed run replays its last page, so this log can hold the same error twice and the totals in `counts` are approximate. Articles and licences are not affected.
+
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.
 - **No match:** insert a new article.
@@ -153,7 +157,7 @@ Records that failed during a run. One bad record doesn't stop the run, and it ma
 
 ## Before adding a second source
 These tables assume Europe PMC is the only source. Before PubMed or any other source is added, a migration must:
-- Keep one raw record per source, so one source can't overwrite another's. `jsonb` can't hold PubMed's XML as received.
+- Keep one raw record per source, so one source can't overwrite another's. `jsonb` can't hold PubMed's XML as received, in `articles.source_record` or `pipeline_run_errors.raw_record`.
 - Define how licences from different sources combine. The rule must fail closed: full-text reuse is allowed only if every source's current licence allows it.
 
 ## Tables to come
@@ -166,10 +170,10 @@ Each agent's or feature's tables are added by their own migration when it's buil
 | Evidence Grader | Evidence grades and their reasons |
 | Extractor | Structured facts |
 | Writer | Summary versions |
-| Fact-Checker and Hype Detector | Checks and flags per summary version |
+| Fact-Checker and Hype Detector | Checks and flags per version of the checked text (summaries, Editor text and scripts) |
 | Contradiction Tracker | Links between findings |
 | Editor | Research packs |
-| Script Writer, Audio Producer and Audio QA | Scripts, audio files and QA results |
+| Script Writer, Audio Producer and Audio QA | Scripts, audio file references and QA results |
 | Publisher | Published items |
 | Web app | Accounts and billing, with personal data limited to an email address and a Stripe customer reference |
 | All LLM and TTS calls | Model, tokens, cost and latency per call |

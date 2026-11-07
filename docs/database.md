@@ -112,7 +112,7 @@ One row per run of an agent. This is how a crashed run resumes, how the next run
 | `id` | `bigint` identity | No | Primary key |
 | `agent` | `text` | No | Such as `scout` |
 | `status` | `text` | No | `running`, `succeeded`, `partial` or `failed` |
-| `parameters` | `jsonb` | No | Inputs, such as the search terms and date window |
+| `parameters` | `jsonb` | No | Inputs, written when the row is created. For Scout: the search terms, `window_start` and `window_end`. |
 | `checkpoint` | `jsonb` | Yes | Progress for resuming, such as the Europe PMC cursor |
 | `counts` | `jsonb` | No | Totals, such as articles fetched, inserted, updated and failed |
 | `error` | `text` | Yes | Why the run failed, if it did |
@@ -125,9 +125,11 @@ One row per run of an agent. This is how a crashed run resumes, how the next run
 - A check constraint limits `status` to the values above.
 - A partial unique index allows only one `running` row per agent.
 
-**Crashed runs:** a worker holds a session-level Postgres advisory lock for its agent on a dedicated connection while it runs, and stops if that connection is lost. The lock is released if the process dies. A worker that takes the lock and finds a `running` row knows that run is dead, so it resumes in that row from its checkpoint.
+**Crashed runs:** a worker holds a session-level Postgres advisory lock for its agent on a dedicated connection while it runs. It checks that connection before committing each page, and stops if it has been lost. The lock is released if the process dies. A worker that takes the lock and finds a `running` row knows that run is dead, so it resumes in that row from its checkpoint.
 
-**Failed runs and the next window:** `failed` is final, and the row is never resumed. Each new Scout run's window starts where the last `succeeded` or `partial` run's window ended, less a small overlap. A failed run's papers are therefore fetched again by the next run, and reruns don't create duplicates.
+**Failed runs and the next window:** `failed` is final, and the row is never resumed. Each new Scout run's window starts at the latest `parameters.window_end` among `succeeded` and `partial` runs, less a small overlap. With no such run, it starts a configured number of days back, 30 by default. A failed run's window is therefore fetched again by the next run, and reruns don't create duplicates.
+
+**Failed records:** records that fail in a `partial` run are not retried automatically, because the next window starts after them, although the overlap may fetch some again. The run sends an alert, and a person re-runs that window once the cause is fixed. Re-running an older window doesn't move later windows back, because the next window uses the latest `window_end`.
 
 ### `pipeline_run_errors`
 Records that failed during a run. One bad record doesn't stop the run, and it may have no usable identifiers, so this table doesn't reference `articles`.
@@ -165,7 +167,7 @@ Each agent's or feature's tables are added by their own migration when it's buil
 
 | Agent or area | Will store |
 |---|---|
-| Triage and later agents | Each article's status per agent |
+| Triage and later agents | Each article's status per agent, including a failed state that later runs skip |
 | Triage | Scope decisions and relevance scores |
 | Evidence Grader | Evidence grades and their reasons |
 | Extractor | Structured facts |
@@ -176,4 +178,4 @@ Each agent's or feature's tables are added by their own migration when it's buil
 | Script Writer, Audio Producer and Audio QA | Scripts, audio file references and QA results |
 | Publisher | Published items |
 | Web app | Accounts and billing, with personal data limited to an email address and a Stripe customer reference |
-| All LLM and TTS calls | Model, tokens, cost and latency per call |
+| All LLM, TTS and speech-to-text calls | Model, usage (tokens or audio length), cost and latency per call |

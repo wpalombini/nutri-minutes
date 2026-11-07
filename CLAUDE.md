@@ -26,9 +26,9 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Approvals are not required. Merge once both reviewers have reported on the latest substantive push, required checks pass, there are no blocking findings and nothing major needs the repo owner's input, then report any non-blocking findings for the owner to decide on.
 
 ## Stack
-- TypeScript with strict mode and Next.js for the web app.
+- TypeScript with strict mode and Next.js for the web app, using Kysely for database access (ADR 0002).
 - Python with strict type checking for scheduled pipeline workers, evals, data tooling and operational scripts (ADR 0001).
-- Postgres; schema changes only through Alembic migrations (ADR 0002), which must be reversible or documented as not. Update `docs/database.md` in the same PR.
+- Postgres; schema changes only through Alembic migrations (ADR 0002), which must be reversible or documented as not, and run as a separate deploy step. Update `docs/database.md` in the same PR.
 - Docker; images must build for both `linux/amd64` and `linux/arm64`.
 - Cloudflare (DNS, CDN, R2 object storage), Stripe (billing), OpenRouter (LLM and TTS access).
 - Changing any of the above requires an ADR.

@@ -34,13 +34,13 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Changing any of the above requires an ADR.
 
 ## Commands
-Workers live in `workers/` and use `uv`. Run these from `workers/`, with `DATABASE_URL` and `TEST_DATABASE_URL` set (see `.env.example`).
+Workers live in `workers/` and use `uv`. Run these from `workers/`. Copy `.env.example` to `.env` at the repo root, then load it into your shell with `set -a; . ../.env; set +a`.
 - Local database: `docker compose up -d --wait` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
 - Install: `uv sync`
 - Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)
 - Lint and format: `uv run ruff check .` and `uv run ruff format .`
 - Type check: `uv run mypy`
-- Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision -m "<summary>"`, then edit it by hand
+- Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision --rev-id 0002 -m "<summary>"` with the next number, then edit it by hand
 <!-- Add web app and eval commands once they exist. -->
 
 ## Engineering standards

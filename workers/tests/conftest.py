@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy import Connection, Engine, create_engine, make_url, text
 
 WORKERS_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,6 +22,9 @@ def _test_database_url() -> str:
         if os.environ.get("REQUIRE_TEST_DATABASE") == "1":
             pytest.fail("TEST_DATABASE_URL is not set")
         pytest.skip("TEST_DATABASE_URL is not set")
+    name = make_url(url).database or ""
+    if not name.endswith("_test"):
+        pytest.fail(f"Refusing to use database {name!r}: its name must end in '_test'")
     return url
 
 

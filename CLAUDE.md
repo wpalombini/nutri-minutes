@@ -18,7 +18,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 
 ## Stack
 - TypeScript with strict mode and Next.js for the web app.
-- Python with strict type checking for scheduled pipeline workers and scripts (ADR 0001).
+- Python with strict type checking for scheduled pipeline workers, evals, data tooling and operational scripts (ADR 0001).
 - Postgres; schema changes only through migrations, which must be reversible or documented as not.
 - Docker; images must build for both `linux/amd64` and `linux/arm64`.
 - Cloudflare (DNS, CDN, R2 object storage), Stripe (billing), OpenRouter (LLM and TTS access).

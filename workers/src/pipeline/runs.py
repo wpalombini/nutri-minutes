@@ -68,6 +68,7 @@ def agent_lock(engine: Engine, agent: str) -> Iterator[AgentLock | None]:
             # If the connection dropped, the lock already went with it.
             with suppress(DBAPIError):
                 connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
+                connection.execute(text("RESET statement_timeout"))
 
 
 def _run_from_row(row: Any) -> Run:
@@ -151,29 +152,33 @@ def record_error(
     error: str,
     raw_record: Any,
 ) -> None:
-    """Log a failed record. If the raw record itself can't be stored, log it without it."""
+    """Log a failed record without ever aborting the caller's transaction.
+
+    If the full entry can't be stored, it retries without the raw record, then without the
+    source ID. Each attempt runs in its own savepoint. Only the last failure is raised.
+    """
     try:
-        raw = json.dumps(raw_record)
+        raw = json.dumps(raw_record, allow_nan=False)
     except TypeError, ValueError:
         raw = None
     statement = text(
         "INSERT INTO pipeline_run_errors (run_id, source, source_record_id, error, raw_record) "
         "VALUES (:run_id, :source, :source_record_id, :error, CAST(:raw AS jsonb))"
     )
-    params = {
-        "run_id": run.id,
-        "source": source,
-        "source_record_id": source_record_id,
-        "error": error,
-        "raw": raw,
-    }
-    savepoint = conn.begin_nested()
-    try:
-        conn.execute(statement, params)
-    except DBAPIError:
-        savepoint.rollback()
-        if raw is None:
-            raise
-        conn.execute(statement, {**params, "raw": None})
-    else:
-        savepoint.commit()
+    base: dict[str, Any] = {"run_id": run.id, "source": source, "error": error}
+    attempts: list[dict[str, str | None]] = [
+        {"source_record_id": source_record_id, "raw": raw},
+        {"source_record_id": source_record_id, "raw": None},
+        {"source_record_id": None, "raw": None},
+    ]
+    for number, attempt in enumerate(attempts, start=1):
+        savepoint = conn.begin_nested()
+        try:
+            conn.execute(statement, {**base, **attempt})
+        except Exception:
+            savepoint.rollback()
+            if number == len(attempts):
+                raise
+        else:
+            savepoint.commit()
+            return

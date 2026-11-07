@@ -239,3 +239,35 @@ def test_error_log_falls_back_when_the_raw_record_cant_be_stored(clean_engine: E
         )
         stored = conn.execute(text("SELECT error, raw_record FROM pipeline_run_errors")).one()
     assert (stored.error, stored.raw_record) == ("bad", None)
+
+
+@pytest.mark.parametrize("bad_id", ["12\x00", "12\ud800"])
+def test_bad_record_with_unstorable_id_doesnt_fail_the_run(
+    clean_engine: Engine, bad_id: str
+) -> None:
+    bad = record(id=bad_id, pmid=None, doi=None, pmcid=None, journalInfo=7)
+    client = FakeClient(pages={FIRST_CURSOR: SearchPage([bad, *_records(1)], None, 2)})
+    results = run_scout(clean_engine, client, FakeNotifier(), SETTINGS, TODAY)
+
+    assert results is not None and results[0].status == "partial"
+    with clean_engine.connect() as conn:
+        assert conn.execute(text("SELECT count(*) FROM articles")).scalar_one() == 1
+        logged = conn.execute(text("SELECT source_record_id FROM pipeline_run_errors")).scalar_one()
+    assert logged is not None and "\x00" not in logged
+
+
+def test_every_record_failing_alerts_as_an_error(clean_engine: Engine) -> None:
+    client = FakeClient(pages={FIRST_CURSOR: SearchPage([record(title=None)], None, 1)})
+    notifier = FakeNotifier()
+    run_scout(clean_engine, client, notifier, SETTINGS, TODAY)
+    assert [a.severity for a in notifier.alerts] == [Severity.ERROR]
+
+
+def test_error_log_falls_back_to_no_source_id(clean_engine: Engine) -> None:
+    with clean_engine.begin() as conn:
+        run = start_run(conn, AGENT, {"query": "x"})
+        record_error(
+            conn, run, source="europe_pmc", source_record_id="1\x00", error="bad", raw_record=None
+        )
+        stored = conn.execute(text("SELECT source_record_id FROM pipeline_run_errors")).one()
+    assert stored.source_record_id is None

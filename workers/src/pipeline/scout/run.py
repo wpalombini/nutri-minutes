@@ -102,15 +102,24 @@ def _process_page(
                 # One bad record must not fail the run: log it and carry on.
                 savepoint.rollback()
                 message = _record_failure(exc)
-                logger.warning("Scout run %d: record failed: %s", run.id, message)
-                record_error(
-                    conn,
-                    run,
-                    source=SOURCE,
-                    source_record_id=record_id(record),
-                    error=message,
-                    raw_record=strip_nuls(record),
+                logger.warning(
+                    "Scout run %d: record failed: %s",
+                    run.id,
+                    message,
+                    # A traceback helps find bugs; RecordError is expected bad input.
+                    exc_info=not isinstance(exc, RecordError | DBAPIError),
                 )
+                try:
+                    record_error(
+                        conn,
+                        run,
+                        source=SOURCE,
+                        source_record_id=record_id(record),
+                        error=message,
+                        raw_record=strip_nuls(record),
+                    )
+                except Exception:
+                    logger.exception("Scout run %d: couldn't log a failed record", run.id)
                 counts["failed"] += 1
             else:
                 savepoint.commit()
@@ -159,9 +168,11 @@ def _execute(
     logger.info("Scout run %d %s: %s", run.id, status, run.counts)
     if status == "partial":
         window = f"{run.parameters['window_start']} to {run.parameters['window_end']}"
+        # Every record failing usually means a bug or an API change, not bad records.
+        every_record = run.counts["failed"] == run.counts["fetched"]
         notifier.send(
             Alert(
-                Severity.WARNING,
+                Severity.ERROR if every_record else Severity.WARNING,
                 f"Scout run {run.id} finished with failed records",
                 f"{run.counts['failed']} of {run.counts['fetched']} records failed for "
                 f"{window}. They're in pipeline_run_errors. Fix the cause, then re-run "

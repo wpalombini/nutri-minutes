@@ -57,10 +57,15 @@ _PMCID = re.compile(r"^PMC[1-9][0-9]*$")
 _LICENCE_VERSION = re.compile(r"[-\s]+\d+(?:\.\d+)*$")
 
 
+def clean_text(value: str) -> str:
+    """Remove NULs and replace invalid Unicode, which Postgres can't store."""
+    return value.replace("\x00", "").encode("utf-8", "replace").decode("utf-8")
+
+
 def strip_nuls(value: Any) -> Any:
-    """Remove NUL characters, which Postgres can't store in text or jsonb."""
+    """Clean every string in a record with `clean_text`."""
     if isinstance(value, str):
-        return value.replace("\x00", "")
+        return clean_text(value)
     if isinstance(value, dict):
         return {strip_nuls(k): strip_nuls(v) for k, v in value.items()}
     if isinstance(value, list):
@@ -212,6 +217,6 @@ def record_id(record: Any) -> str | None:
     if isinstance(record, dict):
         for key in ("id", "pmid", "pmcid", "doi"):
             value = record.get(key)
-            if isinstance(value, str) and value.strip():
-                return value.strip()[:200]
+            if isinstance(value, str) and clean_text(value).strip():
+                return clean_text(value).strip()[:200]
     return None

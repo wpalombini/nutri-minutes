@@ -1,6 +1,7 @@
 """Run Scout: `python -m pipeline.scout`, or with `--window-start` and `--window-end` to
-re-run a past window by hand. Exits 1 if a run failed, and 0 otherwise, including when
-another run holds the lock.
+re-run a past window by hand. Exits 1 if a run failed or Scout couldn't run, such as on a
+configuration, database or lost-lock error. Exits 0 otherwise, including when another run holds
+the lock.
 """
 
 import argparse
@@ -14,6 +15,7 @@ from sqlalchemy.exc import DBAPIError
 from pipeline.db import database_url
 from pipeline.europe_pmc import EuropePmcClient
 from pipeline.notify import Alert, LoggingNotifier, Severity
+from pipeline.runs import LockLost
 from pipeline.scout.run import RunResult, Window, run_scout
 from pipeline.scout.settings import ScoutSettings, client_settings_from_env
 
@@ -43,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     notifier = LoggingNotifier()
     try:
         results = _run(notifier, today, window)
+    except LockLost:
+        return 1  # Already alerted; the run resumes next time.
     except Exception as exc:
         # Configuration, database and lost-lock errors end up here. Database errors are kept
         # short so record content never reaches the alert.

@@ -1,0 +1,56 @@
+"""Run Scout: `python -m pipeline.scout`, or with `--window-start` and `--window-end` to
+re-run a past window by hand. Exits 1 if a run failed, and 0 otherwise, including when
+another run holds the lock.
+"""
+
+import argparse
+import logging
+import sys
+from datetime import UTC, date, datetime
+
+from sqlalchemy import create_engine
+
+from pipeline.db import database_url
+from pipeline.europe_pmc import EuropePmcClient
+from pipeline.notify import LoggingNotifier
+from pipeline.scout.run import Window, run_scout
+from pipeline.scout.settings import ScoutSettings, client_settings_from_env
+
+
+def _parse_args(argv: list[str], today: date) -> Window | None:
+    parser = argparse.ArgumentParser(prog="python -m pipeline.scout", description=__doc__)
+    parser.add_argument("--window-start", type=date.fromisoformat, help="YYYY-MM-DD")
+    parser.add_argument("--window-end", type=date.fromisoformat, help="YYYY-MM-DD")
+    args = parser.parse_args(argv)
+    if (args.window_start is None) != (args.window_end is None):
+        parser.error("--window-start and --window-end must be given together")
+    if args.window_start is None:
+        return None
+    if args.window_end > today:
+        parser.error("--window-end can't be in the future")
+    if args.window_start > args.window_end:
+        parser.error("--window-start can't be after --window-end")
+    return Window(args.window_start, args.window_end)
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    # httpx logs every request URL at INFO, which floods the log with the long query.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    today = datetime.now(UTC).date()
+    window = _parse_args(sys.argv[1:] if argv is None else argv, today)
+    engine = create_engine(database_url(), pool_pre_ping=True)
+    try:
+        with EuropePmcClient(client_settings_from_env()) as client:
+            results = run_scout(
+                engine, client, LoggingNotifier(), ScoutSettings.from_env(), today, window
+            )
+    finally:
+        engine.dispose()
+    if results is None:
+        return 0
+    return 1 if any(result.status == "failed" for result in results) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

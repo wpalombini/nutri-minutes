@@ -1,11 +1,13 @@
 """Alembic environment: runs migrations online, one deploy at a time."""
 
+import logging
 import time
 from logging.config import fileConfig
 from typing import Literal
 
 from alembic import context
 from sqlalchemy import Connection, create_engine, text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.schema import SchemaItem
 
 from pipeline.db import database_url
@@ -20,6 +22,7 @@ LOCK_POLL_SECONDS = 2
 if context.config.config_file_name is not None:
     fileConfig(context.config.config_file_name, disable_existing_loggers=False)
 
+logger = logging.getLogger("alembic.env")
 target_metadata = Base.metadata
 
 
@@ -75,12 +78,16 @@ def run_migrations_online() -> None:
                     context.run_migrations()
                 connection.commit()
             finally:
-                # Clear any failed transaction first, or the unlock can't run.
-                connection.rollback()
-                connection.execute(
-                    text("SELECT pg_advisory_unlock(:key)"), {"key": MIGRATION_LOCK_KEY}
-                )
-                connection.commit()
+                # Clear any failed transaction first, or the unlock can't run. If the connection
+                # dropped, the lock went with it, so don't hide the original error.
+                try:
+                    connection.rollback()
+                    connection.execute(
+                        text("SELECT pg_advisory_unlock(:key)"), {"key": MIGRATION_LOCK_KEY}
+                    )
+                    connection.commit()
+                except DBAPIError:
+                    logger.warning("Couldn't release the migration lock; it ends with the session")
     finally:
         engine.dispose()
 

@@ -40,6 +40,7 @@ Workers live in `workers/` and use `uv`. Run these from `workers/`. Copy `.env.e
 - Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)
 - Lint and format: `uv run ruff check .` and `uv run ruff format .`
 - Type check: `uv run mypy`
+- Scout: `uv run python -m pipeline.scout` for the next window, or add `--window-start YYYY-MM-DD --window-end YYYY-MM-DD` to re-run a past one
 - Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision --rev-id 0002 -m "<summary>"` with the next number, then edit it by hand
 <!-- Add web app and eval commands once they exist. -->
 

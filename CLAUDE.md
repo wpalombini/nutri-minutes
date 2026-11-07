@@ -8,7 +8,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 ## Source of truth
 - Architecture and technology decisions: `docs/adr/` (one ADR per decision, numbered, never edited after acceptance; supersede with a new ADR).
 - If a requested change conflicts with an accepted ADR, stop and say so before writing code. Propose a new ADR instead.
-- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs. `CLAUDE.md`, ADRs and code may still state product, editorial, compliance and technical requirements in their own words, but never pricing, competitors, positioning, roadmap, revenue targets or personal working habits.
+- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs. `CLAUDE.md`, ADRs, other public docs and code may still state product, editorial, compliance and technical requirements in their own words, but never pricing, competitors, positioning, roadmap, revenue targets or personal working habits.
 
 ## How to work
 - Small, reviewable changes: one concern per PR, with tests for code changes. Leave the main branch deployable.

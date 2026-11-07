@@ -8,19 +8,21 @@ An automated pipeline and web app that turns newly published nutrition research 
 ## Source of truth
 - Architecture and technology decisions: `docs/adr/` (one ADR per decision, numbered, never edited after acceptance; supersede with a new ADR).
 - If a requested change conflicts with an accepted ADR, stop and say so before writing code. Propose a new ADR instead.
-- Private context may be loaded from `CLAUDE.local.md` (gitignored). Never copy its contents into committed files, commit messages, PR descriptions, code comments or logs.
+- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs.
 
 ## How to work
-- Small, reviewable changes: one concern per PR, with tests. Leave the main branch deployable.
+- Small, reviewable changes: one concern per PR, with tests for code changes. Leave the main branch deployable.
 - Read the relevant code and ADRs before proposing changes. Ask before large refactors, new dependencies, schema changes or anything hard to reverse.
 - Verify current external facts (API behaviour, rate limits, pricing, licences) against official documentation, not memory. Link the source in the PR or ADR.
 - End each task with a short summary: what changed, how it was verified, what's next.
 
 ## Pull requests
 - All work goes through a PR. Never push directly to `main` unless the repo owner explicitly asks.
-- When a PR is opened, run two separate reviewer agents and report their findings:
+- When a PR is opened or receives substantive pushes, run two separate reviewer agents:
   - **Quality reviewer:** the code is professional and production ready, covering code quality, best practices, security and accessibility.
   - **Integration reviewer:** the PR works well in the current project and does not introduce bugs.
+- Report review findings to the repo owner in the session. Do not post them to GitHub unless asked.
+- Only blocking findings stop a merge. The repo owner decides on the rest.
 
 ## Stack
 - TypeScript throughout unless an ADR says otherwise; strict mode on.

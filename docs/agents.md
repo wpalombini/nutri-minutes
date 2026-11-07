@@ -6,9 +6,10 @@ How the pipeline's agents fit together: what each one does, what it uses, and ho
 - **They are pipeline stages.** Each agent has one job, a defined input and a defined output. Scheduled workers run them in a fixed order.
 - **They don't talk to each other directly.** One agent writes its output to Postgres and the next reads it. Audio files go to R2, with references in Postgres. This keeps runs resumable and means every output can be inspected and traced.
 - **Not every agent needs an LLM.** Scout, for example, is plain code. Where a rule or a direct comparison gives the right answer, use that instead of a model call.
-- **They run per article, then per week.** Scout through Contradiction Tracker run per article, as articles arrive. Editor through Publisher run weekly, working from the articles that passed.
+- **They run per article, then per week.** Scout fetches new articles daily. Triage through Contradiction Tracker then run per article. Editor through Publisher run weekly, working from the articles that passed.
 
 ## Flow
+The diagram shows the order in the Agents table below. Each loop back to an earlier agent is described in [Where agents loop or stop](#where-agents-loop-or-stop).
 
 ```mermaid
 flowchart TD
@@ -26,6 +27,7 @@ flowchart TD
 
     subgraph weekly["Weekly"]
         Editor --> Scripts["Script Writer"]
+        Editor --> WeeklyGates
         Scripts --> WeeklyGates["Fact-Checker and Hype Detector"]
         WeeklyGates -- "flagged script" --> Scripts
         WeeklyGates -- "flagged Editor text" --> Editor
@@ -54,7 +56,7 @@ flowchart TD
 | **Editor** | Chooses and orders the week's findings, sets the theme and builds the research pack | Checked summaries, grades, links between findings | Research pack | Model client, Postgres | Planned |
 | **Script Writer** | Writes two-host episode scripts from the research pack | Research pack | Scripts | Model client, Postgres | Planned |
 | **Audio Producer** | Generates audio per segment, adds music and normalises loudness | Scripts | Audio files | Model client, audio processing, R2, Postgres | Planned |
-| **Audio QA** | Transcribes the audio and compares it with the script, looking for missing segments and mispronunciations | Audio and scripts | Pass, or flags per segment | Speech-to-text, text comparison, R2, Postgres | Planned |
+| **Audio QA** | Transcribes the audio and compares it with the script, looking for missing segments and mispronunciations | Audio and scripts | Pass, or flags per segment | Model client (speech-to-text), text comparison, R2, Postgres | Planned |
 | **Publisher** | Publishes everything that has cleared the gates | Research pack, audio | Web pages, email, podcast feeds, social clips | Email provider, R2, web app, Postgres | Planned |
 
 ## Where agents loop or stop
@@ -62,16 +64,19 @@ flowchart TD
 - **Editor, Script Writer and the gates:** the same gates and caps apply to their new text, because it can introduce new claims. Flagged text that can't be fixed does not publish.
 - **Everything published is checked:** every summary, piece of Editor text and script passes both gates before it publishes or is turned into audio. Audio QA then checks the audio against the script that passed.
 - **Audio Producer and Audio QA:** a failed segment is regenerated, also with a capped number of attempts. If it still fails, the episode is held back. Written outputs that have cleared the gates can still publish.
-- **Bad articles:** a failure on one article is recorded, with its identifier where it has one, and the run continues. It isn't retried automatically. An alert is sent, and once the cause is fixed a person can run the agent again for that article or date window.
+- **Bad articles:** a failure on one article is recorded, with its identifier where it has one, and the run continues. The article is marked as failed, and later runs skip it rather than retrying it. An alert is sent. Once the cause is fixed, a person re-runs it: Scout by date window, later agents by article.
 - **Budget:** if a run reaches its budget limit, it stops and fails closed.
 - **Human approval:** an optional approval step before the weekly publish is still undecided.
-- **Older studies:** Contradiction Tracker will need earlier studies to compare against, more than Scout's daily runs collect. When it's built, a one-off backfill using Scout's code is planned, limited to in-scope systematic reviews and meta-analyses. Its depth is decided then.
 - **Full text:** no agent has been assigned to fetch permitted full text yet. This is decided when Extractor is built. Until then, agents work from abstracts and metadata.
 
+## Planned work
+- **Older studies:** Contradiction Tracker will need earlier studies to compare against, more than Scout's daily runs collect. When it's built, a one-off backfill using Scout's code is planned. Unlike Scout's daily runs, the backfill query is limited to in-scope systematic reviews and meta-analyses. Its depth is decided then.
+- **Speech-to-text:** the provider for Audio QA isn't chosen yet. It needs an ADR, and its calls go through the model client.
+
 ## Rules every agent follows
-- **Idempotent and resumable:** running an agent again on the same input does not create duplicate outputs, and work left unfinished by an interrupted or failed run is picked up by a later run. A record that fails within a run is logged for review and isn't retried automatically. Items held back after their capped attempts stay held back.
-- **One model client:** every LLM and TTS call goes through a single model client that records model, tokens, cost and latency.
-- **Alerts:** failed runs, runs with failed records and held-back items send an alert through a notifier interface, so the provider can change. A Discord webhook is the planned first provider, and adding it gets its own ADR.
+- **Idempotent and resumable:** running an agent again on the same input does not create duplicate outputs, and work left unfinished by an interrupted or failed run is picked up by a later run. A record that fails within a run is marked as failed and isn't retried by later runs, though each request within a run still retries with backoff. Items held back after their capped attempts stay held back.
+- **One model client:** every LLM, TTS and speech-to-text call goes through a single model client that records model, tokens, cost and latency.
+- **Alerts:** failed runs, runs with failed records and held-back items trigger an alert through a notifier interface, so the provider can change. A Discord webhook is the planned first provider, and adding it gets its own ADR. The webhook URL is a secret kept in an environment variable, and alerts follow the logging rules: no secrets, emails or payment data.
 - **Traceable outputs:** model-generated outputs record the model and prompt that produced them, and new versions never overwrite old ones.
 - **Licence check:** only agents with a licence check may use full text, and only when the article's licence permits it. Otherwise they work from abstracts and metadata. `CLAUDE.md` has the full rule.
 - **Evaluated:** prompts and model choices are code, so changes must pass the eval suite.
@@ -79,12 +84,12 @@ flowchart TD
 ## Scout
 Scout runs daily and is the first agent to be built.
 
-1. Request PubMed-indexed records (`SRC:MED`) from Europe PMC with `resultType=core`, for the search terms and a date window based on `firstIndexDate`. The default `lite` result type has no licence or abstract, so without `core` every licence would be stored as `unknown`. `SRC:MED` leaves out preprints, which haven't been peer reviewed. Each window starts where the last succeeded or partial run's window ended, less a small overlap, so a late-indexed paper or a failed run's papers aren't missed. With no such run, such as on the first run, the window starts a configured number of days back, 30 by default.
+1. Request PubMed-indexed records (`SRC:MED`) from Europe PMC with `resultType=core`, for the search terms and a date window based on `firstIndexDate` (`FIRST_IDATE` in queries). The default `lite` result type has no licence or abstract, so without `core` every licence would be stored as `unknown`. `SRC:MED` leaves out preprints, which haven't been peer reviewed. Each window starts at the latest `window_end` among `succeeded` and `partial` runs, less a small overlap, so a late-indexed paper or a `failed` run's window isn't missed. With no such run, such as on the first run, the window starts a configured number of days back, 30 by default.
 2. Page through the results until there is no new cursor, saving the cursor so a crashed run can resume. A page with fewer results than requested doesn't mean the results have ended.
 3. Match each paper on DOI, PMID or PMCID, then insert or update it with its abstract and metadata.
 4. Record the licence exactly as supplied, along with its normalised value. A missing licence is stored as `unknown`, which never permits full-text reuse.
-5. Record any paper that can't be processed, then continue with the next one. A run with failed papers ends as `partial` and sends an alert. Those papers aren't fetched again automatically, because the next window starts after them. A person re-runs that window once the cause is fixed.
+5. Record any paper that can't be processed, then continue with the next one. A run with failed papers ends as `partial` and sends an alert. Those papers aren't deliberately retried, although the overlap may fetch some of them again. A person re-runs that window once the cause is fixed.
 
-**Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common, and the share of records with one varied widely by query in samples taken on 2026-11-07.
+**Beyond limiting results to PubMed-indexed records, Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common, and the share of records with one varied widely by query in samples taken on 2026-11-07.
 
 **Handling Europe PMC:** the search service can return temporary `503` errors, so requests use timeouts and retries with backoff. In testing on 2026-11-07, `cursorMark` requests sorted by `FIRST_IDATE` returned `503` on every attempt, while the same kind of request filtered by a `FIRST_IDATE` range succeeded. Scout therefore pages through date ranges without sorting.

@@ -1,0 +1,46 @@
+[project]
+name = "pipeline"
+version = "0.1.0"
+description = "Scheduled pipeline workers and database migrations"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.1",
+    "psycopg[binary]>=3.3.8",
+    "sqlalchemy>=2.1.8",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.6,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+# Migrations build SQL from module constants only, never from input.
+"migrations/**" = ["S608"]
+
+[tool.mypy]
+strict = true
+files = ["src", "migrations", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "error",
+    # Alembic can't compare generated columns and says so on every check.
+    "ignore:Computed default on article_licences.full_text_reuse_allowed:UserWarning",
+]

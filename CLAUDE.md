@@ -33,14 +33,15 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Cloudflare (DNS, CDN, R2 object storage), Stripe (billing), OpenRouter (LLM and TTS access).
 - Changing any of the above requires an ADR.
 
-<!-- Fill in once the repo has them:
 ## Commands
-- Install:
-- Dev server:
-- Tests / evals:
-- Lint / typecheck:
-- Migrations:
--->
+Workers live in `workers/` and use `uv`. Run these from `workers/`, with `DATABASE_URL` and `TEST_DATABASE_URL` set (see `.env.example`).
+- Local database: `docker compose up -d --wait` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
+- Install: `uv sync`
+- Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)
+- Lint and format: `uv run ruff check .` and `uv run ruff format .`
+- Type check: `uv run mypy`
+- Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision -m "<summary>"`, then edit it by hand
+<!-- Add web app and eval commands once they exist. -->
 
 ## Engineering standards
 - **Reliability:** pipeline stages are idempotent and resumable; external calls have timeouts, retries with backoff and clear failure states. One bad paper must not fail a whole run.

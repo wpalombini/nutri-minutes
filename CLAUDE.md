@@ -44,11 +44,11 @@ An automated pipeline and web app that turns newly published nutrition research 
 
 ## Engineering standards
 - **Reliability:** pipeline stages are idempotent and resumable; external calls have timeouts, retries with backoff and clear failure states. One bad paper must not fail a whole run.
-- **Cost control:** every LLM/TTS call goes through a single client that records model, tokens, cost and latency. Respect per-run budget limits; fail closed when exceeded.
+- **Cost control:** every LLM, TTS and speech-to-text call goes through a single client that records model, usage (tokens or audio length), cost and latency. Respect per-run budget limits; fail closed when exceeded.
 - **Observability:** trace each pipeline run and each model call; structured logs; alert on failures. Never log secrets, emails or payment data.
 - **Security:** secrets only via environment variables (`.env` is gitignored; keep `.env.example` current). Validate all external input. Least-privilege credentials. Verify Stripe webhook signatures.
 - **Evaluation:** prompts and model choices are code. Changes to them must pass the eval suite in CI (faithfulness, numeric accuracy, grading agreement, reading level, hype score). Regressions block merge.
-- **Maintainability:** provider-specific code (LLM, TTS, email, storage) sits behind interfaces. Internal names stay generic, not tied to the product brand.
+- **Maintainability:** provider-specific code (LLM, TTS, speech-to-text, email, storage, notifications) sits behind interfaces. Internal names stay generic, not tied to the product brand.
 
 ## Content rules (enforce in code, prompts and evals)
 - Every published claim must be traceable to a specific source (DOI/PMID) and supported by its text. The fact-check and hype-detection stages are hard gates: nothing publishes with unresolved flags.

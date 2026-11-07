@@ -57,6 +57,25 @@ _PMCID = re.compile(r"^PMC[1-9][0-9]*$")
 _LICENCE_VERSION = re.compile(r"[-\s]+\d+(?:\.\d+)*$")
 
 
+def strip_nuls(value: Any) -> Any:
+    """Remove NUL characters, which Postgres can't store in text or jsonb."""
+    if isinstance(value, str):
+        return value.replace("\x00", "")
+    if isinstance(value, dict):
+        return {strip_nuls(k): strip_nuls(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [strip_nuls(v) for v in value]
+    return value
+
+
+def _object(value: Any, what: str) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise RecordError(f"Invalid {what}")
+    return value
+
+
 def _text(value: Any) -> str | None:
     if value is None:
         return None
@@ -102,9 +121,9 @@ def licence_code(raw_value: str | None) -> str:
     value = raw_value.strip().lower()
     if not value:
         return "unknown"
-    value = _LICENCE_VERSION.sub("", value)
-    value = re.sub(r"[\s_]+", "-", value)
-    if value in {"cc0", "cc-0", "cc-zero"}:
+    hyphenated = re.sub(r"[\s_]+", "-", value)
+    value = re.sub(r"[\s_]+", "-", _LICENCE_VERSION.sub("", value))
+    if hyphenated in {"cc0", "cc-0", "cc-zero"} or value == "cc0":
         return "cc0"
     return value if value in LICENCE_CODES and value.startswith("cc-") else "other"
 
@@ -125,7 +144,7 @@ def _date(value: Any) -> date | None:
 
 
 def _publication_types(record: dict[str, Any]) -> list[str]:
-    pub_types = (record.get("pubTypeList") or {}).get("pubType") or []
+    pub_types = _object(record.get("pubTypeList"), "publication types").get("pubType") or []
     if isinstance(pub_types, str):
         pub_types = [pub_types]
     if not isinstance(pub_types, list):
@@ -134,16 +153,16 @@ def _publication_types(record: dict[str, Any]) -> list[str]:
 
 
 def _journal(record: dict[str, Any]) -> str | None:
-    journal = (record.get("journalInfo") or {}).get("journal") or {}
-    if not isinstance(journal, dict):
-        return None
-    return _text(journal.get("title"))
+    journal = _object(record.get("journalInfo"), "journal").get("journal")
+    return _text(_object(journal, "journal").get("title"))
 
 
 def _relations(record: dict[str, Any]) -> list[Relation]:
-    items = (record.get("commentCorrectionList") or {}).get("commentCorrection") or []
+    items = _object(record.get("commentCorrectionList"), "relations").get("commentCorrection") or []
     if isinstance(items, dict):
         items = [items]
+    if not isinstance(items, list):
+        raise RecordError("Invalid relations")
     relations: dict[tuple[str, str, str], Relation] = {}
     for item in items:
         if not isinstance(item, dict):
@@ -157,9 +176,10 @@ def _relations(record: dict[str, Any]) -> list[Relation]:
     return list(relations.values())
 
 
-def normalise(record: dict[str, Any]) -> ArticleValues:
+def normalise(record: Any) -> ArticleValues:
     if not isinstance(record, dict):
         raise RecordError("Record is not an object")
+    record = strip_nuls(record)
     doi = canonical_doi(record.get("doi"))
     pmid = canonical_pmid(record.get("pmid"))
     pmcid = canonical_pmcid(record.get("pmcid"))

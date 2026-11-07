@@ -193,7 +193,7 @@ Records that failed during a run. One bad record doesn't stop the run, and it ma
 **Indexes:**
 - An index on `run_id` finds a run's errors, because Postgres doesn't index foreign keys automatically.
 
-A resumed run replays its last page, so this log can hold the same error twice and the totals in `counts` are approximate. Articles and licences are not affected.
+A page can be processed twice, for example when a worker loses its lock connection after storing a page, so this log can hold the same error twice and the totals in `counts` are approximate. Articles and licences are not affected.
 
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.

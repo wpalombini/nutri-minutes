@@ -50,6 +50,8 @@ def test_invalid_doi(raw: str) -> None:
         ("cc by-nc-sa", "cc-by-nc-sa"),
         ("cc by-nc-nd", "cc-by-nc-nd"),
         ("cc0", "cc0"),
+        ("CC-0", "cc0"),
+        ("cc zero", "cc0"),
         ("CC0 1.0", "cc0"),
         ("public domain", "other"),
         ("cc by-xyz", "other"),
@@ -126,6 +128,11 @@ def test_single_publication_type_as_string() -> None:
         {"pmcid": "12345"},
         {"firstIndexDate": "2026-13-01"},
         {"title": 42},
+        {"pubTypeList": ["Review"]},
+        {"journalInfo": "Journal of Examples"},
+        {"journalInfo": {"journal": "Journal of Examples"}},
+        {"commentCorrectionList": ["Retraction in"]},
+        {"commentCorrectionList": {"commentCorrection": "Retraction in"}},
     ],
 )
 def test_invalid_records(overrides: dict[str, Any]) -> None:
@@ -137,3 +144,15 @@ def test_record_id() -> None:
     assert record_id(record()) == "40000001"
     assert record_id({"doi": "10.1000/x"}) == "10.1000/x"
     assert record_id("not a record") is None
+
+
+def test_nul_characters_are_stripped() -> None:
+    values = normalise(record(title="A study\x00 of diet", abstractText="Text\x00"))
+    assert values.title == "A study of diet"
+    assert values.abstract == "Text"
+    assert values.source_record["title"] == "A study of diet"
+
+
+def test_non_object_record() -> None:
+    with pytest.raises(RecordError):
+        normalise(["not", "a", "record"])

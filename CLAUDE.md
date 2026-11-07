@@ -19,7 +19,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 ## Pull requests
 - All work goes through a PR. Never push directly to `main` unless the repo owner explicitly asks.
 - When a PR is opened, run two separate reviewer agents and report their findings:
-  - **Quality reviewer:** code quality, best practices, security and accessibility.
+  - **Quality reviewer:** the code is professional and production ready, covering code quality, best practices, security and accessibility.
   - **Integration reviewer:** the PR works well in the current project and does not introduce bugs.
 
 ## Stack

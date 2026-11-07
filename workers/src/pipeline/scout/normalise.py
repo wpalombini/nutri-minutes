@@ -217,6 +217,6 @@ def record_id(record: Any) -> str | None:
     if isinstance(record, dict):
         for key in ("id", "pmid", "pmcid", "doi"):
             value = record.get(key)
-            if isinstance(value, str) and clean_text(value).strip():
-                return clean_text(value).strip()[:200]
+            if isinstance(value, str) and (cleaned := clean_text(value).strip()):
+                return cleaned[:200]
     return None

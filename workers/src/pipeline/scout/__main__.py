@@ -48,7 +48,7 @@ def main(argv: list[str] | None = None) -> int:
     except LockLost:
         return 1  # Already alerted; the run resumes next time.
     except Exception as exc:
-        # Configuration, database and lost-lock errors end up here. Database errors are kept
+        # Configuration and database errors end up here. Database errors are kept
         # short so record content never reaches the alert.
         if isinstance(exc, DBAPIError):
             detail = f"Database error: {type(exc.orig).__name__}"

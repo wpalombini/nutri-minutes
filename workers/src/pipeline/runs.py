@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import Connection, Engine, text
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 
 class LockLost(RuntimeError):
@@ -59,15 +59,14 @@ def agent_lock(engine: Engine, agent: str) -> Iterator[AgentLock | None]:
         acquired = connection.execute(
             text("SELECT pg_try_advisory_lock(:key)"), {"key": key}
         ).scalar_one()
-        if not acquired:
-            yield None
-            return
         try:
-            yield AgentLock(connection, agent)
+            yield AgentLock(connection, agent) if acquired else None
         finally:
-            # If the connection dropped, the lock already went with it.
-            with suppress(DBAPIError):
-                connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
+            # If the connection dropped, the lock already went with it. Any error here must
+            # not replace the one that ended the run, such as LockLost.
+            with suppress(SQLAlchemyError):
+                if acquired:
+                    connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
                 connection.execute(text("RESET statement_timeout"))
 
 

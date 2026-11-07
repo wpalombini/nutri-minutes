@@ -1,0 +1,29 @@
+# Europe PMC search terms for Scout, in Europe PMC query syntax. Scout adds the PubMed-only
+# filter (SRC:MED) and the date window. Keep this broad: Triage decides scope and quality.
+# Scope: nutrition, exercise for health outcomes only, and occasional gene-diet and
+# gene-ageing research (see CLAUDE.md).
+
+query = """
+(
+  nutrition OR nutritional OR diet OR diets OR dietary OR "dietary supplement" OR
+  "dietary supplements" OR micronutrient OR micronutrients OR "vitamin D" OR
+  "calcium intake" OR "calcium supplementation" OR "dietary protein" OR "protein intake" OR
+  "protein supplementation" OR creatine OR "omega-3" OR fasting OR "time-restricted eating" OR
+  "caloric restriction" OR "calorie restriction" OR "Mediterranean diet" OR nutrigenomics OR
+  nutrigenetics OR "gene-diet interaction"
+)
+OR
+(
+  (
+    "resistance training" OR "resistance exercise" OR "strength training" OR
+    "physical activity" OR "aerobic exercise" OR "exercise training" OR "balance training"
+  )
+  AND
+  (
+    bone OR osteoporosis OR "bone mineral density" OR sarcopenia OR "muscle strength" OR
+    "muscle mass" OR falls OR frailty OR cardiometabolic OR "blood pressure" OR glucose OR
+    lipids OR cognition OR "cognitive decline" OR dementia OR mortality OR longevity OR
+    ageing OR aging
+  )
+)
+"""

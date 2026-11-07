@@ -110,6 +110,8 @@ The licences we have seen for each article. Old rows are kept when a licence cha
 | `other` | Not allowed |
 | `unknown` | Not allowed |
 
+Licence values are normalised by lowercasing, dropping a trailing version such as `4.0`, and joining words with hyphens, so `CC BY 4.0` becomes `cc-by`.
+
 `full_text_reuse_allowed` fails closed: anything other than `cc0` or `cc-by` is not reusable, including a licence value we don't recognise, which is stored as `other`. `CC BY-SA` is excluded because its share-alike terms make it more restrictive than `CC BY`. All these papers can still be summarised in our own words from abstracts and metadata.
 
 ### `article_relations`
@@ -129,7 +131,7 @@ Links between findings, such as one study agreeing or conflicting with another, 
 | `first_seen_at` | `timestamptz` | No | |
 | `last_seen_at` | `timestamptz` | No | |
 
-**Relation types:** `retraction_in`, `retraction_of`, `erratum_in`, `erratum_for`, `expression_of_concern_in`, `expression_of_concern_for`, `comment_in`, `comment_on`, `update_in`, `update_of`, `republished_in`, `republished_from` and `other`. A type we don't recognise is stored as `other`, with the original in `raw_type`.
+**Relation types:** `retraction_in`, `retraction_of`, `erratum_in`, `erratum_for`, `expression_of_concern_in`, `expression_of_concern_for`, `comment_in`, `comment_on`, `update_in`, `update_of`, `republished_in`, `republished_from` and `other`. A type we don't recognise, such as `Preprint in`, is stored as `other`, with the original in `raw_type`.
 
 **Constraints and indexes:**
 - A check constraint limits `relation_type` to the values above.

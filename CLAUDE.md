@@ -16,6 +16,12 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Verify current external facts (API behaviour, rate limits, pricing, licences) against official documentation, not memory. Link the source in the PR or ADR.
 - End each task with a short summary: what changed, how it was verified, what's next.
 
+## Pull requests
+- All work goes through a PR. Never push directly to `main` unless the repo owner explicitly asks.
+- When a PR is opened, run two separate reviewer agents and report their findings:
+  - **Quality reviewer:** code quality, best practices, security and accessibility.
+  - **Integration reviewer:** the PR works well in the current project and does not introduce bugs.
+
 ## Stack
 - TypeScript throughout unless an ADR says otherwise; strict mode on.
 - Next.js for the web app; scheduled workers for the pipeline.

@@ -9,7 +9,7 @@ from sqlalchemy import Engine, text
 
 from pipeline.europe_pmc import FIRST_CURSOR, EuropePmcError, SearchPage
 from pipeline.notify import Alert, Severity
-from pipeline.runs import agent_lock, record_error, start_run
+from pipeline.runs import LockLost, agent_lock, lock_key, record_error, start_run
 from pipeline.scout.run import AGENT, Window, next_window, run_scout
 from pipeline.scout.settings import ScoutSettings
 from tests.records import record
@@ -271,3 +271,36 @@ def test_error_log_falls_back_to_no_source_id(clean_engine: Engine) -> None:
         )
         stored = conn.execute(text("SELECT source_record_id FROM pipeline_run_errors")).one()
     assert stored.source_record_id is None
+
+
+def test_lost_lock_connection_stops_the_run_with_one_alert(clean_engine: Engine) -> None:
+    class DropLockClient(FakeClient):
+        def search(self, query: str, cursor: str = FIRST_CURSOR) -> SearchPage:
+            if cursor == "c2":
+                # Kill the session holding Scout's advisory lock, as a network drop would.
+                with clean_engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            "SELECT pg_terminate_backend(pid) FROM pg_locks "
+                            "WHERE locktype = 'advisory' AND objid = :key"
+                        ),
+                        {"key": lock_key(AGENT)},
+                    )
+            return super().search(query, cursor)
+
+    client = DropLockClient(
+        pages={
+            FIRST_CURSOR: SearchPage(_records(1), "c2", 2),
+            "c2": SearchPage(_records(2), None, 2),
+        }
+    )
+    notifier = FakeNotifier()
+    with pytest.raises(LockLost):
+        run_scout(clean_engine, client, notifier, SETTINGS, TODAY)
+
+    assert [a.severity for a in notifier.alerts] == [Severity.WARNING]
+    [run] = _runs(clean_engine)
+    # The run stays running with its first page saved, so the next run resumes it.
+    assert run.status == "running"
+    assert run.checkpoint == {"cursor": "c2"}
+    assert run.counts["inserted"] == 1

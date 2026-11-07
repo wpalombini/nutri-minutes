@@ -1,0 +1,18 @@
+# Private context (never commit)
+CLAUDE.local.md
+docs/private/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+.next/
+dist/
+coverage/
+
+# OS / editor
+.DS_Store
+*.log

@@ -61,13 +61,13 @@ flowchart TD
 - **Writer and the gates:** a flag from Fact-Checker or Hype Detector goes back to Writer with the reasons. Attempts are capped. An article still flagged after the last attempt is held back and does not publish.
 - **Editor, Script Writer and the gates:** the same gates and caps apply to their new text, because it can introduce new claims. Flagged text that can't be fixed does not publish.
 - **Audio Producer and Audio QA:** a failed segment is regenerated, also with a capped number of attempts. If it still fails, the episode is held back. Written outputs that have cleared the gates can still publish.
-- **Bad articles:** a failure on one article is recorded against that article and the run continues.
+- **Bad articles:** a failure on one article is recorded, with its identifier where it has one, and the run continues.
 - **Budget:** if a run reaches its budget limit, it stops and fails closed.
 - **Human approval:** an optional approval step before the weekly publish is still undecided.
 - **Full text:** no agent has been assigned to fetch permitted full text yet. This is decided when Extractor is built. Until then, agents work from abstracts and metadata.
 
 ## Rules every agent follows
-- **Idempotent and resumable:** running an agent again on the same input does not create duplicates, and a failed run can pick up where it stopped.
+- **Idempotent and resumable:** running an agent again on the same input does not create duplicate outputs, and interrupted or failed work is always picked up by a later run.
 - **One model client:** every LLM and TTS call goes through a single client that records model, tokens, cost and latency.
 - **Traceable outputs:** model-generated outputs record the model and prompt that produced them, and new versions never overwrite old ones.
 - **Licence check:** only agents with a licence check may use full text, and only when the article's licence permits it. Otherwise they work from abstracts and metadata. `CLAUDE.md` has the full rule.
@@ -76,12 +76,12 @@ flowchart TD
 ## Scout
 Scout runs daily and is the first agent to be built.
 
-1. Request PubMed-indexed records (`SRC:MED`) from Europe PMC for the search terms and a date window based on `firstIndexDate`. This leaves out preprints, which haven't been peer reviewed. Windows overlap slightly, so a late-indexed paper isn't missed.
-2. Page through the results until there is no new cursor, saving the cursor so an interrupted run can resume. A page with fewer results than requested doesn't mean the results have ended.
+1. Request PubMed-indexed records (`SRC:MED`) from Europe PMC for the search terms and a date window based on `firstIndexDate`. This leaves out preprints, which haven't been peer reviewed. Each window starts where the last completed run's window ended, less a small overlap, so a late-indexed paper or a failed run's papers aren't missed.
+2. Page through the results until there is no new cursor, saving the cursor so a crashed run can resume. A page with fewer results than requested doesn't mean the results have ended.
 3. Match each paper on DOI, PMID or PMCID, then insert or update it.
 4. Record the licence exactly as supplied, along with its normalised value. A missing licence is stored as `unknown`, which never permits full-text reuse.
 5. Record any paper that can't be processed, then continue with the next one.
 
-**Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common: between 13 and 60 of every 100 records had one, depending on the query.
+**Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common, and the share of records with one varied widely by query in samples taken on 2026-11-07.
 
 **Handling Europe PMC:** the search service can return temporary `503` errors, so requests use timeouts and retries with backoff. In testing on 2026-11-07, `cursorMark` requests sorted by `FIRST_IDATE` returned `503` on every attempt, while the same kind of request filtered by a `FIRST_IDATE` range succeeded. Scout therefore pages through date ranges without sorting.

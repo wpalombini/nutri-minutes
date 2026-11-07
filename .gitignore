@@ -16,3 +16,12 @@ coverage/
 # OS / editor
 .DS_Store
 *.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/

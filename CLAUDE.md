@@ -8,7 +8,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 ## Source of truth
 - Architecture and technology decisions: `docs/adr/` (one ADR per decision, numbered, never edited after acceptance; supersede with a new ADR).
 - If a requested change conflicts with an accepted ADR, stop and say so before writing code. Propose a new ADR instead.
-- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs.
+- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs. The one exception is that public project rules may state editorial and compliance requirements in their own words.
 
 ## How to work
 - Small, reviewable changes: one concern per PR, with tests for code changes. Leave the main branch deployable.
@@ -19,10 +19,11 @@ An automated pipeline and web app that turns newly published nutrition research 
 ## Pull requests
 - All work goes through a PR. Never push directly to `main` unless the repo owner explicitly asks.
 - When a PR is opened or receives substantive pushes, run two separate reviewer agents:
-  - **Quality reviewer:** the code is professional and production ready, covering code quality, best practices, security and accessibility.
+  - **Quality reviewer:** the change is professional and production ready, covering code quality, best practices, security and accessibility.
   - **Integration reviewer:** the PR works well in the current project and does not introduce bugs.
 - Report review findings to the repo owner in the session. Do not post them to GitHub unless asked.
-- Only blocking findings stop a merge. The repo owner decides on the rest.
+- Reviewers label each finding blocking or non-blocking. Blocking means a real defect, such as a bug, a conflict, an incorrect statement, exposed private content or instructions that cannot be followed.
+- Approvals are not required. Merge once there are no blocking findings and nothing major needs the repo owner's input, then report any non-blocking findings for the owner to decide on.
 
 ## Stack
 - TypeScript with strict mode and Next.js for the web app.

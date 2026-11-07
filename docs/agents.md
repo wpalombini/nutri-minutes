@@ -9,12 +9,12 @@ How the pipeline's agents fit together: what each one does, what it uses, and ho
 - **They run per article, then per week.** Scout fetches new articles daily. Triage through Contradiction Tracker then run per article. Editor through Publisher run weekly, working from the articles that passed.
 
 ## Flow
-The diagram shows the order in the Agents table below. Each loop back to an earlier agent is described in [Where agents loop or stop](#where-agents-loop-or-stop).
+The diagram follows the order of the Agents table below, and shows that the weekly gates feed both Audio Producer and Publisher. Each loop back to an earlier agent is described in [Where agents loop or stop](#where-agents-loop-or-stop).
 
 ```mermaid
 flowchart TD
+    Scout --> Triage
     subgraph perArticle["Per article"]
-        Scout --> Triage
         Triage --> Grader["Evidence Grader"]
         Grader --> Extractor
         Extractor --> Writer
@@ -27,8 +27,8 @@ flowchart TD
 
     subgraph weekly["Weekly"]
         Editor --> Scripts["Script Writer"]
-        Editor --> WeeklyGates
-        Scripts --> WeeklyGates["Fact-Checker and Hype Detector"]
+        Editor --> WeeklyGates["Fact-Checker and Hype Detector"]
+        Scripts --> WeeklyGates
         WeeklyGates -- "flagged script" --> Scripts
         WeeklyGates -- "flagged Editor text" --> Editor
         WeeklyGates --> Audio["Audio Producer"]
@@ -64,7 +64,7 @@ flowchart TD
 - **Editor, Script Writer and the gates:** the same gates and caps apply to their new text, because it can introduce new claims. Flagged text that can't be fixed does not publish.
 - **Everything published is checked:** every summary, piece of Editor text and script passes both gates before it publishes or is turned into audio. Audio QA then checks the audio against the script that passed.
 - **Audio Producer and Audio QA:** a failed segment is regenerated, also with a capped number of attempts. If it still fails, the episode is held back. Written outputs that have cleared the gates can still publish.
-- **Bad articles:** a failure on one article is recorded, with its identifier where it has one, and the run continues. The article is marked as failed, and later runs skip it rather than retrying it. An alert is sent. Once the cause is fixed, a person re-runs it: Scout by date window, later agents by article.
+- **Bad articles:** a failure on one article is recorded, with its identifier where it has one, and the run continues. An alert is sent, and the record isn't retried by later runs. From Triage onwards, the article is marked as failed for that agent and later runs skip it. Scout logs failed papers in the run's error log instead, because a failed paper may have no stored article or readable identifier. Once the cause is fixed, a person re-runs the work: Scout by date window, later agents by article.
 - **Budget:** if a run reaches its budget limit, it stops and fails closed.
 - **Human approval:** an optional approval step before the weekly publish is still undecided.
 - **Full text:** no agent has been assigned to fetch permitted full text yet. This is decided when Extractor is built. Until then, agents work from abstracts and metadata.
@@ -74,9 +74,9 @@ flowchart TD
 - **Speech-to-text:** the provider for Audio QA isn't chosen yet. It needs an ADR, and its calls go through the model client.
 
 ## Rules every agent follows
-- **Idempotent and resumable:** running an agent again on the same input does not create duplicate outputs, and work left unfinished by an interrupted or failed run is picked up by a later run. A record that fails within a run is marked as failed and isn't retried by later runs, though each request within a run still retries with backoff. Items held back after their capped attempts stay held back.
-- **One model client:** every LLM, TTS and speech-to-text call goes through a single model client that records model, tokens, cost and latency.
-- **Alerts:** failed runs, runs with failed records and held-back items trigger an alert through a notifier interface, so the provider can change. A Discord webhook is the planned first provider, and adding it gets its own ADR. The webhook URL is a secret kept in an environment variable, and alerts follow the logging rules: no secrets, emails or payment data.
+- **Idempotent and resumable:** running an agent again on the same input does not create duplicate outputs, and work left unfinished by an interrupted or failed run is picked up by a later run. A record that fails within a run is logged and isn't retried by later runs, though each request within a run still retries with backoff. Items held back after their capped attempts stay held back.
+- **One model client:** every LLM, TTS and speech-to-text call goes through a single model client that records model, usage (tokens or audio length), cost and latency.
+- **Alerts:** failed runs, runs with failed records and held-back items trigger an alert through a notifier interface, so the provider can change. A Discord webhook is the planned first provider, and adding it gets its own ADR. The webhook URL is a secret kept in an environment variable, and alerts follow the logging rules in `CLAUDE.md`: no secrets, emails or payment data.
 - **Traceable outputs:** model-generated outputs record the model and prompt that produced them, and new versions never overwrite old ones.
 - **Licence check:** only agents with a licence check may use full text, and only when the article's licence permits it. Otherwise they work from abstracts and metadata. `CLAUDE.md` has the full rule.
 - **Evaluated:** prompts and model choices are code, so changes must pass the eval suite.
@@ -88,7 +88,7 @@ Scout runs daily and is the first agent to be built.
 2. Page through the results until there is no new cursor, saving the cursor so a crashed run can resume. A page with fewer results than requested doesn't mean the results have ended.
 3. Match each paper on DOI, PMID or PMCID, then insert or update it with its abstract and metadata.
 4. Record the licence exactly as supplied, along with its normalised value. A missing licence is stored as `unknown`, which never permits full-text reuse.
-5. Record any paper that can't be processed, then continue with the next one. A run with failed papers ends as `partial` and sends an alert. Those papers aren't deliberately retried, although the overlap may fetch some of them again. A person re-runs that window once the cause is fixed.
+5. Record any paper that can't be processed, then continue with the next one. A run with failed papers ends as `partial` and sends an alert. Those papers aren't deliberately retried. The overlap may fetch some of them again, and they are then processed like any other paper. A person re-runs that window once the cause is fixed.
 
 **Beyond limiting results to PubMed-indexed records, Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common, and the share of records with one varied widely by query in samples taken on 2026-11-07.
 

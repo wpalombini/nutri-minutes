@@ -8,7 +8,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 ## Source of truth
 - Architecture and technology decisions: `docs/adr/` (one ADR per decision, numbered, never edited after acceptance; supersede with a new ADR).
 - If a requested change conflicts with an accepted ADR, stop and say so before writing code. Propose a new ADR instead.
-- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs. The one exception is that public project rules may state editorial and compliance requirements in their own words.
+- Private context may be loaded from `CLAUDE.local.md` and `docs/private/` (both gitignored). Never copy their contents into committed files, commit messages, issues, PR descriptions, PR comments, reviews, code comments or logs. `CLAUDE.md`, ADRs and code may still state product, editorial, compliance and technical requirements in their own words, but never pricing, competitors, positioning, roadmap, revenue targets or personal working habits.
 
 ## How to work
 - Small, reviewable changes: one concern per PR, with tests for code changes. Leave the main branch deployable.
@@ -23,7 +23,7 @@ An automated pipeline and web app that turns newly published nutrition research 
   - **Integration reviewer:** the PR works well in the current project and does not introduce bugs.
 - Report review findings to the repo owner in the session. Do not post them to GitHub unless asked.
 - Reviewers label each finding blocking or non-blocking. Blocking means a real defect, such as a bug, a conflict, an incorrect statement, exposed private content or instructions that cannot be followed.
-- Approvals are not required. Merge once there are no blocking findings and nothing major needs the repo owner's input, then report any non-blocking findings for the owner to decide on.
+- Approvals are not required. Merge once both reviewers have reported on the latest substantive push, required checks pass, there are no blocking findings and nothing major needs the repo owner's input, then report any non-blocking findings for the owner to decide on.
 
 ## Stack
 - TypeScript with strict mode and Next.js for the web app.

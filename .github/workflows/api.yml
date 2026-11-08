@@ -66,12 +66,15 @@ jobs:
           context: api
           platforms: linux/amd64,linux/arm64
           push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
       - name: Build API image for the smoke test
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: api
           load: true
           tags: research-api:ci
+          cache-from: type=gha,scope=api
       - name: Smoke test
         run: |
           docker run -d --name api --read-only --cap-drop ALL --security-opt no-new-privileges \

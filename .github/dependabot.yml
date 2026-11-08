@@ -1,0 +1,47 @@
+# Weekly update PRs for dependencies, base images and pinned actions. New versions wait 14 days
+# before Dependabot proposes them, in line with only adopting releases at least two weeks old.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /api
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      api-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: uv
+    directory: /workers
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      workers-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: [/api, /workers]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      actions:
+        patterns: ["*"]

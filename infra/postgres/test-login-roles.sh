@@ -2,7 +2,9 @@
 # Checks infra/postgres/login-roles.sql against a disposable database: it creates both roles, can
 # be run again, skips the API role without a password, and leaves the API role with no access to
 # pipeline tables. Needs psql, and TEST_DATABASE_URL pointing at a database whose schema is at the
-# latest migration (CI runs this after the workers' tests, then migrates).
+# latest migration (CI runs this after the workers' tests, then migrates). The schema check
+# assumes public was recreated without the default USAGE grant to PUBLIC, as the workers'
+# test setup does.
 #
 # Roles belong to the whole Postgres server, not one database, so this changes the passwords of
 # pipeline_runner and api_runner for every database on that server. It runs only in CI unless
@@ -33,7 +35,8 @@ fail() {
 
 query "DROP ROLE IF EXISTS api_runner"
 
-run_roles "worker-ci-1" "" | grep -q "api_runner role was not created" || fail "empty api_password should skip api_runner"
+skipped_output="$(run_roles "worker-ci-1" "")"
+grep -q "api_runner role was not created" <<<"$skipped_output" || fail "empty api_password should skip api_runner"
 [ "$(query "SELECT count(*) FROM pg_roles WHERE rolname = 'api_runner'")" = 0 ] || fail "api_runner created without a password"
 
 run_roles "worker-ci-1" "api-ci-1"
@@ -49,7 +52,16 @@ done
 
 # The passwords set last must work for login.
 url_for() {
-  python3 -c 'import sys, urllib.parse as u; p = u.urlsplit(sys.argv[1]); print(p._replace(netloc=f"{sys.argv[2]}:{sys.argv[3]}@{p.hostname}:{p.port}").geturl())' "$TEST_DATABASE_URL" "$1" "$2"
+  python3 - "$TEST_DATABASE_URL" "$1" "$2" <<'PY'
+import sys
+from urllib.parse import quote, urlsplit
+
+url, user, password = sys.argv[1:]
+parts = urlsplit(url)
+host = f"[{parts.hostname}]" if ":" in (parts.hostname or "") else parts.hostname
+netloc = f"{quote(user, safe='')}:{quote(password, safe='')}@{host}:{parts.port or 5432}"
+print(parts._replace(netloc=netloc).geturl())
+PY
 }
 psql "$(url_for pipeline_runner worker-ci-2)" -Atqc "SELECT 1" >/dev/null || fail "pipeline_runner login"
 psql "$(url_for api_runner api-ci-2)" -Atqc "SELECT 1" >/dev/null || fail "api_runner login"

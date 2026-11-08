@@ -80,7 +80,7 @@ To verify before tokens are written: whether Atkinson Hyperlegible Next has tabu
 
 ### Type scale
 
-A classical scale (Bringhurst): 16, 18, 21, 24, 30, 36, 48, 60. Nothing is set below 16px.
+Adapted from Bringhurst's classical scale, with 30 added between 24 and 36: 16, 18, 21, 24, 30, 36, 48, 60. Nothing is set below 16px.
 
 | Size / line height | Face and weight | Use |
 |---|---|---|
@@ -92,7 +92,7 @@ A classical scale (Bringhurst): 16, 18, 21, 24, 30, 36, 48, 60. Nothing is set b
 | 21 / 1.3 | Literata 600 | Finding titles in lists |
 | 18 / 1.7 | Literata 400 | Summary body (serif gets the extra leading) |
 | 18 / 1.6 | Atkinson 400 / 700 | Interface text, figure captions |
-| 16 / 1.5 | Atkinson 400 / 700 | Metadata, axis labels, the disclosure line |
+| 16 / 1.5 | Atkinson 400 / 700 | Metadata, axis labels, the footer disclosure |
 
 Headlines are sentence case and say the finding itself ("More dairy linked to slightly fewer hip fractures, but the range includes no difference"), with `text-wrap: balance`. That is how type is an active part of the design here: the headline does the job a hero image would do elsewhere, and its honesty is the brand.
 
@@ -145,10 +145,9 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 | [Bone health] [Muscle and      |
 | strength with age] [Falls...]  |
 +--------------------------------+
-| Written by artificial          |
-| intelligence. Not medical      |
-| advice. How summaries are made |
-| (footer)                       |
+| Footer disclosure, wording in  |
+| principle 7. How summaries are |
+| made (link)                    |
 +--------------------------------+
 ```
 
@@ -156,7 +155,7 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 
 ```
 +--------------------------------------------------------------------------+
-| Nutri Minutes                         This week   Browse topics   How we grade |
+| Nutri Minutes                          This week   Topics   How we grade |
 +--------------------------------------------------------------------------+
 | This week's findings, published 7 November 2026                          |
 | Falls and independence                                                   |
@@ -168,14 +167,16 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 |  Fewer falls                                                 More falls  |
 |  Falls were 23% less frequent (rate ratio 0.77, 95% CI 0.64 to 0.93)...  |
 |--------------------------------------------------------------------------|
-| More dairy linked to slightly fewer hip...  | --<=◆=|>-- | [##..] Low     |
-| Bone health                                 |            |                |
+| More dairy linked to slightly fewer hip...  | --<=◆=|>-- | [##..] Low    |
+| Bone health                                 |            |               |
 |--------------------------------------------------------------------------|
-| Protein at breakfast and leg strength...    | (Animal)   | [#...] Very low|
+| Protein at breakfast and leg strength...    | (Animal)   | [#...] V. low |
 |--------------------------------------------------------------------------|
 | Browse by topic                                                          |
 | [Bone health] [Muscle and strength with age] [Falls and independence]    |
 | [Heart and metabolism] [Brain health] [Longevity] [Genes and diet]       |
++--------------------------------------------------------------------------+
+| Footer disclosure (principle 7)                How summaries are made    |
 +--------------------------------------------------------------------------+
 ```
 
@@ -209,7 +210,7 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 | | show                        ||
 | | - not cause and effect ...  ||
 | +- - - - - - - - - - - - - - -+|
-| > Why this grade is low        |  <- disclosure, 44px target
+| > Why this grade is low        |  <- expandable section, 44px target
 |   certainty                    |
 | +----------------------------+ |
 | | Study at a glance          | |  <- the one raised panel
@@ -219,10 +220,9 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 | | Licence                    | |
 | +----------------------------+ |
 +--------------------------------+
-| Written by artificial          |
-| intelligence. Not medical      |
-| advice. How summaries are made |
-| (footer)                       |
+| Footer disclosure, wording in  |
+| principle 7. How summaries are |
+| made (link)                    |
 +--------------------------------+
 ```
 
@@ -230,7 +230,7 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 
 ```
 +--------------------------------------------------------------------------+
-| Nutri Minutes                         This week   Browse topics   How we grade |
+| Nutri Minutes                          This week   Topics   How we grade |
 +--------------------------------------------------------------------------+
 | Bone health                                                              |
 | More dairy linked to slightly fewer hip fractures,                       |
@@ -246,11 +246,13 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 | (66ch measure)                                | | Design               | |
 |                                               | | People               | |
 | +- - - - - - - - - - - - - - - - - - - - - -+ | | Followed for         | |
-| | What this study does not show            | | | Main result          | |
+| | What this study does not show             | | | Main result          | |
 | +- - - - - - - - - - - - - - - - - - - - - -+ | | Funding              | |
 |                                               | | Source (DOI link)    | |
 | > Why this grade is low certainty             | | Licence              | |
 |   + Raises confidence  - Lowers confidence    | +----------------------+ |
++--------------------------------------------------------------------------+
+| Footer disclosure (principle 7)                How summaries are made    |
 +--------------------------------------------------------------------------+
 ```
 
@@ -264,13 +266,13 @@ Each grade is shown by three things at once, none of which is colour:
 2. **Words:** the level name is always visible next to the marks: "High", "Moderate", "Low" or "Very low certainty", plus "2 of 4" on study pages.
 3. **Accessible name:** the marks are `aria-hidden`; the text carries the meaning for screen readers ("Low certainty, 2 of 4").
 
-The study design is a separate, always-visible text label in an outlined pill: "Randomised trial", "Observational study", "Animal study", "Lab study", "Review of studies". This meets the rule that observational and animal studies are labelled as such, independent of the grade.
+The study design is a separate, always-visible text label in parentheses, with no outline (outlines mean controls): "Randomised trial", "Observational study", "Animal study", "Lab study", "Review of studies". This meets the rule that observational and animal studies are labelled as such, independent of the grade.
 
 "Why this grade" lists reasons in two groups, "Raises confidence" (plus icon) and "Lowers confidence" (minus icon), each with a text heading, drawn from design, size, duration, population, and funding and conflicts.
 
 ## 6. The one bold element: the interval
 
-The effect size, drawn to scale, near the top of every study page and on the lead finding on the home page: a wide horizontal axis, a labelled "No difference" line, the confidence interval as a thick Beetroot bar and the point estimate as an outlined diamond. Words at each end ("Lower risk" / "Higher risk", "Fewer falls" / "More falls") say which way is good, so no one has to decode a ratio. A plain-English caption under it always repeats the numbers in full (estimate, 95% CI, and an absolute version where the study gives one).
+The effect size, drawn to scale, near the top of every study page and on the lead finding on the home page: a wide horizontal axis, a labelled "No difference" line, the confidence interval as a thick Beetroot bar and the point estimate as a diamond filled with the page colour and outlined in Spruce ink (page colour on Beetroot is 6.83:1 light and 7.74:1 dark, so the diamond stands out from the bar). Words at each end ("Lower risk" / "Higher risk", "Fewer falls" / "More falls") say which way is good, so no one has to decode a ratio. A plain-English caption under it always repeats the numbers in full (estimate, 95% CI, and an absolute version where the study gives one).
 
 It's the bold element because it is the most characteristic object in this subject (it's the core of a forest plot) and it is honest by construction: an interval that crosses the no-difference line looks like it. It's the visual answer to hype. Ratios use a log scale, so 0.5 and 2 sit equally far from 1.
 

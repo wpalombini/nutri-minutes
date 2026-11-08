@@ -36,7 +36,8 @@ Phone first, with only the two token breakpoints:
 - Australian English spelling ("randomised"), sentence case for headings, links and buttons. This overrides the Title Case rule in the web-design-guidelines skill; the design plan's sentence case wins.
 - Never "AI": always "artificial intelligence".
 - Dates as "7 November 2026" (`Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })`) in a `<time datetime>` element.
-- Numbers through `Intl.NumberFormat('en-AU')`. Negative numbers use the true minus sign (U+2212). `Intl.NumberFormat('en-AU')` outputs a hyphen-minus, so swap the `minusSign` part from `formatToParts()`. Ranges are written with "to" ("0.80 to 1.04"), never a hyphen or dash, so a range is never misread as a negative number.
+- **Study numbers print exactly as the API sends them.** Effect sizes, interval limits, p-values and any other study figure arrive as decimal strings, and the app keeps every digit: "0.80" stays "0.80", "0.0004" stays "0.0004". Don't pass them through `Intl.NumberFormat` with its defaults, which drops trailing zeros and rounds small values to 0. The only changes allowed: replace a leading hyphen-minus with the true minus sign (U+2212), and add thousands grouping to the integer part ("1,250.5"). If you do format with `Intl`, set `minimumFractionDigits` and `maximumFractionDigits` to the string's own number of decimals. Parse the string to a number only to position marks in the drawing.
+- **Counts** (people in a study, numbers of summaries) use `Intl.NumberFormat('en-AU')`. Ranges are written with "to" ("0.80 to 1.04"), never a hyphen or dash, so a range is never misread as a negative number.
 - Loading text ends with an ellipsis character: "Loading…".
 - Curly quotes and apostrophes in all copy.
 - The brand name "Nutri Minutes" has a non-breaking space between the words and `translate="no"` where it appears as the wordmark.

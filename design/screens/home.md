@@ -17,6 +17,7 @@ The Editor chooses and orders the week's findings, so the first one is the lead.
 - If the latest edition was published in the last 7 days: `h1` "This week's findings".
 - Otherwise: `h1` "Latest findings". It never says "this week" about older content.
 - Under the `h1`, always: "Published {date}" in a `<time>`.
+- The rule is worked out when the page renders, so a cached page keeps its heading until it is revalidated. If the page only revalidates when an edition is published, it will still say "This week" long after day 7. Revalidate on publish **and** on a time basis of at most a day, so the heading is wrong for no more than a day.
 
 ## Layout
 

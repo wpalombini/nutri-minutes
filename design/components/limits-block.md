@@ -14,7 +14,7 @@ The limits of a study, as first-class content in their own marked block, never a
 | Lab study | "It was done on cells or tissue in a lab, not in people." |
 | Randomised trial, review | No fixed item |
 
-The pipeline's own limits follow. (Whether the writer should then skip saying the same thing is an open question for the pipeline, raised in the PR.)
+The pipeline's own limits follow. Whether the writer should then avoid repeating the fixed item is in the [open questions](../OPEN-QUESTIONS.md).
 
 ## Wireframe
 
@@ -57,7 +57,7 @@ Same shape at 360px and 1280px; it fills the reading column (`layout.study-colum
 
 ## States
 - **Rendered with its page;** no loading state.
-- **No limits from the pipeline:** for observational, animal and lab studies the fixed item still shows. For a randomised trial or review with no limits, the summary is incomplete: treat it as invalid, like a missing grade, and show the error page. (Owner decision, raised in the PR: this is stricter than the content rules require.)
+- **No limits from the pipeline:** for observational, animal and lab studies the fixed item still shows. For a randomised trial or review with no limits, the summary is incomplete: treat it as invalid, like a missing grade, and show the error page. (This is stricter than the content rules require; it's listed in the [open questions](../OPEN-QUESTIONS.md).)
 - **Long items:** wrap; no truncation, no "show more".
 
 ## Keyboard and screen readers

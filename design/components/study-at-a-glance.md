@@ -15,8 +15,12 @@ The facts of one study in one place, including the source. The only raised, fill
 | Paper published | 2 November 2026 | |
 | Summary published | 7 November 2026 | Plus "Updated {date}" on a second line if it was |
 | Summarised from | The abstract | "The abstract" or "The full text" |
-| Licence | CC BY 4.0 | The licence as the source states it, or "Not stated" |
+| Licence | CC BY | Built from `licence_code` (below), never the raw value |
 | Source | https://doi.org/10.xxxx/xxxxx | The DOI as a link. Always present. |
+
+**Licence labels** from `licence_code` in [`docs/database.md`](../../docs/database.md#article_licences): `cc0` "CC0", `cc-by` "CC BY", `cc-by-sa` "CC BY-SA", `cc-by-nc` "CC BY-NC", `cc-by-nd` "CC BY-ND", `cc-by-nc-sa` "CC BY-NC-SA", `cc-by-nc-nd` "CC BY-NC-ND", `other` "Other licence", `unknown` "Not stated". The code has no version, so the label has none.
+
+**Changes to the plan:** the plan's panel lists Design, People, Followed for, Main result, Funding, Source and Licence. This spec renames Funding to "Funding and conflicts" (the grade weighs both) and adds Journal, Paper published, Summary published and Summarised from. Those are additions for the owner to accept or trim.
 
 "Summarised from" and "Licence" together tell readers why some summaries quote less: we reuse full text only when the licence allows (`CLAUDE.md`, licensing).
 
@@ -72,8 +76,8 @@ Same panel at both widths; only its place on the page changes (see [study page](
 
 ## States
 - **Rendered with its page;** no loading state.
-- **Missing optional fields** (followed for, funding, journal, licence): leave the row out, except Licence, which shows "Not stated", and Funding and conflicts, which shows "Not reported" (a missing funding statement is itself information).
-- **Missing DOI:** the summary is invalid (see [conventions](../screens/README.md#content-rules-the-app-enforces)). If a later source has a PMID but no DOI, that's an open question for the content rules, not a fallback the app invents.
+- **Missing optional fields** (followed for, funding, journal): leave the row out. Licence always shows ("Not stated" when unknown), and Funding and conflicts, which shows "Not reported" (a missing funding statement is itself information).
+- **Missing DOI:** the summary is invalid (see [conventions](../screens/README.md#content-rules-the-app-enforces)). If a later source has a PMID but no DOI, the app doesn't invent a fallback; that case is in the [open questions](../OPEN-QUESTIONS.md).
 
 ## Motion
 None.
@@ -92,5 +96,5 @@ None.
 | `paper_published_on` | date or null |
 | `published_on`, `updated_on` | date, date or null |
 | `source_basis` | `abstract` or `full_text` |
-| `licence_label` | string or null, as the source states it |
+| `licence_code` | enum from `article_licences`, the current licence |
 | `doi` | string, canonical (lowercase, no prefix), shown as `https://doi.org/{doi}` |

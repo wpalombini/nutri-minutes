@@ -17,4 +17,6 @@ Checked on 8 November 2026 against the files above.
 
 ## Icons and images
 
-None yet.
+| Asset | Use | Source | Licence |
+|---|---|---|---|
+| Site icon: the interval bar and estimate diamond (`icons/icon.svg`, `icons/icon-app.svg`, `icons/icon-maskable.svg` and the `.ico` and `.png` files exported from them) | Favicon, Apple touch icon and web app manifest icons | Original work drawn for this project from the design plan's interval; owned by the project. Contains no third-party assets, fonts or text. See [icons/README.md](icons/README.md). | Owned by the project |

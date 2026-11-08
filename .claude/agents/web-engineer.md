@@ -48,9 +48,9 @@ You are the senior web engineer for the Nutri Minutes web app. The app lives in 
 - Check UI changes against the web-design-guidelines skill.
 
 ## Testing
-The tools below are the intended setup. Each is a new dependency, so it's added only once the repo owner has agreed, as `CLAUDE.md` requires.
+ADR 0004 sets the styling approach (CSS Modules and CSS variables generated from the tokens) and the test tools. Add each dependency in the PR that first uses it, pinned to an exact version. Anything outside ADR 0004 still needs the repo owner's agreement.
 - Vitest for logic and components. Playwright for key flows and screenshots at 360px and 1280px, in light and dark. Automated accessibility checks with axe on every page.
-- Performance budgets for Core Web Vitals (LCP, INP, CLS) checked in CI.
+- Performance budgets for Core Web Vitals (LCP, INP, CLS) checked in CI. Choosing that tool needs the owner's agreement.
 - Before a PR, run lint, type check, tests and a production build. Look at the screenshots yourself and compare them with the designer's spec.
 
 ## Repo rules

@@ -2,6 +2,8 @@
 
 How the pipeline's agents fit together: what each one does, what it uses, and how work moves between them. Only the planned shape is described here. Details can change as each agent is built, and this document changes with them.
 
+These are the pipeline agents, which run in production. The agents that help build the product are separate: see [Build agents](#build-agents).
+
 ## How agents work together
 - **They are pipeline stages.** Each agent has one job, a defined input and a defined output. Scheduled workers run them in a fixed order.
 - **They don't talk to each other directly.** One agent writes its output to Postgres and the next reads it. Audio files go to R2, with references in Postgres. This keeps runs resumable and means every output can be inspected and traced.
@@ -93,3 +95,14 @@ Scout runs daily and is the first agent built. The code is in `workers/src/pipel
 **Beyond limiting results to PubMed-indexed records, Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common, and the share of records with one varied widely by query in samples taken on 2026-11-07.
 
 **Handling Europe PMC:** the search service can return temporary `503` errors, so requests use timeouts and retries with backoff. In testing on 2026-11-07, `cursorMark` requests sorted by `FIRST_IDATE` returned `503` on every attempt, while the same kind of request filtered by a `FIRST_IDATE` range succeeded. Scout therefore pages through date ranges without sorting. Scout also waits between requests, 1 second by default, and sends a `User-Agent` naming the client and a project contact address set by an environment variable, so EBI can get in touch before blocking it.
+
+## Build agents
+Build agents help develop the product. They never run in production. They are Claude Code subagents defined in `.claude/agents/`, and a development session calls them only when its work touches their area. Everything else, such as the workers, the API, infrastructure and docs, is done directly in the session.
+
+| Agent | Called for | Produces | Doesn't |
+|---|---|---|---|
+| **Designer** (`designer.md`) | Any UI or UX work, on the web app now and mobile apps later | The design system and design tokens in `design/`, and screen and flow specs | Write app code |
+| **Web engineer** (`web-engineer.md`) | Any code in `web/` | Pages, components, data fetching through the API, web tests | Change design tokens or make visual decisions alone |
+
+Both follow `CLAUDE.md`, and their work goes through the usual PR reviews. They load the skills in `.claude/skills/`, which are copied from upstream at pinned commits; `.claude/skills/THIRD_PARTY.md` records the sources and licences.
+

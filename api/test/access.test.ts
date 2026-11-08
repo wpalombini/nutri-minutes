@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { errors, SignJWT } from 'jose'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ACCESS_JWT_HEADER, type AccessVariables, requireAccess } from '../src/access.js'
 import { AUDIENCE, CLIENT_ID, captureLogs, TEAM_DOMAIN, testKeys } from './helpers.js'
 
@@ -136,18 +136,17 @@ describe('remoteAccessKeys', () => {
   it('fetches keys from the team certs endpoint', async () => {
     const { remoteAccessKeys } = await import('../src/access.js')
     const requested: string[] = []
-    const realFetch = globalThis.fetch
-    globalThis.fetch = (async (input: string | URL | Request) => {
+    vi.stubGlobal('fetch', async (input: string | URL | Request) => {
       requested.push(String(input instanceof Request ? input.url : input))
       return new Response('{"keys":[]}', { headers: { 'content-type': 'application/json' } })
-    }) as typeof fetch
+    })
     try {
       const getKey = remoteAccessKeys(TEAM_DOMAIN)
       await expect(
         getKey({ alg: 'RS256', kid: 'x' }, { payload: '', signature: '' } as never),
       ).rejects.toThrow()
     } finally {
-      globalThis.fetch = realFetch
+      vi.unstubAllGlobals()
     }
     expect(requested).toEqual([`${TEAM_DOMAIN}/cdn-cgi/access/certs`])
   })

@@ -20,14 +20,14 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 1. Install Docker with the Compose plugin, and clone the repo.
 2. Copy `.env.example` to `.env`. Set `POSTGRES_PASSWORD`, `WORKER_DB_PASSWORD` and `API_DB_PASSWORD` to long random values made of letters and digits, such as the output of `openssl rand -hex 32`. Keep `.env` readable only by the deploy user (`chmod 600 .env`). `POSTGRES_PASSWORD` only takes effect when the database volume is first created; to change it later, change the role's password in Postgres too. `WORKER_DB_PASSWORD` and `API_DB_PASSWORD` can be changed at any time, and the next `up` applies them. Set `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` from the API's Access application, and `CLOUDFLARE_TUNNEL_TOKEN` from the `research-api` tunnel (see "Cloudflare setup").
 3. Run `docker compose up -d --build`.
-4. Check the services with `docker compose ps -a`. `migrate` and `db-roles` should show `Exited (0)`, and `db` and `scheduler` should be up. `api` should show `healthy` and `cloudflared` should be up. `docker compose logs cloudflared` should show registered tunnel connections.
+4. Check the services with `docker compose ps -a`. `migrate` and `db-roles` should show `Exited (0)`, and `db` and `scheduler` should be up. `api` and `cloudflared` should show `healthy`. `docker compose logs cloudflared` should show registered tunnel connections.
 
 ## Everyday tasks
-- **Deploy a change:** `git pull`, then `docker compose up -d --build`. Migrations run before the scheduler restarts.
+- **Deploy a change:** `git pull`, then `docker compose up -d --build`. Migrations run before the scheduler restarts. If `.env.example` gained a required setting, add it to `.env` first: every Compose command, including Scout runs, fails while one is missing.
 - **Logs:** `docker compose logs -f scheduler`. Scout's alerts are log lines starting with `ALERT`. Logs rotate at 5 files of 10 MB per service.
 - **Run Scout now:** `docker compose run --rm scout`.
 - **Re-run a past window:** `docker compose run --rm scout --window-start YYYY-MM-DD --window-end YYYY-MM-DD`.
-- **API checks:** `docker compose exec api node -e "fetch('http://127.0.0.1:3000/readyz').then(async (r) => console.log(r.status, await r.text()))"`. `/healthz` reports the process is up and `/readyz` that the database answers. Neither needs a token.
+- **API checks:** `docker compose exec api node -e "fetch('http://127.0.0.1:3000/readyz').then(async (r) => console.log(r.status, await r.text()))"`. `/healthz` reports the process is up and `/readyz` that the database answers. Neither needs a token, and both return 404 to requests from Cloudflare.
 - **Database shell:** `docker compose exec db psql -U pipeline pipeline`.
 - **Dependency updates:** Dependabot opens weekly PRs for npm and uv packages, base images and pinned actions, 14 days after each release. They go through the normal review. Two pins must be updated by hand: the Postgres service image in `.github/workflows/workers.yml`, to match `compose.yaml`, and the `setup-uv` `version` there, to match the uv image in `workers/Dockerfile`.
 - **Login roles test:** CI checks `infra/postgres/login-roles.sql` with `infra/postgres/test-login-roles.sh`. Roles are server-wide, so the script refuses to run outside CI unless `ALLOW_SERVER_ROLE_CHANGES=1` is set; never run it against the stack's database server.
@@ -37,7 +37,7 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 ## Cloudflare setup
 The API is published as `api.nutriminutes.com`:
 - **Tunnel:** `research-api`, managed in Cloudflare (Networks > Tunnels). Its public hostname route sends `api.nutriminutes.com` to `http://api:3000`, and everything else to 404.
-- **Access application:** a self-hosted application for `api.nutriminutes.com` whose only policy is Service Auth, allowing only the web app's service token. Its AUD tag goes in `ACCESS_AUD`, and the team domain in `ACCESS_TEAM_DOMAIN`.
+- **Access application:** a self-hosted application for the whole `api.nutriminutes.com` hostname, with no path, whose only policy is Service Auth, allowing only the web app's service token. Its AUD tag goes in `ACCESS_AUD`, and the team domain in `ACCESS_TEAM_DOMAIN`.
 - **Service token:** the web app sends its `CF-Access-Client-Id` and `CF-Access-Client-Secret` on every request. The secret is shown once, when the token is created, and belongs in the web app's environment, not in this repo or `.env`.
 - **Rate limiting:** a Cloudflare rate limiting rule on the API hostname, then the API's own per-client limit.
 

@@ -24,10 +24,11 @@ export function rateLimit(settings: RateLimitSettings, logger: Logger) {
     const time = now()
     let window = windows.get(clientId)
     if (!window || time - window.start >= settings.windowMs) {
-      if (!window && windows.size >= MAX_TRACKED_CLIENTS) {
-        for (const [key, value] of windows) {
-          if (time - value.start >= settings.windowMs) windows.delete(key)
-        }
+      // Re-insert so the map stays ordered by window start, and drop the oldest when full.
+      windows.delete(clientId)
+      if (windows.size >= MAX_TRACKED_CLIENTS) {
+        const oldest = windows.keys().next().value
+        if (oldest !== undefined) windows.delete(oldest)
       }
       window = { start: time, count: 0 }
       windows.set(clientId, window)

@@ -17,6 +17,19 @@ updates:
       - dependency-name: "@types/node"
         update-types: [version-update:semver-major]
 
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      web-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
+
   - package-ecosystem: uv
     directory: /workers
     schedule:

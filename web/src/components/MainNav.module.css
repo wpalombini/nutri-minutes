@@ -1,0 +1,46 @@
+/* design/components/links-and-buttons.md, "Navigation link". */
+.nav {
+  flex-basis: 100%;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-24);
+  row-gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-primary);
+  font-family: var(--type-interface-font-family);
+  font-size: var(--type-interface-font-size);
+  font-weight: var(--type-interface-font-weight);
+  letter-spacing: var(--type-interface-letter-spacing);
+  line-height: var(--type-interface-line-height);
+  text-decoration-line: none;
+}
+
+.link:visited {
+  color: var(--text-link);
+}
+
+.link:hover {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--link-underline-width);
+}
+
+.link[aria-current] {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--link-underline-hover-width);
+}
+
+@media (width >= 720px) {
+  .nav {
+    flex-basis: auto;
+  }
+}

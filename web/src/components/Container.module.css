@@ -1,0 +1,16 @@
+/* design/screens/app-shell.md, "Layout and widths": one container for header, main and footer. */
+.container {
+  max-width: calc(var(--layout-content-max) + 2 * var(--layout-gutter));
+  margin-inline: auto;
+  padding-inline: max(var(--layout-gutter), env(safe-area-inset-left))
+    max(var(--layout-gutter), env(safe-area-inset-right));
+}
+
+/* 720px: --layout-breakpoint-gutter. Custom properties can't be used in media queries. */
+@media (width >= 720px) {
+  .container {
+    max-width: calc(var(--layout-content-max) + 2 * var(--layout-gutter-wide));
+    padding-inline: max(var(--layout-gutter-wide), env(safe-area-inset-left))
+      max(var(--layout-gutter-wide), env(safe-area-inset-right));
+  }
+}

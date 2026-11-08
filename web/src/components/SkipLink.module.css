@@ -1,0 +1,47 @@
+/* design/screens/app-shell.md, "Skip link": a primary button, shown on :focus. */
+.skipLink {
+  position: absolute;
+  inset-block-start: var(--space-8);
+  inset-inline-start: var(--layout-gutter);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-primary);
+  padding-inline: var(--space-24);
+  border-radius: var(--radius-control);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  font-family: var(--type-interface-strong-font-family);
+  font-size: var(--type-interface-strong-font-size);
+  font-weight: var(--type-interface-strong-font-weight);
+  letter-spacing: var(--type-interface-strong-letter-spacing);
+  line-height: var(--type-interface-strong-line-height);
+  text-decoration-line: none;
+}
+
+.skipLink:visited {
+  color: var(--button-primary-text);
+}
+
+.skipLink:hover {
+  color: var(--button-primary-text);
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--link-underline-width);
+}
+
+/* The visually hidden pattern (app-shell.md, "Visually hidden text"): fixed values by design. */
+.skipLink:not(:focus):not(:active) {
+  inline-size: 1px;
+  block-size: 1px;
+  min-block-size: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (width >= 720px) {
+  .skipLink {
+    inset-inline-start: var(--layout-gutter-wide);
+  }
+}

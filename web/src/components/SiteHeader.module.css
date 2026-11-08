@@ -1,0 +1,43 @@
+/* design/screens/app-shell.md, "Header". */
+.header {
+  border-block-end: var(--border-divider-width) solid var(--border-divider);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  row-gap: var(--space-8);
+  column-gap: var(--space-32);
+  padding-block: var(--space-16);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-primary);
+  color: var(--text-primary);
+  font-family: var(--type-subheading-font-family);
+  font-size: var(--type-subheading-font-size);
+  font-weight: var(--type-subheading-font-weight);
+  letter-spacing: var(--type-subheading-letter-spacing);
+  line-height: var(--type-subheading-line-height);
+  text-decoration-line: none;
+}
+
+.wordmark:visited,
+.wordmark:hover {
+  color: var(--text-primary);
+}
+
+.wordmark:hover {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--link-underline-width);
+}
+
+@media (width >= 720px) {
+  .inner {
+    padding-block: var(--space-24);
+  }
+}

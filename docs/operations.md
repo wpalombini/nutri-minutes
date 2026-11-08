@@ -1,6 +1,6 @@
 # Operations
 
-How the pipeline runs with Docker Compose, locally and on the production VM. Everything is defined in `compose.yaml` at the repo root, with settings and secrets in `.env` (see `.env.example`).
+How the pipeline runs in production with Docker Compose. The same setup also runs locally for development. Everything is defined in `compose.yaml` at the repo root, with settings and secrets in `.env` (see `.env.example`).
 
 ## Services
 

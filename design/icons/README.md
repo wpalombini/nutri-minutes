@@ -55,13 +55,13 @@ Copy the files into `web/` like this. Next.js generates the `<link>` tags from t
 | From `design/icons/` | To | Next.js output |
 |---|---|---|
 | `favicon.ico` | `app/favicon.ico` (top level of `app/` only) | `<link rel="icon" href="/favicon.ico" sizes="any">` |
-| `icon.svg` | `app/icon.svg` | `<link rel="icon" href="/icon.svg?…" type="image/svg+xml" sizes="any">` |
+| `icon.svg` | `app/icon.svg` | `<link rel="icon" href="/icon?<generated>" type="image/svg+xml" sizes="any">` |
 | `apple-touch-icon.png` | `app/apple-icon.png` | `<link rel="apple-touch-icon" href="/apple-icon.png?…" type="image/png" sizes="180x180">` |
 | `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | `public/icons/` | referenced from `app/manifest.ts` |
 
 Browsers that support SVG favicons use `icon.svg`; the rest fall back to `favicon.ico`.
 
-`app/manifest.ts` (Next.js serves it at `/manifest.webmanifest` and adds `<link rel="manifest">`):
+`app/manifest.ts`. Next.js serves it at `/manifest.webmanifest` and adds the `<link rel="manifest">` tag; check this against the built page, because the docs page doesn't state it:
 
 ```ts
 import type { MetadataRoute } from "next";
@@ -89,13 +89,13 @@ Keep `maskable` and `any` as separate entries; a single icon with `purpose: "any
 
 ## Re-exporting
 
-Edit the SVGs by hand (keep them free of editor metadata), then run, from the repo root, with an existing `sharp` install on `NODE_PATH` (Next.js uses `sharp` for image optimisation, so the web app's `node_modules` usually has it):
+Edit the SVGs by hand (keep them free of editor metadata), then run the script from the repo root with an existing `sharp` install on `NODE_PATH`. The repo doesn't declare `sharp` anywhere. The web app (`web/`) doesn't exist yet. Once it does, an npm install of it normally includes `sharp`, because it is an optional dependency of Next.js, but pnpm or `--omit=optional` installs leave it out. Until then, point `NODE_PATH` at any local `sharp` install, or produce the files by hand from the export spec above. For example, once `web/` exists:
 
 ```sh
 NODE_PATH=web/node_modules node design/icons/export-icons.cjs
 ```
 
-It writes all five raster files next to the SVGs. `sharp` renders SVG with librsvg; the committed files were made with sharp 0.34.5 (librsvg 2.61.2). If the colours change, update the hex values in all three SVGs and in `export-icons.cjs` (the Apple icon's flatten background), then recheck the contrast table above.
+It writes all five raster files next to the SVGs. `sharp` renders SVG with librsvg; the committed files were made with sharp 0.34.5 (librsvg 2.61.2), and other versions may not produce byte-identical files. If the colours change, update the hex values in all three SVGs and in `export-icons.cjs` (the Apple icon's flatten background), then recheck the contrast table above.
 
 Export spec, if you use another tool: `favicon.ico` = `icon.svg` at 16, 32 and 48px; `icon-192.png` and `icon-512.png` = `icon-app.svg`; `icon-maskable-512.png` = `icon-maskable.svg` at 512; `apple-touch-icon.png` = `icon-maskable.svg` at 180, flattened onto `#EDF2EF` with no alpha channel.
 

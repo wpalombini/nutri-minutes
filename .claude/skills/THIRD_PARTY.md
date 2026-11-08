@@ -11,12 +11,13 @@ These skills are copied from their upstream repositories at a pinned commit, so 
 
 ## Changes from upstream
 - The two Vercel skill folders are renamed to match the `name` in their `SKILL.md` (`vercel-react-best-practices`, `vercel-composition-patterns`).
+- `web-design-guidelines/guidelines.md` is upstream's `command.md`, renamed, and `LICENSE-guidelines` is that repository's `LICENSE`.
 - `web-design-guidelines/SKILL.md` reads the pinned `guidelines.md` instead of fetching the latest rules from GitHub on every run, so a change upstream can't alter the agents' instructions without a reviewed PR.
 
 ## MIT licence (vercel-labs/agent-skills)
 The upstream repository declares the MIT licence but does not include a licence file. Its terms are reproduced here for the copied skills.
 
-> Copyright (c) Vercel
+> Copyright (c) Vercel Labs
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 >

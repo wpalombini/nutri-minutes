@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="720" height="300" role="img" aria-labelledby="t d">
+  <title id="t">Anatomy of the full-size interval</title>
+  <desc id="d">Outcome and comparison lines, a "No difference" label above a vertical line at the centre, a thick interval bar from 0.80 to 1.04 with a hollow diamond at 0.91, an axis with ticks at 0.5, 0.67, 1, 1.5 and 2, the direction words "Lower risk" and "Higher risk", and a caption. Light theme; illustration only.</desc>
+  <rect width="720" height="300" fill="#edf2ef"/>
+  <g font-family="Atkinson Hyperlegible Next, system-ui, sans-serif" font-size="16">
+    <text x="20" y="32" fill="#122b27" font-weight="700">Hip fracture risk</text>
+    <text x="20" y="56" fill="#4a5f59">Highest compared with lowest dairy intake</text>
+    <text x="360" y="92" fill="#4a5f59" text-anchor="middle">No difference</text>
+  </g>
+  <!-- plot: x from 20 to 700 is the domain 0.5 to 2 (log). p(v) = 20 + 680 * (ln v - ln 0.5) / (ln 4) -->
+  <!-- null line at 1 -->
+  <rect x="359" y="100" width="2" height="40" fill="#4a5f59"/>
+  <!-- axis -->
+  <rect x="20" y="140" width="680" height="1" fill="#4a5f59"/>
+  <!-- ticks at 0.5, 0.67, 1, 1.5, 2 -->
+  <g fill="#4a5f59">
+    <rect x="20" y="141" width="1" height="8"/>
+    <rect x="160" y="141" width="1" height="8"/>
+    <rect x="360" y="141" width="1" height="8"/>
+    <rect x="559" y="141" width="1" height="8"/>
+    <rect x="699" y="141" width="1" height="8"/>
+  </g>
+  <!-- bar 0.80 to 1.04: p(0.80) = 20 + 680*0.3390 = 250.5; p(1.04) = 20 + 680*0.5283 = 379.2 -->
+  <rect x="250.5" y="114" width="128.7" height="12" fill="#97245a"/>
+  <!-- diamond at 0.91: p = 20 + 680*0.4320 = 313.8; diagonal 22, outline 2 -->
+  <polygon points="313.8,109 324.8,120 313.8,131 302.8,120" fill="#edf2ef" stroke="#122b27" stroke-width="2"/>
+  <g font-family="Atkinson Hyperlegible Next, system-ui, sans-serif" font-size="16" fill="#4a5f59" style="font-variant-numeric: tabular-nums">
+    <text x="20" y="172">0.5</text>
+    <text x="160" y="172" text-anchor="middle">0.67</text>
+    <text x="360" y="172" text-anchor="middle">1</text>
+    <text x="559" y="172" text-anchor="middle">1.5</text>
+    <text x="700" y="172" text-anchor="end">2</text>
+  </g>
+  <g font-family="Atkinson Hyperlegible Next, system-ui, sans-serif" font-size="16" font-weight="700" fill="#122b27">
+    <text x="20" y="200">Lower risk</text>
+    <text x="700" y="200" text-anchor="end">Higher risk</text>
+  </g>
+  <g font-family="Atkinson Hyperlegible Next, system-ui, sans-serif" font-size="18" fill="#122b27">
+    <text x="20" y="236">Hip fracture risk was 9% lower among people who ate the most dairy.</text>
+    <text x="20" y="262">Hazard ratio 0.91, 95% confidence interval 0.80 to 1.04. The range</text>
+    <text x="20" y="288">includes 1, so no difference is still plausible.</text>
+  </g>
+</svg>

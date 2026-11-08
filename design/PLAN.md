@@ -1,6 +1,6 @@
 # Nutri Minutes design plan
 
-Status: approved by the repo owner (decisions in section 10). The tokens are in [`tokens/`](tokens/README.md) (DTCG JSON); screen specs will go into `design/screens/`.
+Status: approved by the repo owner (decisions in section 10). The tokens are in [`tokens/`](tokens/README.md) (DTCG JSON); the screen specs are in [`screens/`](screens/README.md) and the component specs in [`components/`](components/README.md).
 
 ## 1. Subject, audience and primary job
 

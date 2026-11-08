@@ -20,3 +20,4 @@ Checked on 8 November 2026 against the files above.
 | Asset | Use | Source | Licence |
 |---|---|---|---|
 | Site icon: the interval bar and estimate diamond (`icons/icon.svg`, `icons/icon-app.svg`, `icons/icon-maskable.svg` and the `.ico` and `.png` files exported from them) | Favicon, Apple touch icon and web app manifest icons | Original work drawn for this project from the design plan's interval; owned by the project. Contains no third-party assets, fonts or text. See [icons/README.md](icons/README.md). | Owned by the project |
+| Interface icons: chevron, plus and minus in a circle, notice (exclamation in a circle) | "Why this grade" toggle and groups, retraction and correction notices | Original work drawn for this project as simple strokes; paths in [components/why-this-grade.md](components/why-this-grade.md#icons) and [screens/study.md](screens/study.md#retraction-and-correction-notices). Contains no third-party assets. | Owned by the project |

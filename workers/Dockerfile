@@ -4,7 +4,7 @@
 
 FROM ghcr.io/astral-sh/uv:0.13.5@sha256:32a7bb39b496babbd997b0a39a4d66c126bdaf5661b302bf6f06abda8deca6ff AS uv
 
-FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS build
+FROM python:3.15.0-slim-trixie@sha256:f5b92f2a669a4c347044f29367f31983280b648250ca94dea66f98c53bc87e58 AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -17,7 +17,7 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --locked --no-dev --no-editable
 
-FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS supercronic
+FROM python:3.15.0-slim-trixie@sha256:f5b92f2a669a4c347044f29367f31983280b648250ca94dea66f98c53bc87e58 AS supercronic
 # Supercronic runs cron jobs in the foreground with logs on stdout. Checksums were taken from
 # the v0.2.50 release binaries, and their SHA-1 matches the release notes.
 ARG TARGETARCH
@@ -43,7 +43,7 @@ with open("/supercronic", "wb") as f:
 os.chmod("/supercronic", 0o755)
 PY
 
-FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+FROM python:3.15.0-slim-trixie@sha256:f5b92f2a669a4c347044f29367f31983280b648250ca94dea66f98c53bc87e58
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin app
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv

@@ -1,13 +1,39 @@
-# Local development and test database. Not for production use.
+# The pipeline's services, for local development and the production VM alike.
+# Settings and secrets come from .env (see .env.example). Nothing here is published beyond
+# localhost.
+
+name: nutri-minutes
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-workers: &workers
+  build: ./workers
+  image: pipeline-workers:local
+  logging: *logging
+
+x-worker-env: &worker-env
+  DATABASE_URL: postgresql://pipeline_runner:${WORKER_DB_PASSWORD:?Set WORKER_DB_PASSWORD in .env}@db:5432/pipeline
+  EUROPE_PMC_CONTACT: ${EUROPE_PMC_CONTACT:?Set EUROPE_PMC_CONTACT in .env}
+  EUROPE_PMC_REQUEST_DELAY_SECONDS: ${EUROPE_PMC_REQUEST_DELAY_SECONDS:-}
+  SCOUT_INITIAL_DAYS: ${SCOUT_INITIAL_DAYS:-}
+  SCOUT_OVERLAP_DAYS: ${SCOUT_OVERLAP_DAYS:-}
+  SCOUT_MAX_RESUMES: ${SCOUT_MAX_RESUMES:-}
+  TZ: UTC
+
 services:
   db:
     image: postgres:17.6-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: pipeline
-      POSTGRES_PASSWORD: pipeline-local-only
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: pipeline
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +41,58 @@ services:
       interval: 2s
       timeout: 5s
       retries: 15
+    logging: *logging
+
+  # Applies migrations as the schema owner, then exits.
+  migrate:
+    <<: *workers
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql://pipeline:${POSTGRES_PASSWORD}@db:5432/pipeline
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Creates or updates the workers' login role, then exits.
+  db-roles:
+    image: postgres:17.6-alpine
+    entrypoint:
+      - sh
+      - -c
+      - psql -v worker_password="$$WORKER_DB_PASSWORD" -f /sql/login-roles.sql
+    environment:
+      PGHOST: db
+      PGUSER: pipeline
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: pipeline
+      WORKER_DB_PASSWORD: ${WORKER_DB_PASSWORD:?Set WORKER_DB_PASSWORD in .env}
+    volumes:
+      - ./infra/postgres:/sql:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    logging: *logging
+
+  # Runs the schedule in workers/crontab.
+  scheduler:
+    <<: *workers
+    command: ["supercronic", "-passthrough-logs", "/app/crontab"]
+    restart: unless-stopped
+    environment: *worker-env
+    depends_on:
+      db-roles:
+        condition: service_completed_successfully
+
+  # One-off Scout runs: docker compose run --rm scout [--window-start ... --window-end ...]
+  scout:
+    <<: *workers
+    profiles: ["manual"]
+    entrypoint: ["python", "-m", "pipeline.scout"]
+    command: []
+    environment: *worker-env
+    depends_on:
+      db-roles:
+        condition: service_completed_successfully
 
 volumes:
   db-data:

@@ -206,7 +206,7 @@ A page can be processed twice, for example when a worker loses its lock connecti
 ## Roles and access
 Migrations run as the role that owns the schema. Migration `0001` also creates a `pipeline_worker` group role, which can't log in, so the migrating role needs `CREATEROLE` unless the group role already exists. On managed Postgres without it, create the role first. The migration lock covers one database only, so don't run the first migration on two databases on the same server at the same time.
 - **`pipeline_worker`:** can select, insert and update the Scout tables, and select and insert into `pipeline_run_errors`. It can't delete rows, edit logged errors or change the schema.
-- **Login roles:** created outside migrations, with their passwords kept out of the repo, then granted `pipeline_worker`.
+- **Login roles:** created outside migrations, with their passwords kept out of the repo, then granted `pipeline_worker`. The workers' login role is `pipeline_runner`, kept up to date by `infra/postgres/login-roles.sql` (see `docs/operations.md`).
 - **Server-wide roles:** roles belong to the whole Postgres server, not one database. A downgrade revokes the role's access but doesn't drop it, because it may have access to other databases.
 - **Web app role:** created when the web app is built. It will read published content only (see "Tables to come").
 

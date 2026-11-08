@@ -34,8 +34,12 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Changing any of the above requires an ADR.
 
 ## Commands
+The full stack runs with Docker Compose; `docs/operations.md` covers deploying and running it. Copy `.env.example` to `.env` first.
+- Stack: `docker compose up -d --build` (database, migrations, worker login role and the daily schedule)
+- One-off Scout run: `docker compose run --rm scout`
+
 Workers live in `workers/` and use `uv`. Run these from `workers/`. Copy `.env.example` to `.env` at the repo root, then load it into your shell with `set -a; . ../.env; set +a`.
-- Local database: `docker compose up -d --wait` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
+- Local database only: `docker compose up -d --wait db` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
 - Install: `uv sync`
 - Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)
 - Lint and format: `uv run ruff check .` and `uv run ruff format .`

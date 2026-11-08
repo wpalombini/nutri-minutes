@@ -1,0 +1,3 @@
+# Pipeline schedule, run by supercronic in the scheduler service. Times are UTC.
+# Scout: fetch new papers daily.
+15 3 * * * python -m pipeline.scout

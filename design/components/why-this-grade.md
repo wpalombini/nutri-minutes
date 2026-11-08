@@ -79,10 +79,10 @@ The [APG disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure
 - A plain `<section>` with no accessible name, so it isn't a named region: heading navigation finds it through its `h2`, and the landmark list stays as the [study page](../screens/study.md#keyboard-and-screen-readers) gives it.
 - Enter and Space toggle it (a native `<button>` does this). `aria-expanded` and `data-open` change together between `"false"` and `"true"`. Focus stays on the button.
 - **Without scripting the content must still be readable,** using the `scripting` media feature (Baseline since December 2023) and no inline script:
-  - `@media (scripting: enabled)`: the closed panel is hidden (`.content[data-open="false"] { display: none }`) and `.static` is `display: none`.
-  - `@media (scripting: none)`: `.toggle` is `display: none`, `.static` shows as the plain heading text, and the panel shows. So a screen reader never meets `aria-expanded="false"` over visible content; `display: none` removes the hidden copy from the accessibility tree.
+  - Base styles assume scripting is on: the closed panel is hidden (`.content[data-open="false"] { display: none }`) and `.static` is `display: none`.
+  - `@media not (scripting: enabled)`: `.toggle` is `display: none`, `.static` shows as the plain heading text, and the panel shows. This also covers `scripting: initial-only` (mostly print) and browsers that don't support the feature, so the heading is never shown or read twice. So a screen reader never meets `aria-expanded="false"` over visible content; `display: none` removes the hidden copy from the accessibility tree.
   - The server HTML is the same in both cases, so there's no hydration mismatch and nothing for the content security policy to allow. (How the CSP is built is the web engineer's call.)
-  - Accepted limitation: if scripting is enabled but the JavaScript bundle fails to load, the panel stays closed and can't be opened. The grade itself and the "How we grade" link in the nav still explain it.
+  - Accepted limitation: if scripting is enabled but the JavaScript bundle fails to load, the panel stays closed and can't be opened, and clicks before hydration do nothing. The grade itself and the "How we grade" link in the nav still explain it.
   - Selectors use attribute selectors and the module's own local classes, so no `:global()` is needed in the CSS Module.
 - If the page is opened with `#why-this-grade`, open the panel on load.
 - The open state is not stored in the URL: it's a reading aid, not page state.

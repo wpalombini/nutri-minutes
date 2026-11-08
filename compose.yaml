@@ -1,6 +1,6 @@
-# The pipeline's services, for local development and the production VM alike.
-# Settings and secrets come from .env (see .env.example). Nothing here is published beyond
-# localhost.
+# The production stack for the pipeline. The same file also runs it locally for development.
+# Settings and secrets come from .env (see .env.example). No service is exposed publicly yet:
+# the database port is bound to 127.0.0.1 only.
 
 name: nutri-minutes
 

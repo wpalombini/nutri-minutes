@@ -287,7 +287,7 @@ Everything around it stays quiet: one accent colour used nowhere else except lin
 ## 7. Motion principles
 
 - **One orchestrated moment:** on a study page, the interval grows outward from the point estimate once on load (about 500ms, ease-out). It shows that the range spreads around an estimate. No other entrance animations, no scroll-triggered reveals.
-- **Motion answers actions:** opening "Why this grade" expands in place; the audio player (later) shows progress. Hover changes link underline thickness and control border weight, not position.
+- **Motion answers actions:** opening "Why this grade" expands in place; the audio player (later) shows progress. Hover changes link underline thickness, and control border weight and colour (Lichen to Spruce ink), not position.
 - Animate `transform` and `opacity` only; never `transition: all`.
 - `prefers-reduced-motion: reduce` removes the interval growth and all non-essential transitions. Nothing needs motion to be understood.
 - No autoplaying audio or looping animation.

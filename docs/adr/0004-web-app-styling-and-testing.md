@@ -6,21 +6,22 @@
 ## Context
 The web app in `web/` is a Next.js App Router app (ADR 0001, ADR 0003). The design system in `design/` defines the visual language as design tokens in the W3C Design Tokens (DTCG) format, with light and dark colour roles and a contrast check (`design/tokens/`). The design is small and custom: one reading column, a few components, and one data graphic, the effect-size interval.
 
-`CLAUDE.md` requires an ADR for the stack and owner agreement for new dependencies. The web app needs a styling approach and a test setup before its first code lands.
+`CLAUDE.md` requires an ADR for the stack and owner agreement for new dependencies. The web app needs a styling approach and a test setup before its first code lands. The repo owner chose both options below, including the test dependencies.
 
 ## Decision
 - **Styling: CSS Modules plus CSS custom properties generated from the tokens.**
-  - A build step in `web/` turns `design/tokens/` into one stylesheet of CSS custom properties. Light values sit on `:root` and dark values apply under `prefers-color-scheme: dark`. Aliases become `var()` references.
-  - The generated file is not edited by hand. A CI check fails if it is out of date with the tokens.
+  - A script in `web/` turns `design/tokens/` into one stylesheet of CSS custom properties. Light values sit on `:root` and dark values apply under `prefers-color-scheme: dark`, plus a `data-theme` override if a theme switch is added later. Aliases become `var()` references. Pages set `color-scheme` and a per-theme `theme-color`, as `design/tokens/README.md` describes.
+  - The generated stylesheet is committed, so changes to it show in review, and it is never edited by hand. An npm script in `web/` regenerates it, and a CI check fails if the committed file differs from what the tokens produce.
   - Components use [CSS Modules](https://nextjs.org/docs/app/getting-started/css), which Next.js supports with no extra dependency, plus one global stylesheet for resets, base type and the token variables.
   - Components never use raw colours, sizes or font values, only the token variables.
   - Fonts are self-hosted through `next/font`. The `font.family.*` tokens map to the CSS variables that `next/font` generates.
 - **Testing:**
-  - **[Vitest](https://vitest.dev/)** for logic and components, with Testing Library for component behaviour.
-  - **[Playwright](https://playwright.dev/)** for key flows, plus screenshots at 360px and 1280px wide in light and dark.
-  - **[axe-core](https://github.com/dequelabs/axe-core)** through `@axe-core/playwright`, run on every page in the Playwright suite. Any WCAG 2.2 A or AA violation fails CI.
-- **CI:** a `web` workflow runs on changes to `web/**` and `design/tokens/**`. It runs lint, type check, unit tests, the token freshness check, a production build, the client-bundle secret check required by ADR 0003, and the Playwright and axe suite.
-- **Dependencies:** pinned to exact versions and added in the PR that first uses them, with `npm audit` in CI. Dependabot watches `/web` like `/api`.
+  - **[Vitest](https://vitest.dev/)** for logic and components, with Testing Library for component behaviour, jsdom as the DOM environment and `@vitejs/plugin-react`.
+  - **[Playwright](https://playwright.dev/)** for key flows. It also captures screenshots at 360px and 1280px wide in light and dark, for review rather than as pixel baselines that fail CI, since rendering differs between machines.
+  - **[axe-core](https://github.com/dequelabs/axe-core)** through `@axe-core/playwright`, run on every page in the Playwright suite with the tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and `wcag22aa`. Any violation it reports fails CI. Automated checks find only some WCAG failures, so keyboard and screen-reader checks by hand are still needed.
+- **Linting and formatting:** ESLint with `eslint-config-next`, which includes the Next.js, React Hooks and jsx-a11y rules. Formatting uses Biome, as in the API.
+- **CI:** a `web` workflow runs on changes to `web/**`, `design/tokens/**` and its own workflow file. Like the API workflow, it pins the Node version (matching the version set on Vercel) and pins actions by commit SHA. It runs the token contrast check (`design/tokens/check_contrast.py`), lint, type check, unit tests, the token freshness check, a production build, the client-bundle secret check required by ADR 0003, and the Playwright and axe suite.
+- **Dependencies:** pinned to exact versions and added in the PR that first uses them, with `npm audit` in CI. Dependabot watches `/web` like `/api`, with the same cooldown and major-version rules, added in the PR that creates `web/`.
 
 ## Consequences
 - **No styling framework to learn or upgrade:** styles are plain CSS scoped per component, and the tokens stay the single source of truth for every value.
@@ -32,6 +33,14 @@ The web app in `web/` is a Next.js App Router app (ADR 0001, ADR 0003). The desi
 ## Alternatives considered
 - **Tailwind CSS:** quick to write and widely used. It can read CSS variables, but it adds a second vocabulary over the tokens and a build dependency, and long class lists make accessibility review of markup harder. Our design is too small to gain much from it.
 - **CSS-in-JS (for example styled-components or Emotion):** runtime styling works poorly with React Server Components and adds client JavaScript.
-- **Zero-runtime CSS-in-JS (for example vanilla-extract or Panda CSS):** typed styles, but another build tool and dependency for little gain over CSS Modules with typed token names.
+- **Zero-runtime CSS-in-JS (for example vanilla-extract or Panda CSS):** typed styles, but another build tool and dependency for little gain over CSS Modules.
 - **Jest instead of Vitest:** mature, but slower and needs more configuration for ESM and TypeScript. The API already uses Vitest.
-- **Cypress instead of Playwright:** good developer tools, but weaker multi-browser support. Playwright also takes the screenshots we need at set widths and colour schemes.
+- **Cypress instead of Playwright:** good developer tools, but its WebKit support is experimental. Playwright also takes the screenshots we need at set widths and colour schemes.
+
+## References
+- Next.js, CSS: https://nextjs.org/docs/app/getting-started/css
+- Next.js, CSS-in-JS: https://nextjs.org/docs/app/guides/css-in-js
+- Playwright, emulation: https://playwright.dev/docs/emulation
+- Playwright, accessibility testing: https://playwright.dev/docs/accessibility-testing
+- Next.js, ESLint: https://nextjs.org/docs/app/api-reference/config/eslint
+- axe-core API and tags: https://github.com/dequelabs/axe-core/blob/develop/doc/API.md

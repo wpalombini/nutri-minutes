@@ -37,10 +37,13 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pipeline -d pipeline"]
+      # Check over TCP: during first-time setup Postgres listens on its socket only, and the
+      # other services connect over TCP.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U pipeline -d pipeline"]
       interval: 2s
       timeout: 5s
       retries: 15
+      start_period: 30s
     logging: *logging
 
   # Applies migrations as the schema owner, then exits.
@@ -78,6 +81,8 @@ services:
     <<: *workers
     command: ["supercronic", "-passthrough-logs", "/app/crontab"]
     restart: unless-stopped
+    # Give a running job time to finish its current page on deploy. Scout resumes if cut off.
+    stop_grace_period: 60s
     environment: *worker-env
     depends_on:
       db-roles:

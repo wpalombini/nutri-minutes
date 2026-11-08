@@ -16,7 +16,7 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 
 ## First deploy on the VM
 1. Install Docker with the Compose plugin, and clone the repo.
-2. Copy `.env.example` to `.env`. Set `POSTGRES_PASSWORD` and `WORKER_DB_PASSWORD` to long random values made of letters and digits, such as the output of `openssl rand -hex 32`. Keep `.env` readable only by the deploy user (`chmod 600 .env`).
+2. Copy `.env.example` to `.env`. Set `POSTGRES_PASSWORD` and `WORKER_DB_PASSWORD` to long random values made of letters and digits, such as the output of `openssl rand -hex 32`. Keep `.env` readable only by the deploy user (`chmod 600 .env`). `POSTGRES_PASSWORD` only takes effect when the database volume is first created; to change it later, change the role's password in Postgres too. `WORKER_DB_PASSWORD` can be changed at any time, and the next `up` applies it.
 3. Run `docker compose up -d --build`.
 4. Check the services with `docker compose ps -a`. `migrate` and `db-roles` should show `Exited (0)`, and `db` and `scheduler` should be up.
 

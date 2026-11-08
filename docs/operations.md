@@ -35,23 +35,29 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 - **Project mail:** `contact@nutriminutes.com` is the contact address Scout sends to Europe PMC. Cloudflare Email Routing forwards it to the owner's inbox, so manage it in the Cloudflare dashboard under Email Routing.
 
 ## Upgrade Postgres to a new major version
-Postgres can't read another major version's data files, so a major upgrade is a dump, a restore into a new volume and a redeploy. Each major version gets its own volume, and the old one is left untouched for rollback. The steps below are for 17 to 18 (`db-data` to `db-data-pg18`); for a later version, change the image and volume names to match. Plan for a few minutes of API downtime.
+Postgres can't read another major version's data files, so a major upgrade means a dump, a restore into a new volume and a redeploy. Each major version gets its own volume, and the old one is left untouched for rollback. The steps below are for 17 to 18 (`db-data` to `db-data-pg18`). For a later version, change the image and volume names to match. Dependabot proposes major Postgres bumps as a plain tag change, so a PR like that needs this procedure, not just a merge. Plan for a few minutes of API downtime.
 
-1. **Stop writers:** `docker compose stop scheduler api`. Check that no Scout run is in progress first (`docker compose ps`, and no `scout` container running).
-2. **Record row counts:** `docker compose exec -T db psql -U pipeline -d pipeline -XAt -c "select 'articles', count(*) from articles union all select 'article_licences', count(*) from article_licences union all select 'article_relations', count(*) from article_relations union all select 'pipeline_runs', count(*) from pipeline_runs union all select 'pipeline_run_errors', count(*) from pipeline_run_errors union all select 'alembic_version', count(*) from alembic_version"`, and the Alembic revision: `docker compose exec -T db psql -U pipeline -d pipeline -XAtc "select version_num from alembic_version"`.
-3. **Dump:** `mkdir -p -m 700 ~/backups`, then `(umask 077; docker compose exec -T db pg_dump -U pipeline -d pipeline -Fc > ~/backups/nutri-minutes-pg17-$(date -u +%Y%m%d).dump)`. Check that it reads back: `docker compose exec -T db pg_restore -l < ~/backups/nutri-minutes-pg17-YYYYMMDD.dump | head`.
+1. **Stop writers:** avoid the daily Scout run at 03:15 UTC, and check `docker compose logs --since 30m scheduler` and `docker compose ps` to make sure no Scout run is in progress. Then run `docker compose stop scheduler api`. Scout resumes if it's cut off.
+2. **Record row counts:** `docker compose exec -T db psql -U pipeline -d pipeline -XAt -c "select 'articles', count(*) from articles union all select 'article_licences', count(*) from article_licences union all select 'article_relations', count(*) from article_relations union all select 'pipeline_runs', count(*) from pipeline_runs union all select 'pipeline_run_errors', count(*) from pipeline_run_errors union all select 'alembic_version ' || version_num, 1 from alembic_version"`.
+3. **Dump:** run `mkdir -p -m 700 ~/backups`, then `DUMP=~/backups/nutri-minutes-pg17-$(date -u +%Y%m%dT%H%M%SZ).dump`, then `(umask 077; docker compose exec -T db pg_dump -U pipeline -d pipeline -Fc > "$DUMP") && echo dump ok`. Check that the whole archive reads back: `docker compose exec -T db pg_restore -f /dev/null < "$DUMP" && echo readable`. Use the same shell for the remaining steps, so `$DUMP` stays set.
 4. **Stop the old server:** `docker compose stop db`. Don't use `down -v`.
-5. **Switch the image and volume:** deploy the change to `compose.yaml` (new image for `db` and `db-roles`, new volume mounted where the new image expects it; Postgres 18 images use `/var/lib/postgresql`), and the matching image in `.github/workflows/workers.yml`.
-6. **Start the new server:** `docker compose up -d --wait db`. It initialises the empty volume, creating the `pipeline` superuser with `POSTGRES_PASSWORD` from `.env`.
-7. **Create the group role:** migration 0001 creates `pipeline_worker`, but the restored `alembic_version` stops it running again, so create it by hand: `docker compose exec -T db psql -U pipeline -d pipeline -c "CREATE ROLE pipeline_worker NOLOGIN"`. Add any other group roles later migrations create.
-8. **Restore:** `docker compose exec -T db pg_restore -U pipeline -d pipeline --single-transaction --exit-on-error < ~/backups/nutri-minutes-pg17-YYYYMMDD.dump`. Ownership and grants are kept, since the dump's owner, `pipeline`, exists on the new server. Then run `docker compose exec -T db vacuumdb -U pipeline -d pipeline --analyze-only`, because a restore doesn't carry planner statistics over.
-9. **Recreate the test database:** `docker compose exec db createdb -U pipeline pipeline_test`.
+5. **Switch the image and volume:** deploy the change to `compose.yaml`: the new image for `db` and `db-roles`, and the new volume mounted where the new image expects it (Postgres 18 images use `/var/lib/postgresql`). Do this with `git pull`, but don't run `up` for the whole stack yet.
+6. **Start the new server:** `docker compose up -d --wait db`. It initialises the empty volume and creates the `pipeline` superuser with `POSTGRES_PASSWORD` from `.env`.
+7. **Create the group role:** migration 0001 creates `pipeline_worker`, but the restored `alembic_version` stops it from running again, so create it by hand: `docker compose exec -T db psql -U pipeline -d pipeline -c "CREATE ROLE pipeline_worker NOLOGIN"`. Add any other group roles that later migrations create.
+8. **Restore:** `docker compose exec -T db pg_restore -U pipeline -d pipeline --single-transaction --exit-on-error < "$DUMP"`. Ownership and grants are kept, because the dump's owner, `pipeline`, exists on the new server. Then run `docker compose exec -T db vacuumdb -U pipeline -d pipeline --analyze-only`: a restore doesn't carry planner statistics over.
+9. **Local development only:** recreate the test database with `docker compose exec db createdb -U pipeline pipeline_test`.
 10. **Redeploy:** `docker compose up -d --build`. `migrate` finds the schema at head, and `db-roles` creates `pipeline_runner` and `api_runner` with the passwords from `.env`.
-11. **Verify:** the row counts and Alembic revision match step 2, `docker compose ps -a` shows `migrate` and `db-roles` as `Exited (0)` and `api` and `cloudflared` as `healthy`, the `/readyz` check under "Everyday tasks" returns 200, and `docker compose logs db` shows no authentication failures.
+11. **Verify:** the row counts and the Alembic revision match step 2. In `docker compose ps -a`, `migrate` and `db-roles` show `Exited (0)`, and `api` and `cloudflared` show `healthy`. The `/readyz` check under "Everyday tasks" returns 200, and `docker compose logs db` shows no authentication failures.
 
-**Rollback:** run `docker compose down` (never with `-v`), restore the previous `compose.yaml` (old image, `db-data` mounted at `/var/lib/postgresql/data`), then run `docker compose up -d --build`. The old volume still holds the data as it was at step 1, so anything written after the upgrade is lost unless it's dumped from the new server first.
+**Rollback:**
+1. Run `docker compose down`, never with `-v`.
+2. Put back the previous `compose.yaml`, which has the old image and `db-data` mounted at `/var/lib/postgresql/data`: `git checkout <commit before the upgrade> -- compose.yaml`.
+3. Run `docker compose up -d --build`.
+4. Once the upgrade is retried, run `git checkout HEAD -- compose.yaml`.
 
-**Clean-up:** keep the old volume and the dump until the owner has confirmed the upgrade. Then remove the old volume with `docker volume rm nutri-minutes_db-data`. Keep the dump with the other backups.
+The old volume still holds the data as it was at step 1. Anything written to the new server after the upgrade is lost on rollback: an older `pg_restore` can't reliably read a newer server's dump.
+
+**Clean-up:** keep the old volume and the dump until the owner has confirmed the upgrade, then remove the volume with `docker volume rm nutri-minutes_db-data`. The dump is on the VM itself, so copy it somewhere off the VM if it's to be kept as a backup (see "Backups" under "Not covered yet").
 
 ## Cloudflare setup
 The API is published as `api.nutriminutes.com`:

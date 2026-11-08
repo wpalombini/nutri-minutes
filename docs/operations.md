@@ -27,6 +27,7 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 - **Re-run a past window:** `docker compose run --rm scout --window-start YYYY-MM-DD --window-end YYYY-MM-DD`.
 - **Database shell:** `docker compose exec db psql -U pipeline pipeline`.
 - **Change the schedule:** edit `workers/crontab` (times are UTC), then redeploy.
+- **Project mail:** `contact@nutriminutes.com` is the contact address Scout sends to Europe PMC. Cloudflare Email Routing forwards it to the owner's inbox, so manage it in the Cloudflare dashboard under Email Routing.
 
 ## Not covered yet
 - **Backups:** the database volume isn't backed up yet. Add this before the data matters.

@@ -1,9 +1,10 @@
 # Pipeline workers image, built for linux/amd64 and linux/arm64.
-# Build context: workers/. Runs as a non-root user.
+# Build context: workers/. Runs as a non-root user. Base images are pinned by digest;
+# Dependabot proposes updates.
 
-FROM ghcr.io/astral-sh/uv:0.11.6 AS uv
+FROM ghcr.io/astral-sh/uv:0.11.6@sha256:b1e699368d24c57cda93c338a57a8c5a119009ba809305cc8e86986d4a006754 AS uv
 
-FROM python:3.14.10-slim-trixie AS build
+FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -16,7 +17,7 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --locked --no-dev --no-editable
 
-FROM python:3.14.10-slim-trixie AS supercronic
+FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS supercronic
 # Supercronic runs cron jobs in the foreground with logs on stdout. Checksums were taken from
 # the v0.2.50 release binaries, and their SHA-1 matches the release notes.
 ARG TARGETARCH
@@ -42,7 +43,7 @@ with open("/supercronic", "wb") as f:
 os.chmod("/supercronic", 0o755)
 PY
 
-FROM python:3.14.10-slim-trixie
+FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin app
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv

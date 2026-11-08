@@ -5,6 +5,12 @@
 
 \set ON_ERROR_STOP on
 
+-- Keep passwords out of the server log. A failing statement is normally logged with its text,
+-- which here would include a password. Both settings need a superuser, which the schema owner
+-- is in the Compose stack.
+SET log_min_error_statement = panic;
+SET log_statement = 'none';
+
 SELECT 'CREATE ROLE pipeline_runner LOGIN'
 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'pipeline_runner')
 \gexec

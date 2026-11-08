@@ -1,7 +1,7 @@
 -- Creates or updates the login roles the pipeline workers and the API connect as. Idempotent, and
 -- run by the db-roles service after migrations, which create the pipeline_worker group role.
 -- Requires psql variables worker_password and api_password. The API role is skipped when
--- api_password is empty.
+-- api_password is empty, which Compose doesn't allow but other callers may.
 
 \set ON_ERROR_STOP on
 

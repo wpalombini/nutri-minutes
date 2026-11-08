@@ -15,6 +15,7 @@ describe('loadConfig', () => {
       port: 3000,
       accessTeamDomain: 'https://example-team.cloudflareaccess.com',
       accessAudience: 'f'.repeat(64),
+      rateLimitPerMinute: 600,
     })
   })
 
@@ -29,6 +30,7 @@ describe('loadConfig', () => {
     ['DATABASE_URL', 'mysql://user:pw@db/x'],
     ['DB_POOL_MAX', '0'],
     ['PORT', 'eighty'],
+    ['RATE_LIMIT_PER_MINUTE', '0'],
   ])('rejects an invalid %s', (key, value) => {
     expect(() => loadConfig({ ...valid, [key]: value })).toThrow(`${key} is invalid`)
   })

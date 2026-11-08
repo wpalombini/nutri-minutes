@@ -7,6 +7,7 @@ export interface Config {
   port: number
   accessTeamDomain: string
   accessAudience: string
+  rateLimitPerMinute: number
 }
 
 export class ConfigError extends Error {
@@ -22,6 +23,8 @@ const schema = z.object({
   ACCESS_TEAM_DOMAIN: z.url({ protocol: /^https$/, hostname: /\.cloudflareaccess\.com$/ }),
   // The Access application's AUD tag: 64 hex characters.
   ACCESS_AUD: z.string().regex(/^[0-9a-f]{64}$/),
+  // Requests per minute allowed for each Access client.
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(600),
 })
 
 /**
@@ -49,5 +52,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     port: values.PORT,
     accessTeamDomain: new URL(values.ACCESS_TEAM_DOMAIN).origin,
     accessAudience: values.ACCESS_AUD,
+    rateLimitPerMinute: values.RATE_LIMIT_PER_MINUTE,
   }
 }

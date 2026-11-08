@@ -4,6 +4,7 @@ import { createApp } from './app.js'
 import { ConfigError, loadConfig } from './config.js'
 import { checkDatabase, createDatabase } from './db.js'
 import { createLogger, describeError } from './logger.js'
+import { rateLimit } from './rate-limit.js'
 
 // Below Docker's default 10-second stop grace period, so we exit before being killed.
 const SHUTDOWN_TIMEOUT_MS = 8_000
@@ -31,6 +32,7 @@ const app = createApp({
     },
     logger,
   ),
+  rateLimit: rateLimit({ limit: config.rateLimitPerMinute, windowMs: 60_000 }, logger),
   checkDatabase: () => checkDatabase(db),
   logger,
 })

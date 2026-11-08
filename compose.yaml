@@ -1,6 +1,7 @@
 # The production stack for the pipeline and its API. The same setup also runs locally for
-# development. Settings and secrets come from .env (see .env.example). No service is exposed
-# publicly: the database port is bound to 127.0.0.1 only, and the API publishes no ports.
+# development. Settings and secrets come from .env (see .env.example). No ports are open to the
+# internet: the database is published on 127.0.0.1 only, and the API is reached only through an
+# outbound Cloudflare Tunnel, behind Cloudflare Access (ADR 0003).
 
 name: nutri-minutes
 
@@ -69,7 +70,7 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: pipeline
       WORKER_DB_PASSWORD: ${WORKER_DB_PASSWORD:?Set WORKER_DB_PASSWORD in .env}
-      API_DB_PASSWORD: ${API_DB_PASSWORD:-}
+      API_DB_PASSWORD: ${API_DB_PASSWORD:?Set API_DB_PASSWORD in .env}
     volumes:
       - ./infra/postgres:/sql:ro
     depends_on:
@@ -100,17 +101,17 @@ services:
       db-roles:
         condition: service_completed_successfully
 
-  # The HTTP API for the web app (ADR 0003). It's in the "api" profile until the Cloudflare
-  # tunnel is added: start it with `docker compose --profile api up -d`. No ports are published.
+  # The HTTP API for the web app (ADR 0003). No ports are published: cloudflared reaches it over
+  # the Compose network.
   api:
     build: ./api
     image: research-api:local
-    profiles: ["api"]
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://api_runner:${API_DB_PASSWORD:-}@db:5432/pipeline
-      ACCESS_TEAM_DOMAIN: ${ACCESS_TEAM_DOMAIN:-}
-      ACCESS_AUD: ${ACCESS_AUD:-}
+      DATABASE_URL: postgresql://api_runner:${API_DB_PASSWORD:?Set API_DB_PASSWORD in .env}@db:5432/pipeline
+      ACCESS_TEAM_DOMAIN: ${ACCESS_TEAM_DOMAIN:?Set ACCESS_TEAM_DOMAIN in .env}
+      ACCESS_AUD: ${ACCESS_AUD:?Set ACCESS_AUD in .env}
+      RATE_LIMIT_PER_MINUTE: ${API_RATE_LIMIT_PER_MINUTE:-}
       TZ: UTC
     read_only: true
     cap_drop: [ALL]
@@ -130,6 +131,24 @@ services:
     depends_on:
       db-roles:
         condition: service_completed_successfully
+    logging: *logging
+
+  # Connects outbound to Cloudflare and forwards the API hostname to the api service. Routing is
+  # configured on the tunnel in Cloudflare; the token only identifies this connector.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.3@sha256:faa8e0a1475f137c910be6025f43c8e4092fdd35461b31e19fd1390657a1ff39
+    command: ["tunnel", "run"]
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    pids_limit: 100
+    depends_on:
+      api:
+        condition: service_healthy
     logging: *logging
 
 volumes:

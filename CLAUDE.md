@@ -36,7 +36,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 
 ## Commands
 The full stack runs with Docker Compose; `docs/operations.md` covers deploying and running it. Copy `.env.example` to `.env` first.
-- Stack: `docker compose up -d --build` (database, migrations, login roles and the daily schedule); add `--profile api` to include the API
+- Stack: `docker compose up -d --build` (database, migrations, login roles, the daily schedule, the API and its Cloudflare tunnel)
 - One-off Scout run: `docker compose run --rm scout`
 
 Workers live in `workers/` and use `uv`. Run these from `workers/`, after loading `.env` into your shell with `set -a; . ../.env; set +a`. Host-side runs connect as the schema owner, so use the compose `scout` service to test as the workers' role.
@@ -54,7 +54,7 @@ The API lives in `api/` and uses npm. Run these from `api/`:
 - Tests: `npm test`
 - Lint and format: `npm run lint` and `npm run format`
 - Type check: `npm run typecheck`
-- Run with the stack: `docker compose --profile api up -d --build` from the repo root
+- Run with the stack: `docker compose up -d --build api` from the repo root
 
 ## Engineering standards
 - **Reliability:** pipeline stages are idempotent and resumable; external calls have timeouts, retries with backoff and clear failure states. One bad paper must not fail a whole run.

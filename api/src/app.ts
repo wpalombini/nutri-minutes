@@ -8,6 +8,8 @@ import { describeError, type Logger } from './logger.js'
 export interface AppDependencies {
   /** Authenticates `/v1` requests, usually `requireAccess`. */
   access: MiddlewareHandler<{ Variables: AccessVariables }>
+  /** Limits authenticated `/v1` requests, usually `rateLimit`. */
+  rateLimit?: MiddlewareHandler<{ Variables: AccessVariables }>
   checkDatabase: () => Promise<void>
   logger: Logger
   readinessTimeoutMs?: number
@@ -68,6 +70,7 @@ export function createApp(deps: AppDependencies) {
 
   const v1 = new Hono<{ Variables: AccessVariables }>()
   v1.use(deps.access)
+  if (deps.rateLimit) v1.use(deps.rateLimit)
   // Confirms a caller's credentials work end to end. Data endpoints come with published views.
   v1.get('/ping', (c) => c.json({ status: 'ok' }))
   app.route('/v1', v1)

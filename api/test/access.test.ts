@@ -89,9 +89,35 @@ describe('requireAccess', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns 503 when the signing keys cannot be fetched', async () => {
+  it('rejects an unsigned token', async () => {
+    const { request } = await setup()
+    const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url')
+    const now = Math.floor(Date.now() / 1000)
+    const claims = {
+      iss: TEAM_DOMAIN,
+      aud: AUDIENCE,
+      iat: now,
+      exp: now + 300,
+      common_name: CLIENT_ID,
+    }
+    const res = await request(`${encode({ alg: 'none' })}.${encode(claims)}.`)
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a token without an expiry', async () => {
+    const { sign, request, logs } = await setup()
+    const res = await request(await sign(undefined, { expiresAt: null }))
+    expect(res.status).toBe(401)
+    expect(logs.lines.at(-1)?.reason).toBe('claim_exp')
+  })
+
+  it.each([
+    ['a timeout', () => new errors.JWKSTimeout()],
+    ['an error status from the certs endpoint', () => new errors.JOSEError('Expected 200 OK')],
+    ['a network error', () => new TypeError('fetch failed')],
+  ])('returns 503 when the signing keys cannot be fetched because of %s', async (_, makeError) => {
     const { sign, request, logs } = await setup(async () => {
-      throw new errors.JWKSTimeout()
+      throw makeError()
     })
     const res = await request(await sign())
     expect(res.status).toBe(503)
@@ -103,5 +129,26 @@ describe('requireAccess', () => {
     const token = await sign(undefined, { audience: 'b'.repeat(64) })
     await request(token)
     expect(logs.text()).not.toContain(token)
+  })
+})
+
+describe('remoteAccessKeys', () => {
+  it('fetches keys from the team certs endpoint', async () => {
+    const { remoteAccessKeys } = await import('../src/access.js')
+    const requested: string[] = []
+    const realFetch = globalThis.fetch
+    globalThis.fetch = (async (input: string | URL | Request) => {
+      requested.push(String(input instanceof Request ? input.url : input))
+      return new Response('{"keys":[]}', { headers: { 'content-type': 'application/json' } })
+    }) as typeof fetch
+    try {
+      const getKey = remoteAccessKeys(TEAM_DOMAIN)
+      await expect(
+        getKey({ alg: 'RS256', kid: 'x' }, { payload: '', signature: '' } as never),
+      ).rejects.toThrow()
+    } finally {
+      globalThis.fetch = realFetch
+    }
+    expect(requested).toEqual([`${TEAM_DOMAIN}/cdn-cgi/access/certs`])
   })
 })

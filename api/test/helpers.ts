@@ -20,7 +20,8 @@ export interface TestKeys {
 interface SignOptions {
   issuer?: string
   audience?: string
-  expiresAt?: number | string
+  /** `null` leaves out the expiry claim. */
+  expiresAt?: number | string | null
   kid?: string
 }
 
@@ -29,14 +30,15 @@ export async function testKeys(): Promise<TestKeys> {
   const { publicKey, privateKey } = await generateKeyPair('RS256')
   const jwk = { ...(await exportJWK(publicKey)), kid: 'test-key', alg: 'RS256' }
   const keys = createLocalJWKSet({ keys: [jwk] })
-  const sign = (claims: JWTPayload = { common_name: CLIENT_ID }, options: SignOptions = {}) =>
-    new SignJWT(claims)
+  const sign = (claims: JWTPayload = { common_name: CLIENT_ID }, options: SignOptions = {}) => {
+    const jwt = new SignJWT(claims)
       .setProtectedHeader({ alg: 'RS256', kid: options.kid ?? 'test-key' })
       .setIssuer(options.issuer ?? TEAM_DOMAIN)
       .setAudience(options.audience ?? AUDIENCE)
       .setIssuedAt()
-      .setExpirationTime(options.expiresAt ?? '5m')
-      .sign(privateKey)
+    if (options.expiresAt !== null) jwt.setExpirationTime(options.expiresAt ?? '5m')
+    return jwt.sign(privateKey)
+  }
   return { keys, sign }
 }
 

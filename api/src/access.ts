@@ -42,7 +42,12 @@ function denialReason(error: unknown): string {
 }
 
 function keysUnavailable(error: unknown): boolean {
-  return error instanceof errors.JWKSTimeout || error instanceof errors.JWKSInvalid
+  // jose throws the base JOSEError when the certs endpoint answers with an error status.
+  return (
+    error instanceof errors.JWKSTimeout ||
+    error instanceof errors.JWKSInvalid ||
+    (error instanceof Error && error.constructor === errors.JOSEError)
+  )
 }
 
 /**

@@ -15,7 +15,8 @@ export class ConfigError extends Error {
 
 const schema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
-  DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(5),
+  // api_runner is limited to 10 connections in infra/postgres/login-roles.sql.
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(10).default(5),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
   // The Cloudflare Access team domain, such as https://example.cloudflareaccess.com.
   ACCESS_TEAM_DOMAIN: z.url({ protocol: /^https$/, hostname: /\.cloudflareaccess\.com$/ }),

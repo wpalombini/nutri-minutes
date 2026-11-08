@@ -186,7 +186,7 @@ def check_records(theme: Theme, path: str, resolved: dict[str, Any]) -> int:
         m = ALIAS.match(str(rec.get("on", "")))
         kind, need, noted = rec.get("kind"), rec.get("min"), rec.get("ratio")
         label = f"{name}: {path} on {rec.get('on')}"
-        if not m or theme.type_of(m.group(1)) != "color" or m.group(1) not in resolved:
+        if not m or m.group(1) not in resolved or theme.type_of(m.group(1)) != "color":
             fail(f"{label}: 'on' must be an alias to a colour token")
             continue
         on = m.group(1)

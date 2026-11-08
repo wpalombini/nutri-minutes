@@ -1,6 +1,6 @@
 # Nutri Minutes design plan
 
-Status: draft for the repo owner's approval. Nothing in the design system, tokens or screen specs is built until this is approved. Once it is, the tokens go into `design/tokens/` (DTCG JSON) and the screens into `design/screens/`.
+Status: approved by the repo owner (decisions in section 10). The tokens are in [`tokens/`](tokens/README.md) (DTCG JSON); screen specs will go into `design/screens/`.
 
 ## 1. Subject, audience and primary job
 
@@ -13,7 +13,7 @@ Status: draft for the repo owner's approval. Nothing in the design system, token
 
 ## 2. Palette
 
-Six named base values. One accent, Beetroot, is reserved for links and the effect-size interval, so wherever it appears it means "a number from the study" or "go somewhere".
+Six named base values, plus a visited-link variant of the accent added when the tokens were built. One accent, Beetroot, is reserved for links and the effect-size interval, so wherever it appears it means "a number from the study" or "go somewhere".
 
 | Name | Light | Dark | Role |
 |---|---|---|---|
@@ -23,6 +23,7 @@ Six named base values. One accent, Beetroot, is reserved for links and the effec
 | Lichen | `#4A5F59` | `#A2B6AF` | Secondary text, chart axes, the no-difference line, control borders |
 | Beetroot | `#97245A` | `#F28DB8` | Links and the effect-size interval |
 | Cobalt | `#1F5FAD` | `#8DB8F2` | Focus ring only |
+| Dried beetroot | `#64305F` | `#D9AED0` | Visited links only: a plum shift of Beetroot, so it stays in the accent family |
 
 Decorative dividers are Lichen at 30% opacity. They carry no meaning, so they have no contrast requirement; anything a reader needs to see (control borders, chart axes) uses full Lichen.
 
@@ -35,6 +36,7 @@ Decorative dividers are Lichen at 30% opacity. They carry no meaning, so they ha
 | `text.primary` | Spruce ink |
 | `text.secondary` | Lichen |
 | `text.link` | Beetroot |
+| `text.link-visited` | Dried beetroot |
 | `data.interval` | Beetroot |
 | `data.axis`, `data.null` | Lichen |
 | `border.control` | Lichen |
@@ -57,13 +59,15 @@ Computed with the script in the appendix, not estimated.
 | Lichen on Bright paper | 4.5 | 6.63 | 7.15 |
 | Beetroot on Assay paper (link, interval) | 4.5 | 6.83 | 7.74 |
 | Beetroot on Bright paper | 4.5 | 7.50 | 6.73 |
+| Dried beetroot on Assay paper (visited link) | 4.5 | 8.71 | 9.11 |
+| Dried beetroot on Bright paper | 4.5 | 9.57 | 7.92 |
 | Assay paper on Spruce ink (button label) | 4.5 | 13.24 | 14.64 |
 | Lichen on Assay paper (control border, axis) | 3 | 6.04 | 8.21 |
 | Lichen on Bright paper (control border, axis) | 3 | 6.63 | 7.15 |
 | Cobalt on Assay paper (focus ring) | 3 | 5.62 | 8.57 |
 | Cobalt on Bright paper (focus ring) | 3 | 6.18 | 7.45 |
 
-Every pair passes AA; every text pair passes 4.5:1 even where it would only need 3:1 as large text. No other text and surface pairs are defined.
+Every pair passes AA; every text pair passes 4.5:1 even where it would only need 3:1 as large text. No other text and surface pairs are defined. The tokens record the full set of pairs, including the component roles (grade marks, interval, diamond, no-difference line, limits border, button and hover states), each with its ratio and threshold.
 
 ## 3. Typefaces
 
@@ -76,7 +80,7 @@ Both are SIL Open Font License, on Google Fonts for previewing, and will be self
 
 The two are clearly distinct (reading serif and a humanist, legibility-first sans), so the split itself tells readers what they're looking at: Literata is the story, Atkinson is the data and the controls.
 
-To verify before tokens are written: whether Atkinson Hyperlegible Next has tabular figures (`tnum`). If it doesn't, figures in tables and the at-a-glance panel use Literata's tabular lining figures instead.
+Checked: Atkinson Hyperlegible Next has tabular figures (`tnum`); its default figures are proportional. Figures in tables, axis ticks and the at-a-glance panel use Atkinson with `font-variant-numeric: tabular-nums`. Details and source in [`tokens/README.md`](tokens/README.md#fonts-and-figures).
 
 ### Type scale
 
@@ -327,25 +331,4 @@ What a generic first pass for "health science newsletter site" tends to produce,
 
 ## Appendix: contrast script
 
-The ratios above came from this script (WCAG 2.x relative luminance; run with `python3`). It will move into `design/` with the tokens once approved, so every ratio in the tokens can be re-checked.
-
-```python
-def lum(h):
-    h = h.lstrip('#'); c = [int(h[i:i+2], 16) / 255 for i in (0, 2, 4)]
-    c = [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
-    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
-
-def ratio(a, b):
-    la, lb = sorted([lum(a), lum(b)], reverse=True); return (la + 0.05) / (lb + 0.05)
-
-themes = {
-    'light': dict(paper='#EDF2EF', raised='#FAFCFB', ink='#122B27', lichen='#4A5F59', beet='#97245A', focus='#1F5FAD'),
-    'dark':  dict(paper='#0E1C19', raised='#162925', ink='#E3EDE9', lichen='#A2B6AF', beet='#F28DB8', focus='#8DB8F2'),
-}
-pairs = [('ink', 'paper', 4.5), ('ink', 'raised', 4.5), ('lichen', 'paper', 4.5), ('lichen', 'raised', 4.5),
-         ('beet', 'paper', 4.5), ('beet', 'raised', 4.5), ('paper', 'ink', 4.5),
-         ('focus', 'paper', 3.0), ('focus', 'raised', 3.0)]
-for t, v in themes.items():
-    for f, b, need in pairs:
-        r = ratio(v[f], v[b]); print(f"{t} {f} on {b}: {r:.2f} (needs {need}) {'pass' if r >= need else 'FAIL'}")
-```
+The ratios above were computed with WCAG 2.x relative luminance. The script now lives at [`tokens/check_contrast.py`](tokens/check_contrast.py): it reads the token files, resolves aliases and re-checks every recorded pair against its threshold, exiting non-zero on any failure. Run it with `python3 -I design/tokens/check_contrast.py`.

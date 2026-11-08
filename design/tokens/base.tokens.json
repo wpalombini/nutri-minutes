@@ -1,0 +1,337 @@
+{
+  "$description": "Nutri Minutes base values. Format: W3C DTCG https://www.designtokens.org/TR/2025.10/format/ . Semantic roles in roles.tokens.json, color.light.tokens.json and color.dark.tokens.json refer to these.",
+  "palette": {
+    "$type": "color",
+    "$description": "Named base colours, each with a light and a dark value. Use them through the semantic roles, never directly.",
+    "assay-paper": {
+      "$description": "Page surface: a cool, slightly green paper.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.9294, 0.949, 0.9373], "hex": "#edf2ef" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.0549, 0.1098, 0.098], "hex": "#0e1c19" }
+      }
+    },
+    "bright-paper": {
+      "$description": "Raised surface: the study-at-a-glance panel and inputs.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.9804, 0.9882, 0.9843], "hex": "#fafcfb" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.0863, 0.1608, 0.1451], "hex": "#162925" }
+      }
+    },
+    "spruce-ink": {
+      "$description": "Primary text, evidence-grade marks, primary button fill.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.0706, 0.1686, 0.1529], "hex": "#122b27" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.8902, 0.9294, 0.9137], "hex": "#e3ede9" }
+      }
+    },
+    "lichen": {
+      "$description": "Secondary text, chart axes, the no-difference line, control borders.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.2902, 0.3725, 0.349], "hex": "#4a5f59" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.6353, 0.7137, 0.6863], "hex": "#a2b6af" }
+      }
+    },
+    "beetroot": {
+      "$description": "The one accent: links and the effect-size interval only.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.5922, 0.1412, 0.3529], "hex": "#97245a" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.949, 0.5529, 0.7216], "hex": "#f28db8" }
+      }
+    },
+    "dried-beetroot": {
+      "$description": "Visited links only. A plum shift of Beetroot, so it stays in the accent family.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.3922, 0.1882, 0.3725], "hex": "#64305f" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.851, 0.6824, 0.8157], "hex": "#d9aed0" }
+      }
+    },
+    "cobalt": {
+      "$description": "Focus ring only.",
+      "light": {
+        "$value": { "colorSpace": "srgb", "components": [0.1216, 0.3725, 0.6784], "hex": "#1f5fad" }
+      },
+      "dark": {
+        "$value": { "colorSpace": "srgb", "components": [0.5529, 0.7216, 0.949], "hex": "#8db8f2" }
+      }
+    }
+  },
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "serif": {
+        "$value": ["Literata", "Georgia", "serif"],
+        "$description": "Headlines and summary body: the story. Variable, optical size 7-72; use font-optical-sizing: auto."
+      },
+      "sans": {
+        "$value": ["Atkinson Hyperlegible Next", "system-ui", "sans-serif"],
+        "$description": "Interface, navigation, metadata, numbers and chart labels: the data and the controls. Has tabular figures (tnum)."
+      }
+    },
+    "weight": {
+      "$type": "fontWeight",
+      "regular": {
+        "$value": 400
+      },
+      "semi-bold": {
+        "$value": 600,
+        "$description": "Literata headings."
+      },
+      "bold": {
+        "$value": 700,
+        "$description": "Atkinson Hyperlegible Next emphasis."
+      }
+    },
+    "scale": {
+      "$description": "Bringhurst's classical scale with 30 added: 16, 18, 21, 24, 30, 36, 48, 60. Sizes are in rem (1rem = 16px at the browser default) so they follow the reader's font-size setting. Nothing is set below 16px.",
+      "60": {
+        "$description": "Home lead headline, desktop only. Letter spacing is -0.015em.",
+        "size": {
+          "$value": { "value": 3.75, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.05
+        },
+        "letter-spacing": {
+          "$value": { "value": -0.9, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "48": {
+        "$description": "Page headline, desktop. Letter spacing is -0.01em.",
+        "size": {
+          "$value": { "value": 3, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.1
+        },
+        "letter-spacing": {
+          "$value": { "value": -0.48, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "36": {
+        "$description": "Page headline, phone.",
+        "size": {
+          "$value": { "value": 2.25, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.15
+        },
+        "letter-spacing": {
+          "$value": { "value": 0, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "30": {
+        "$description": "Section heading.",
+        "size": {
+          "$value": { "value": 1.875, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.2
+        },
+        "letter-spacing": {
+          "$value": { "value": 0, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "24": {
+        "$description": "Subheading inside a summary.",
+        "size": {
+          "$value": { "value": 1.5, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.25
+        },
+        "letter-spacing": {
+          "$value": { "value": 0, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "21": {
+        "$description": "Finding titles in lists.",
+        "size": {
+          "$value": { "value": 1.3125, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.3
+        },
+        "letter-spacing": {
+          "$value": { "value": 0, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "18": {
+        "$description": "Summary body (serif, 1.7) and interface text (sans, 1.6).",
+        "size": {
+          "$value": { "value": 1.125, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height-serif": {
+          "$type": "number",
+          "$value": 1.7
+        },
+        "line-height-sans": {
+          "$type": "number",
+          "$value": 1.6
+        },
+        "letter-spacing": {
+          "$value": { "value": 0, "unit": "px" },
+          "$type": "dimension"
+        }
+      },
+      "16": {
+        "$description": "Metadata, axis labels, the footer disclosure. The smallest size used.",
+        "size": {
+          "$value": { "value": 1, "unit": "rem" },
+          "$type": "dimension"
+        },
+        "line-height": {
+          "$type": "number",
+          "$value": 1.5
+        },
+        "letter-spacing": {
+          "$value": { "value": 0, "unit": "px" },
+          "$type": "dimension"
+        }
+      }
+    }
+  },
+  "space": {
+    "$type": "dimension",
+    "$description": "Spacing scale in rem (px at the browser default in each name).",
+    "4": {
+      "$value": { "value": 0.25, "unit": "rem" }
+    },
+    "8": {
+      "$value": { "value": 0.5, "unit": "rem" }
+    },
+    "12": {
+      "$value": { "value": 0.75, "unit": "rem" }
+    },
+    "16": {
+      "$value": { "value": 1, "unit": "rem" }
+    },
+    "24": {
+      "$value": { "value": 1.5, "unit": "rem" }
+    },
+    "32": {
+      "$value": { "value": 2, "unit": "rem" }
+    },
+    "40": {
+      "$value": { "value": 2.5, "unit": "rem" }
+    },
+    "56": {
+      "$value": { "value": 3.5, "unit": "rem" }
+    },
+    "72": {
+      "$value": { "value": 4.5, "unit": "rem" }
+    },
+    "96": {
+      "$value": { "value": 6, "unit": "rem" }
+    }
+  },
+  "radius": {
+    "$type": "dimension",
+    "$description": "Radii step with hierarchy: marks, controls, blocks.",
+    "none": {
+      "$value": { "value": 0, "unit": "px" }
+    },
+    "2": {
+      "$value": { "value": 2, "unit": "px" }
+    },
+    "6": {
+      "$value": { "value": 6, "unit": "px" }
+    },
+    "12": {
+      "$value": { "value": 12, "unit": "px" }
+    }
+  },
+  "border-width": {
+    "$type": "dimension",
+    "1": {
+      "$value": { "value": 1, "unit": "px" }
+    },
+    "2": {
+      "$value": { "value": 2, "unit": "px" }
+    },
+    "3": {
+      "$value": { "value": 3, "unit": "px" }
+    }
+  },
+  "duration": {
+    "$type": "duration",
+    "120": {
+      "$value": { "value": 120, "unit": "ms" }
+    },
+    "200": {
+      "$value": { "value": 200, "unit": "ms" }
+    },
+    "500": {
+      "$value": { "value": 500, "unit": "ms" }
+    }
+  },
+  "easing": {
+    "$type": "cubicBezier",
+    "out": {
+      "$value": [0.2, 0.8, 0.2, 1],
+      "$description": "Decelerate: things arriving or growing."
+    },
+    "in-out": {
+      "$value": [0.4, 0, 0.2, 1],
+      "$description": "Expand and collapse in place."
+    }
+  },
+  "breakpoint": {
+    "$type": "dimension",
+    "$description": "Minimum viewport widths. Layout is phone-first; these are the only two breakpoints.",
+    "720": {
+      "$value": { "value": 720, "unit": "px" },
+      "$description": "Side gutter grows from 16px to 32px."
+    },
+    "960": {
+      "$value": { "value": 960, "unit": "px" },
+      "$description": "Study page: the at-a-glance panel moves beside the summary."
+    }
+  },
+  "width": {
+    "$type": "dimension",
+    "$description": "Fixed layout widths.",
+    "120": {
+      "$value": { "value": 120, "unit": "px" }
+    },
+    "300": {
+      "$value": { "value": 300, "unit": "px" }
+    },
+    "680": {
+      "$value": { "value": 680, "unit": "px" }
+    },
+    "1120": {
+      "$value": { "value": 1120, "unit": "px" }
+    }
+  }
+}

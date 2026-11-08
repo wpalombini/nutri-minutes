@@ -51,9 +51,9 @@ Postgres can't read another major version's data files, so a major upgrade means
 
 **Rollback:**
 1. Run `docker compose down`, never with `-v`.
-2. Put back the previous `compose.yaml`, which has the old image and `db-data` mounted at `/var/lib/postgresql/data`: `git checkout <commit before the upgrade> -- compose.yaml`.
+2. Put back the previous `compose.yaml`, which has the old image and `db-data` mounted at `/var/lib/postgresql/data`: `git checkout ORIG_HEAD -- compose.yaml` straight after the step 5 pull. Otherwise, find the commit with `git log --oneline -- compose.yaml`.
 3. Run `docker compose up -d --build`.
-4. Once the upgrade is retried, run `git checkout HEAD -- compose.yaml`.
+4. Before retrying the upgrade or pulling, run `git checkout HEAD -- compose.yaml`.
 
 The old volume still holds the data as it was at step 1. Anything written to the new server after the upgrade is lost on rollback: an older `pg_restore` can't reliably read a newer server's dump.
 

@@ -167,10 +167,10 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 |  Fewer falls                                                 More falls  |
 |  Falls were 23% less frequent (rate ratio 0.77, 95% CI 0.64 to 0.93)...  |
 |--------------------------------------------------------------------------|
-| More dairy linked to slightly fewer hip...  | --<=◆=|>-- | [##..] Low    |
-| Bone health                                 |            |               |
+| More dairy linked to slightly fewer hip... | --<=◆=|>-- | [##..] Low     |
+| Bone health                                |            |                |
 |--------------------------------------------------------------------------|
-| Protein at breakfast and leg strength...    | (Animal)   | [#...] V. low |
+| Protein at breakfast and leg strength...   | (Animal)   | [#...] Very low|
 |--------------------------------------------------------------------------|
 | Browse by topic                                                          |
 | [Bone health] [Muscle and strength with age] [Falls and independence]    |
@@ -179,6 +179,8 @@ One sentence: a single left-aligned reading column, with the study's numbers dra
 | Footer disclosure (principle 7)                How summaries are made    |
 +--------------------------------------------------------------------------+
 ```
+
+Wireframe rows are shortened to fit. The real rows always show full labels, such as "(Animal study)" and "Very low certainty".
 
 ### Study page, phone (360px)
 
@@ -272,7 +274,7 @@ The study design is a separate, always-visible text label in parentheses, with n
 
 ## 6. The one bold element: the interval
 
-The effect size, drawn to scale, near the top of every study page and on the lead finding on the home page: a wide horizontal axis, a labelled "No difference" line, the confidence interval as a thick Beetroot bar and the point estimate as a diamond filled with the page colour and outlined in Spruce ink (page colour on Beetroot is 6.83:1 light and 7.74:1 dark, so the diamond stands out from the bar). Words at each end ("Lower risk" / "Higher risk", "Fewer falls" / "More falls") say which way is good, so no one has to decode a ratio. A plain-English caption under it always repeats the numbers in full (estimate, 95% CI, and an absolute version where the study gives one).
+The effect size, drawn to scale, near the top of every study page and on the lead finding on the home page: a wide horizontal axis, a labelled "No difference" line, the confidence interval as a thick Beetroot bar and the point estimate as a diamond filled with the page colour and outlined in Spruce ink. The fill carries the contrast against the bar (page colour on Beetroot is 6.83:1 light and 7.74:1 dark); the outline is only about 1.9:1 against Beetroot, so nothing may rely on it. Words at each end ("Lower risk" / "Higher risk", "Fewer falls" / "More falls") say which way is good, so no one has to decode a ratio. A plain-English caption under it always repeats the numbers in full (estimate, 95% CI, and an absolute version where the study gives one).
 
 It's the bold element because it is the most characteristic object in this subject (it's the core of a forest plot) and it is honest by construction: an interval that crosses the no-difference line looks like it. It's the visual answer to hype. Ratios use a log scale, so 0.5 and 2 sit equally far from 1.
 

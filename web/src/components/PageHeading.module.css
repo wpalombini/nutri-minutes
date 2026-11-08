@@ -1,0 +1,37 @@
+.title {
+  margin-block-end: var(--space-24);
+  color: var(--text-primary);
+  font-family: var(--type-headline-phone-font-family);
+  font-size: var(--type-headline-phone-font-size);
+  font-weight: var(--type-headline-phone-font-weight);
+  letter-spacing: var(--type-headline-phone-letter-spacing);
+  line-height: var(--type-headline-phone-line-height);
+  text-wrap: balance;
+}
+
+/* A route-change focus target, not a control, so no ring. */
+.title:focus {
+  outline: none;
+}
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  max-inline-size: var(--measure-body);
+  font-family: var(--type-body-font-family);
+  font-size: var(--type-body-font-size);
+  font-weight: var(--type-body-font-weight);
+  letter-spacing: var(--type-body-letter-spacing);
+  line-height: var(--type-body-line-height);
+}
+
+@media (width >= 720px) {
+  .title {
+    font-family: var(--type-headline-desktop-font-family);
+    font-size: var(--type-headline-desktop-font-size);
+    font-weight: var(--type-headline-desktop-font-weight);
+    letter-spacing: var(--type-headline-desktop-letter-spacing);
+    line-height: var(--type-headline-desktop-line-height);
+  }
+}

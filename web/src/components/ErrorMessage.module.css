@@ -1,0 +1,65 @@
+/* design/screens/app-shell.md, "Error", and links-and-buttons.md, "Primary button". */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
+  margin-block-start: var(--space-24);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-primary);
+  padding-inline: var(--space-24);
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  font-family: var(--type-interface-strong-font-family);
+  font-size: var(--type-interface-strong-font-size);
+  font-weight: var(--type-interface-strong-font-weight);
+  letter-spacing: var(--type-interface-strong-letter-spacing);
+  line-height: var(--type-interface-strong-line-height);
+  cursor: pointer;
+}
+
+.button:hover,
+.button:active {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--link-underline-width);
+  text-underline-offset: var(--link-underline-offset);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  font-family: var(--type-interface-font-family);
+  font-size: var(--type-interface-font-size);
+  font-weight: var(--type-interface-font-weight);
+  line-height: var(--type-interface-line-height);
+}
+
+.reference {
+  margin-block-start: var(--space-24);
+  color: var(--text-secondary);
+  font-family: var(--type-meta-font-family);
+  font-size: var(--type-meta-font-size);
+  font-weight: var(--type-meta-font-weight);
+  line-height: var(--type-meta-line-height);
+}
+
+.digest {
+  font-family: var(--type-figures-font-family);
+  font-variant-numeric: var(--type-figures-font-variant-numeric);
+  font-feature-settings: var(--type-figures-font-feature-settings);
+}
+
+@media (width >= 720px) {
+  .actions {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-24);
+  }
+}

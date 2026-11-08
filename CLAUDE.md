@@ -48,7 +48,7 @@ Workers live in `workers/` and use `uv`. Run these from `workers/`, after loadin
 - Type check: `uv run mypy`
 - Scout: `uv run python -m pipeline.scout` for the next window, or add `--window-start YYYY-MM-DD --window-end YYYY-MM-DD` to re-run a past one
 - Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision --rev-id 0002 -m "<summary>"` with the next number, then edit it by hand
-<!-- Add web app and eval commands once they exist. -->
+<!-- Add eval commands once they exist. -->
 
 The API lives in `api/` and uses npm. Run these from `api/`:
 - Install: `npm ci`
@@ -56,6 +56,15 @@ The API lives in `api/` and uses npm. Run these from `api/`:
 - Lint and format: `npm run lint` and `npm run format`
 - Type check: `npm run typecheck`
 - Run with the stack: `docker compose up -d --build api` from the repo root
+
+The web app lives in `web/` and uses npm. Run these from `web/`; `web/README.md` covers its settings:
+- Install: `npm ci`
+- Dev server: `npm run dev`; production build and server: `npm run build` then `npm start`
+- Tests: `npm test`; browser and accessibility tests (after a build): `npm run test:e2e`, which needs `npx playwright install chromium` once
+- Lint and format: `npm run lint` and `npm run format` (`npm run format:check` in CI)
+- Type check: `npm run typecheck`
+- Design tokens: `npm run tokens` regenerates the CSS variables after a change in `design/tokens/`; `npm run tokens:check` fails if they are stale
+- Client bundle secret check (after a build): `npm run check:bundle`
 
 ## Engineering standards
 - **Reliability:** pipeline stages are idempotent and resumable; external calls have timeouts, retries with backoff and clear failure states. One bad paper must not fail a whole run.

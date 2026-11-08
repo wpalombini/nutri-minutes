@@ -1,0 +1,56 @@
+/* design/screens/app-shell.md, "Footer". */
+.footer {
+  border-block-start: var(--border-divider-width) solid var(--border-divider);
+}
+
+.inner {
+  display: grid;
+  gap: var(--space-16);
+  padding-block: var(--space-40) var(--space-56);
+  color: var(--text-secondary);
+  font-family: var(--type-meta-font-family);
+  font-size: var(--type-meta-font-size);
+  font-weight: var(--type-meta-font-weight);
+  letter-spacing: var(--type-meta-letter-spacing);
+  line-height: var(--type-meta-line-height);
+}
+
+.disclosure,
+.note {
+  max-inline-size: var(--measure-caption);
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+}
+
+/* From 720px: disclosure and note on the left, links on the right, top-aligned. */
+@media (width >= 720px) {
+  .inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-56);
+    align-items: start;
+  }
+
+  .disclosure,
+  .note {
+    grid-column: 1;
+  }
+
+  .links {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}

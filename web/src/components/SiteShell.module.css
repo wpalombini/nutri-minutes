@@ -1,0 +1,16 @@
+/* design/screens/app-shell.md, "Layout and widths". */
+.main {
+  flex: 1;
+  padding-block: var(--space-40) var(--space-72);
+}
+
+/* The skip link's target, not a control, so no ring. */
+.main:focus {
+  outline: none;
+}
+
+@media (width >= 720px) {
+  .main {
+    padding-block: var(--space-56) var(--space-96);
+  }
+}

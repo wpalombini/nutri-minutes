@@ -1,6 +1,6 @@
-# The production stack for the pipeline. The same setup also runs locally for development.
-# Settings and secrets come from .env (see .env.example). No service is exposed publicly;
-# the database port is bound to 127.0.0.1 only.
+# The production stack for the pipeline and its API. The same setup also runs locally for
+# development. Settings and secrets come from .env (see .env.example). No service is exposed
+# publicly: the database port is bound to 127.0.0.1 only, and the API publishes no ports.
 
 name: nutri-minutes
 
@@ -115,6 +115,8 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    pids_limit: 100
     healthcheck:
       test:
         - CMD

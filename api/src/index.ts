@@ -5,7 +5,8 @@ import { ConfigError, loadConfig } from './config.js'
 import { checkDatabase, createDatabase } from './db.js'
 import { createLogger, describeError } from './logger.js'
 
-const SHUTDOWN_TIMEOUT_MS = 10_000
+// Below Docker's default 10-second stop grace period, so we exit before being killed.
+const SHUTDOWN_TIMEOUT_MS = 8_000
 
 const logger = createLogger()
 

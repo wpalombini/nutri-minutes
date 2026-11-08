@@ -31,7 +31,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Python with strict type checking for scheduled pipeline workers, evals, data tooling and operational scripts (ADR 0001).
 - Postgres; schema changes only through Alembic migrations (ADR 0002), which must be reversible or documented as not, and run as a separate deploy step. Update `docs/database.md` in the same PR.
 - Docker; images must build for both `linux/amd64` and `linux/arm64`.
-- Vercel (web app hosting), Cloudflare (DNS, CDN, Tunnel, Access, Email Routing, R2 object storage), Stripe (billing), OpenRouter (LLM and TTS access).
+- Vercel (web app hosting), Cloudflare (DNS, CDN, Tunnel, Access, R2 object storage), Stripe (billing), OpenRouter (LLM and TTS access).
 - Changing any of the above requires an ADR.
 
 ## Commands

@@ -1,6 +1,6 @@
 # ADR 0003: A database API on the VM for the web app and future clients
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-08
 - **Amends:** the "Web app access" decision in [ADR 0002](0002-database-migrations-and-schema-growth.md). Its consequences about the web app's use of Kysely and generated types now apply to the API. The rest of ADR 0002 stands.
 

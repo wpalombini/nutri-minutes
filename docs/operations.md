@@ -8,7 +8,7 @@ How the pipeline runs in production with Docker Compose. The same setup also run
 |---|---|---|
 | `db` | Postgres 17, with data in the `db-data` volume. Published on `127.0.0.1` only. | Always |
 | `migrate` | Applies Alembic migrations as the schema owner, then exits | On every `up`, before the workers |
-| `db-roles` | Creates or updates the `pipeline_runner` and `api_runner` login roles from `infra/postgres/login-roles.sql`, then exits. `api_runner` is skipped when `API_DB_PASSWORD` is empty; clearing it later leaves the role with its old password, so disable it in Postgres if that's the intent. | After `migrate` |
+| `db-roles` | Creates or updates the `pipeline_runner` and `api_runner` login roles from `infra/postgres/login-roles.sql`, then exits. Both passwords are required by Compose. Run outside Compose, the script skips `api_runner` when its password is empty. | After `migrate` |
 | `scheduler` | Runs `workers/crontab` with [supercronic](https://github.com/aptible/supercronic). Scout runs daily at 03:15 UTC. | Always |
 | `scout` | One-off Scout runs. It's in the `manual` profile, so `up` doesn't start it. | On demand |
 | `api` | The HTTP API for the web app ([ADR 0003](adr/0003-database-api-for-the-web-app.md)). It publishes no ports, runs with a read-only filesystem and no Linux capabilities, and checks a Cloudflare Access token on every `/v1` request. It also limits each client to `API_RATE_LIMIT_PER_MINUTE` requests (600 by default). | Always |

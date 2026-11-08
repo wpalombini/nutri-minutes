@@ -38,7 +38,7 @@ The full stack runs with Docker Compose; `docs/operations.md` covers deploying a
 - Stack: `docker compose up -d --build` (database, migrations, worker login role and the daily schedule)
 - One-off Scout run: `docker compose run --rm scout`
 
-Workers live in `workers/` and use `uv`. Run these from `workers/`. Copy `.env.example` to `.env` at the repo root, then load it into your shell with `set -a; . ../.env; set +a`.
+Workers live in `workers/` and use `uv`. Run these from `workers/`, after loading `.env` into your shell with `set -a; . ../.env; set +a`. Host-side runs connect as the schema owner, so use the compose `scout` service to test as the workers' role.
 - Local database only: `docker compose up -d --wait db` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
 - Install: `uv sync`
 - Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)

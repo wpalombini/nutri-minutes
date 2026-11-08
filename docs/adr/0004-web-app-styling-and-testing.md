@@ -6,7 +6,7 @@
 ## Context
 The web app in `web/` is a Next.js App Router app (ADR 0001, ADR 0003). The design system in `design/` defines the visual language as design tokens in the W3C Design Tokens (DTCG) format, with light and dark colour roles and a contrast check (`design/tokens/`). The design is small and custom: one reading column, a few components, and one data graphic, the effect-size interval.
 
-`CLAUDE.md` requires an ADR for the stack and owner agreement for new dependencies. The web app needs a styling approach and a test setup before its first code lands. The repo owner chose both options below, including the test dependencies.
+`CLAUDE.md` requires an ADR for the stack and owner agreement for new dependencies. The web app needs a styling approach and a test setup before its first code lands. The repo owner chose the styling approach and the test tools below. The lint and format tools follow the Next.js default and the API's existing formatter.
 
 ## Decision
 - **Styling: CSS Modules plus CSS custom properties generated from the tokens.**
@@ -19,8 +19,11 @@ The web app in `web/` is a Next.js App Router app (ADR 0001, ADR 0003). The desi
   - **[Vitest](https://vitest.dev/)** for logic and components, with Testing Library for component behaviour, jsdom as the DOM environment and `@vitejs/plugin-react`.
   - **[Playwright](https://playwright.dev/)** for key flows. It also captures screenshots at 360px and 1280px wide in light and dark, for review rather than as pixel baselines that fail CI, since rendering differs between machines.
   - **[axe-core](https://github.com/dequelabs/axe-core)** through `@axe-core/playwright`, run on every page in the Playwright suite with the tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and `wcag22aa`. Any violation it reports fails CI. Automated checks find only some WCAG failures, so keyboard and screen-reader checks by hand are still needed.
-- **Linting and formatting:** ESLint with `eslint-config-next`, which includes the Next.js, React Hooks and jsx-a11y rules. Formatting uses Biome, as in the API.
-- **CI:** a `web` workflow runs on changes to `web/**`, `design/tokens/**` and its own workflow file. Like the API workflow, it pins the Node version (matching the version set on Vercel) and pins actions by commit SHA. It runs the token contrast check (`design/tokens/check_contrast.py`), lint, type check, unit tests, the token freshness check, a production build, the client-bundle secret check required by ADR 0003, and the Playwright and axe suite.
+- **Linting:** ESLint, run as `eslint . --max-warnings 0` from a flat `eslint.config.mjs`, with:
+  - `eslint-config-next/core-web-vitals` and `eslint-config-next/typescript`, which bring the Next.js, React and React Hooks rules.
+  - the full recommended config of `eslint-plugin-jsx-a11y`, because `eslint-config-next` turns on only a few of its rules, as warnings.
+- **Formatting:** Biome's formatter, as in the API. In `web/` its linter and import organising are off: ESLint does the linting, and import order sets CSS order in Next.js.
+- **CI:** a `web` workflow runs on changes to `web/**`, `design/tokens/**` and its own workflow file. Like the API workflow, it pins an exact Node version on the same major version as the one set on Vercel and pins actions by commit SHA. It runs the token contrast check (`design/tokens/check_contrast.py`), lint, a Biome format check, type check, unit tests, the token freshness check, a production build, the client-bundle secret check required by ADR 0003, and the Playwright and axe suite.
 - **Dependencies:** pinned to exact versions and added in the PR that first uses them, with `npm audit` in CI. Dependabot watches `/web` like `/api`, with the same cooldown and major-version rules, added in the PR that creates `web/`.
 
 ## Consequences
@@ -43,4 +46,5 @@ The web app in `web/` is a Next.js App Router app (ADR 0001, ADR 0003). The desi
 - Playwright, emulation: https://playwright.dev/docs/emulation
 - Playwright, accessibility testing: https://playwright.dev/docs/accessibility-testing
 - Next.js, ESLint: https://nextjs.org/docs/app/api-reference/config/eslint
+- eslint-plugin-jsx-a11y: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y
 - axe-core API and tags: https://github.com/dequelabs/axe-core/blob/develop/doc/API.md

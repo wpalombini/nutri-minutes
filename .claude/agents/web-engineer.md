@@ -56,4 +56,4 @@ The tools below are the intended setup. Each is a new dependency, so it's added 
 ## Repo rules
 - Work goes through a PR, never directly to `main`. Keep each PR to one concern, with tests.
 - The repo is public. Never copy anything from `CLAUDE.local.md` or `docs/private/` into code, commits or PRs, and never include session links or tool attribution in commits or PR text.
-- Follow `CLAUDE.md` for everything else, including the content rules: every summary shows its evidence grade and source, and every page carries the "AI-generated, not medical advice" disclosure.
+- Follow `CLAUDE.md` for everything else, including the content rules: every summary shows its evidence grade and source, and every page carries the disclosure that the content is written by artificial intelligence and is not medical advice.

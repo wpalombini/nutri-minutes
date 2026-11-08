@@ -62,13 +62,13 @@
       }
     },
     "link-visited": {
-      "$value": "{palette.dried-beetroot.dark}",
-      "$description": "Visited links. Underline unchanged.",
+      "$value": "{palette.beetroot.dark}",
+      "$description": "Visited links: the same Beetroot as unvisited links, so the palette keeps one accent. Underline unchanged.",
       "$extensions": {
         "io.github.wpalombini.nutri-minutes": {
           "contrast": [
-            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 9.11, "use": "link, visited" },
-            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 7.92, "use": "link, visited" }
+            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 7.74, "use": "link, visited" },
+            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 6.73, "use": "link, visited" }
           ]
         }
       }

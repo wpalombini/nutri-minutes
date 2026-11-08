@@ -13,7 +13,7 @@ Status: approved by the repo owner (decisions in section 10). The tokens are in 
 
 ## 2. Palette
 
-Six named base values, plus a visited-link variant of the accent added when the tokens were built. One accent, Beetroot, is reserved for links and the effect-size interval, so wherever it appears it means "a number from the study" or "go somewhere".
+Six named base values. One accent, Beetroot, is reserved for links and the effect-size interval, so wherever it appears it means "a number from the study" or "go somewhere".
 
 | Name | Light | Dark | Role |
 |---|---|---|---|
@@ -23,7 +23,6 @@ Six named base values, plus a visited-link variant of the accent added when the 
 | Lichen | `#4A5F59` | `#A2B6AF` | Secondary text, chart axes, the no-difference line, control borders |
 | Beetroot | `#97245A` | `#F28DB8` | Links and the effect-size interval |
 | Cobalt | `#1F5FAD` | `#8DB8F2` | Focus ring only |
-| Dried beetroot | `#64305F` | `#D9AED0` | Visited links only: a plum shift of Beetroot, so it stays in the accent family |
 
 Decorative dividers are Lichen at 30% opacity. They carry no meaning, so they have no contrast requirement; anything a reader needs to see (control borders, chart axes) uses full Lichen.
 
@@ -36,7 +35,7 @@ Decorative dividers are Lichen at 30% opacity. They carry no meaning, so they ha
 | `text.primary` | Spruce ink |
 | `text.secondary` | Lichen |
 | `text.link` | Beetroot |
-| `text.link-visited` | Dried beetroot |
+| `text.link-visited` | Beetroot (visited links don't change colour) |
 | `data.interval` | Beetroot |
 | `data.axis`, `data.null` | Lichen |
 | `border.control` | Lichen |
@@ -59,8 +58,6 @@ Computed with the script in the appendix, not estimated.
 | Lichen on Bright paper | 4.5 | 6.63 | 7.15 |
 | Beetroot on Assay paper (link, interval) | 4.5 | 6.83 | 7.74 |
 | Beetroot on Bright paper | 4.5 | 7.50 | 6.73 |
-| Dried beetroot on Assay paper (visited link) | 4.5 | 8.71 | 9.11 |
-| Dried beetroot on Bright paper | 4.5 | 9.57 | 7.92 |
 | Assay paper on Spruce ink (button label) | 4.5 | 13.24 | 14.64 |
 | Lichen on Assay paper (control border, axis) | 3 | 6.04 | 8.21 |
 | Lichen on Bright paper (control border, axis) | 3 | 6.63 | 7.15 |

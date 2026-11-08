@@ -48,15 +48,6 @@
         "$value": { "colorSpace": "srgb", "components": [0.949, 0.5529, 0.7216], "hex": "#f28db8" }
       }
     },
-    "dried-beetroot": {
-      "$description": "Visited links only. A plum shift of Beetroot, so it stays in the accent family.",
-      "light": {
-        "$value": { "colorSpace": "srgb", "components": [0.3922, 0.1882, 0.3725], "hex": "#64305f" }
-      },
-      "dark": {
-        "$value": { "colorSpace": "srgb", "components": [0.851, 0.6824, 0.8157], "hex": "#d9aed0" }
-      }
-    },
     "cobalt": {
       "$description": "Focus ring only.",
       "light": {

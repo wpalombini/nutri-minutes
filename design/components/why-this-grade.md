@@ -57,14 +57,15 @@ Open:
 The [APG disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): a `<button>` inside the `h2`, controlling the panel after it. Screen readers keep the heading for navigation and announce the button's state.
 
 ```html
-<section class="why-grade" id="why-this-grade" aria-labelledby="why-grade-heading">
-  <h2 id="why-grade-heading">
-    <button type="button" aria-expanded="false" aria-controls="why-grade-panel">
+<section class="why-grade" id="why-this-grade">
+  <h2>
+    <button type="button" class="toggle" aria-expanded="false" aria-controls="why-grade-panel">
       <svg class="chevron" aria-hidden="true" …/>
       Why this grade is low certainty
     </button>
+    <span class="static">Why this grade is low certainty</span>
   </h2>
-  <div id="why-grade-panel" class="content">
+  <div id="why-grade-panel" class="content" data-open="false">
     <p>Observational studies start at low certainty, then move up or down.</p>
     <h3><svg aria-hidden="true" …plus/>Raises certainty</h3>
     <ul>…</ul>
@@ -75,9 +76,14 @@ The [APG disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure
 </section>
 ```
 
-- Enter and Space toggle it (a native `<button>` does this). `aria-expanded` changes between `"false"` and `"true"`. Focus stays on the button.
-- The button is the only content of the `h2`, so the heading's name is the button's text.
-- **Without JavaScript the content must still be readable.** The server renders the panel without `hidden`. A small inline script in `<head>` adds a `js` class to `<html>` before first paint, and only under `.js` is the closed panel hidden (`.js .content:not(.open) { display: none }`). There's no flash and no layout shift, and without JavaScript the panel is simply open with the button doing nothing. The inline script needs a CSP hash, like any static inline script.
+- A plain `<section>` with no accessible name, so it isn't a named region: heading navigation finds it through its `h2`, and the landmark list stays as the [study page](../screens/study.md#keyboard-and-screen-readers) gives it.
+- Enter and Space toggle it (a native `<button>` does this). `aria-expanded` and `data-open` change together between `"false"` and `"true"`. Focus stays on the button.
+- **Without scripting the content must still be readable,** using the `scripting` media feature (Baseline since December 2023) and no inline script:
+  - `@media (scripting: enabled)`: the closed panel is hidden (`.content[data-open="false"] { display: none }`) and `.static` is `display: none`.
+  - `@media (scripting: none)`: `.toggle` is `display: none`, `.static` shows as the plain heading text, and the panel shows. So a screen reader never meets `aria-expanded="false"` over visible content; `display: none` removes the hidden copy from the accessibility tree.
+  - The server HTML is the same in both cases, so there's no hydration mismatch and nothing for the content security policy to allow. (How the CSP is built is the web engineer's call.)
+  - Accepted limitation: if scripting is enabled but the JavaScript bundle fails to load, the panel stays closed and can't be opened. The grade itself and the "How we grade" link in the nav still explain it.
+  - Selectors use attribute selectors and the module's own local classes, so no `:global()` is needed in the CSS Module.
 - If the page is opened with `#why-this-grade`, open the panel on load.
 - The open state is not stored in the URL: it's a reading aid, not page state.
 - Why not `<details>` and `<summary>`? HTML does allow a heading inside `<summary>`, but `<summary>` is exposed as a button and screen readers commonly drop the heading inside it, so the section disappears from heading navigation.

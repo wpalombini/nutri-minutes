@@ -147,7 +147,7 @@ API failure or an invalid summary (no grade, design category or DOI): the [error
 - **Very long headline:** wraps; never truncated.
 
 ## Keyboard and screen readers
-- Landmarks: banner, main, complementary ("Study at a glance"), contentinfo. The limits block is a named region.
+- Landmarks: banner, main, complementary ("Study at a glance"), contentinfo. The limits block is a named region. "Why this grade" is a plain section, not a region.
 - Headings: `h1` headline; `h2` "What the study found", "What this study does not show", "Why this grade is …", "Study at a glance"; `h3` inside the body and inside "Why this grade".
 - Tab order: skip link, wordmark, nav, topic link, (notice link), links in the caption if any, links in the body, the "Why this grade" toggle, links inside it when open, the DOI link, footer links.
 - No live regions: nothing on this page updates after load.

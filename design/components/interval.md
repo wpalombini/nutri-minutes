@@ -98,15 +98,15 @@ For risk ratio, odds ratio, hazard ratio and rate ratio.
 
   (0.67 and 0.33 stand for 1/1.5 and 1/3, placed at their exact log positions.)
 - In 0.1 to 10, a limit exactly at 0.1 or 10 is drawn to the edge with a square end (it is on the scale, not beyond it).
-- If one or both limits are beyond 0.1 to 10 on opposite sides of 1, use 0.1 to 10 and [clip](#clipped-ends) each end that is beyond.
-- If **both** limits are beyond the same edge (for example 12 to 30), there's no bar to draw: use the [inconsistent numbers](#states) state's layout (no drawing), but keep the numbers in the caption and add "The whole range is beyond the scale shown."
+- If exactly one limit is beyond 0.1 to 10, use 0.1 to 10 and [clip](#clipped-ends) that end. If both are beyond, on opposite edges, clip both.
+- If **both** limits are beyond the same edge (for example 12 to 30), or the **estimate** is beyond the domain (for example 0.05, 0.02 to 0.3), use the [outside the scale](#states) state. Never pin the diamond to the edge.
 
 ### Differences: linear scale, no-difference line at 0
 For mean difference, risk difference (percentage points) and standardised mean difference.
 
 - Position: `p(v) = (v − lo) / (hi − lo) × 100%`.
 - The domain is symmetric around 0, so 0 is always at 50%: `lo = −m`, `hi = m`, where `m` is the smallest "nice" number (1, 2, 2.5 or 5 times a power of 10) that is at least 1.1 times the larger of `|lower limit|` and `|upper limit|`. The 1.1 keeps the bar off the edge.
-- Ticks at `−m`, `−m/2`, 0, `m/2`, `m`. Labels with the minus sign, no units (the unit is in the outcome line).
+- Ticks at `−m`, `−m/2`, 0, `m/2`, `m`. Labels for negative ticks use the true minus sign (U+2212), like every other number ([conventions](../screens/README.md#reader-facing-text)), and no units (the unit is in the outcome line).
 - No clipping is needed: the domain always contains the interval.
 - **Both limits zero,** or more generally lower equal to upper: a range of zero width isn't a real confidence interval, and `m` would be 0. Route it to the [inconsistent numbers](#states) state.
 
@@ -143,7 +143,7 @@ The same picture with no words, for comparing rows at a glance. The row's headli
 - Null line: at 50%, full box height, `data.null-width`, `data.null`.
 - Bar: centred vertically, `block-size: data.interval-glyph-thickness`, `data.interval`.
 - Diamond: diagonal `data.estimate-glyph-size` (side `calc(data.estimate-glyph-size / 1.4142)`), `data.estimate-fill` with a `data.estimate-border-width` `data.estimate-outline` border. At this size the border takes much of the diamond; that's expected and still reads as a hollow diamond.
-- **Glyph domains:** ratios always use the fixed domain 0.25 to 4, so ratio glyphs in a list are drawn on the same scale and can be compared; a limit exactly at 0.25 or 4 is drawn to the edge with a square end; a limit beyond it is clipped with a point built from `space.4`; if both limits are beyond the same edge, the glyph is replaced by the text "Outside scale" in the no-range style, and the hidden sentence still gives the numbers. Differences use the full-size rule, per row (units differ, so they can't share a scale).
+- **Glyph domains:** ratios always use the fixed domain 0.25 to 4, so ratio glyphs in a list are drawn on the same scale and can be compared; a limit exactly at 0.25 or 4 is drawn to the edge with a square end; a limit beyond it is clipped with a point built from `space.4`; if both limits are beyond, on opposite edges, both are clipped; if both limits are beyond the same edge, or the estimate is outside 0.25 to 4 (for example 0.2, 0.1 to 0.5), the glyph is replaced by the text "Outside scale" in the no-range style, and the hidden sentence still gives the numbers. The diamond is never pinned to an edge. Differences use the full-size rule, per row (units differ, so they can't share a scale).
 - No ticks, labels or animation.
 - **Accessibility:** the glyph is `aria-hidden="true"`. Next to it, a [visually hidden](../screens/app-shell.md#visually-hidden-text) sentence that names the outcome: "Main result for hip fracture risk: hazard ratio 0.91, 95% confidence interval 0.80 to 1.04, which includes no difference." (drop the last clause when it doesn't). The row data therefore includes `outcome_label`.
 
@@ -154,6 +154,7 @@ The same picture with no words, for comparing rows at a glance. The row's headli
 | Normal | As above | As above |
 | **No interval reported** (estimate but no limits) | Don't draw anything: no bar, no diamond, no axis. An invented range would be a false number. Keep the outcome lines, then the caption: the plain result, the estimate in words ("Hazard ratio 0.91."), and the fixed sentence "The abstract doesn't report a range." When the summary was written from the full text (`source_basis` is `full_text`), say "The paper doesn't report a range." instead. | No glyph. In its place, the text "No range reported" in `type.meta`, `text.secondary`, in the same 120px column (it may wrap to two lines). |
 | **No effect size at all** (for example a lab study with no comparable number) | The figure is left out. The study page's summary carries the result in words. | Text "No effect size" in the glyph column, same style. |
+| **Outside the scale** (both limits beyond the same edge of the domain, or the estimate outside the domain) | No drawing, as for no interval reported. The caption keeps the plain result and the numbers in full, and adds "The range is too far from 1 to draw on this scale." (ratios; "from 0" for differences, though the difference domain always contains the interval). Don't add "The abstract doesn't report a range": a range was reported. | Text "Outside scale", same style as "No range reported"; the hidden sentence gives the numbers. |
 | **Inconsistent numbers** (estimate outside its limits, lower above upper, lower equal to upper including both zero, a ratio ≤ 0) | Treat as "no interval reported" but say nothing about why on the page; log it with the summary ID. Never draw it. | As "No range reported". |
 | Loading, empty, error | Rendered with its page; no state of its own. | Same |
 
@@ -191,6 +192,6 @@ In `@media (forced-colors: active)`, backgrounds are removed by default, which w
 | `source_basis` | enum | `abstract` or `full_text`: which text the summary was written from |
 
 ## Checks for the engineer
-- Unit tests for the position, domain, tick and "includes no difference" functions, including limits exactly at the null, at the domain edges, and beyond 0.1 and 10.
+- Unit tests for the position, domain, tick and "includes no difference" functions, including limits exactly at the null, at the domain edges, beyond 0.1 and 10 on one or both sides, both beyond the same edge, and an estimate outside the domain (full size and glyph).
 - Screenshots of a ratio that includes 1, one that doesn't, a linear difference, a clipped end and the no-range state, at 360px and 1280px in light and dark.
 - With CSS off, the outcome lines and caption still read in order.

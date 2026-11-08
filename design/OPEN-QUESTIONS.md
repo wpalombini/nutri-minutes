@@ -20,7 +20,7 @@ Questions raised by the [screen](screens/README.md) and [component](components/R
 
 ## Data no planned stage produces yet
 The specs need these fields, but none of the stages in [`docs/agents.md`](../docs/agents.md) or the tables planned in [`docs/database.md`](../docs/database.md#tables-to-come) produce them:
-- **Retraction and correction dates and notice links.** `article_relations` records that a retraction or erratum exists, with the target's ID, but not its date or a URL. ([Study page](screens/study.md#data-a-summary))
+- **Retraction and correction notice dates.** `article_relations` records that a retraction or erratum exists and the notice's source and ID, but not the notice's date. The link can be built from `target_id` when the target is a PubMed record (`target_source` `MED`); other sources would need their own rule. ([Study page](screens/study.md#data-a-summary))
 - **`rechecked`:** whether a summary has been checked again after a correction. No stage re-checks summaries yet.
 - **Editions:** the week's set of findings, its order and its publication date. The Editor chooses and orders findings, but nothing stores an edition the web app can read. ([Home](screens/home.md#data))
 - **Topic descriptions and summary counts.** ([Topics](screens/topics.md#data))

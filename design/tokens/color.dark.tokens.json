@@ -1,0 +1,263 @@
+{
+  "$description": "Colour roles, dark theme. Same paths as the other theme file. Each foreground role records its contrast pairs in $extensions[\"io.github.wpalombini.nutri-minutes\"].contrast; check them with check_contrast.py.",
+  "surface": {
+    "$type": "color",
+    "page": {
+      "$value": "{palette.assay-paper.dark}",
+      "$description": "Page background."
+    },
+    "raised": {
+      "$value": "{palette.bright-paper.dark}",
+      "$description": "The one raised surface: study at a glance, and inputs. Its edge against the page is low contrast by design; nothing relies on it."
+    }
+  },
+  "text": {
+    "$type": "color",
+    "primary": {
+      "$value": "{palette.spruce-ink.dark}",
+      "$description": "Headlines and body text.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 14.64, "use": "primary text" },
+            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 12.74, "use": "primary text" }
+          ]
+        }
+      }
+    },
+    "secondary": {
+      "$value": "{palette.lichen.dark}",
+      "$description": "Metadata, captions, axis labels, the footer disclosure, input placeholder.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 8.21, "use": "secondary text" },
+            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 7.15, "use": "secondary text" }
+          ]
+        }
+      }
+    },
+    "link": {
+      "$value": "{palette.beetroot.dark}",
+      "$description": "Links at rest. Always underlined.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 7.74, "use": "link" },
+            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 6.73, "use": "link" }
+          ]
+        }
+      }
+    },
+    "link-hover": {
+      "$value": "{palette.beetroot.dark}",
+      "$description": "Links on hover: same colour, thicker underline (link.underline-hover-width).",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 7.74, "use": "link, hover" },
+            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 6.73, "use": "link, hover" }
+          ]
+        }
+      }
+    },
+    "link-visited": {
+      "$value": "{palette.dried-beetroot.dark}",
+      "$description": "Visited links. Underline unchanged.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "text", "min": 4.5, "ratio": 9.11, "use": "link, visited" },
+            { "on": "{surface.raised}", "kind": "text", "min": 4.5, "ratio": 7.92, "use": "link, visited" }
+          ]
+        }
+      }
+    }
+  },
+  "icon": {
+    "$type": "color",
+    "default": {
+      "$value": "{palette.spruce-ink.dark}",
+      "$description": "Icons such as the plus and minus in 'Why this grade'. Always next to a text label.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "icon" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 12.74, "use": "icon" }
+          ]
+        }
+      }
+    }
+  },
+  "button": {
+    "$type": "color",
+    "primary": {
+      "bg": {
+        "$value": "{palette.spruce-ink.dark}",
+        "$description": "Primary button fill.",
+        "$extensions": {
+          "io.github.wpalombini.nutri-minutes": {
+            "contrast": [
+              { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "button boundary" },
+              { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 12.74, "use": "button boundary" }
+            ]
+          }
+        }
+      },
+      "text": {
+        "$value": "{palette.assay-paper.dark}",
+        "$description": "Primary button label.",
+        "$extensions": {
+          "io.github.wpalombini.nutri-minutes": {
+            "contrast": [
+              { "on": "{button.primary.bg}", "kind": "text", "min": 4.5, "ratio": 14.64, "use": "button label" }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "border": {
+    "$type": "color",
+    "control": {
+      "$value": "{palette.lichen.dark}",
+      "$description": "Solid outline of inputs and outlined controls at rest.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 8.21, "use": "control border" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 7.15, "use": "control border" }
+          ]
+        }
+      }
+    },
+    "control-hover": {
+      "$value": "{palette.spruce-ink.dark}",
+      "$description": "Control outline on hover: darker and thicker, so hover raises contrast.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "control border, hover" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 12.74, "use": "control border, hover" }
+          ]
+        }
+      }
+    },
+    "limits": {
+      "$value": "{palette.lichen.dark}",
+      "$description": "Dashed outline of 'What this study does not show'. It carries meaning, so it meets 3:1.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 8.21, "use": "limits border" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 7.15, "use": "limits border" }
+          ]
+        }
+      }
+    },
+    "divider": {
+      "$value": { "colorSpace": "srgb", "components": [0.6353, 0.7137, 0.6863], "alpha": 0.3, "hex": "#a2b6af" },
+      "$description": "Decorative row divider. Carries no meaning, so it has no contrast requirement. Lichen (dark) at 30% opacity.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": { "decorative": true }
+      }
+    }
+  },
+  "focus": {
+    "$type": "color",
+    "ring": {
+      "$value": "{palette.cobalt.dark}",
+      "$description": "Focus ring, used for nothing else.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 8.57, "use": "focus ring" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 7.45, "use": "focus ring" }
+          ]
+        }
+      }
+    }
+  },
+  "grade": {
+    "$type": "color",
+    "mark": {
+      "$value": "{palette.spruce-ink.dark}",
+      "$description": "Evidence-grade squares, every level. Grades never change colour; the level words carry the meaning.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "grade mark" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 12.74, "use": "grade mark" }
+          ]
+        }
+      }
+    }
+  },
+  "data": {
+    "$type": "color",
+    "interval": {
+      "$value": "{palette.beetroot.dark}",
+      "$description": "Confidence-interval bar, full size and glyph.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 7.74, "use": "interval bar" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 6.73, "use": "interval bar" }
+          ]
+        }
+      }
+    },
+    "axis": {
+      "$value": "{palette.lichen.dark}",
+      "$description": "Chart axis line and ticks. Tick labels use text.secondary.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 8.21, "use": "axis" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 7.15, "use": "axis" }
+          ]
+        }
+      }
+    },
+    "null": {
+      "$value": "{palette.lichen.dark}",
+      "$description": "The no-difference line. Always labelled 'No difference' in text.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 8.21, "use": "no-difference line" },
+            { "on": "{surface.raised}", "kind": "non-text", "min": 3.0, "ratio": 7.15, "use": "no-difference line" }
+          ]
+        }
+      }
+    },
+    "estimate-fill": {
+      "$value": "{palette.assay-paper.dark}",
+      "$description": "Point-estimate diamond fill. The fill carries the contrast against the bar. Only drawn on surface.page.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            {
+              "on": "{data.interval}",
+              "kind": "non-text",
+              "min": 3.0,
+              "ratio": 7.74,
+              "use": "diamond fill on interval bar"
+            }
+          ]
+        }
+      }
+    },
+    "estimate-outline": {
+      "$value": "{palette.spruce-ink.dark}",
+      "$description": "Point-estimate diamond outline. Against the bar it is only about 1.9:1, so nothing relies on it there; where the diamond extends past the bar, it is checked against the page.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": {
+          "contrast": [
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "diamond outline on page" }
+          ]
+        }
+      }
+    }
+  }
+}

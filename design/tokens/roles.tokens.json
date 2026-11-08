@@ -1,0 +1,367 @@
+{
+  "$description": "Semantic roles that are the same in light and dark: type styles, sizes, borders, motion and layout. Colour roles are in color.light.tokens.json and color.dark.tokens.json. Every token states its own $type because these groups share names with the colour files.",
+  "type": {
+    "lead-headline": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.60.size}",
+        "fontWeight": "{font.weight.semi-bold}",
+        "letterSpacing": "{font.scale.60.letter-spacing}",
+        "lineHeight": "{font.scale.60.line-height}"
+      },
+      "$description": "Home lead headline, desktop only. Sentence case, text-wrap: balance. Letter spacing is -0.015em; emit it in em on the web."
+    },
+    "headline-desktop": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.48.size}",
+        "fontWeight": "{font.weight.semi-bold}",
+        "letterSpacing": "{font.scale.48.letter-spacing}",
+        "lineHeight": "{font.scale.48.line-height}"
+      },
+      "$description": "Page headline from 720px. Letter spacing is -0.01em; emit it in em on the web."
+    },
+    "headline-phone": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.36.size}",
+        "fontWeight": "{font.weight.semi-bold}",
+        "letterSpacing": "{font.scale.36.letter-spacing}",
+        "lineHeight": "{font.scale.36.line-height}"
+      },
+      "$description": "Page headline below 720px."
+    },
+    "section-heading": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.30.size}",
+        "fontWeight": "{font.weight.semi-bold}",
+        "letterSpacing": "{font.scale.30.letter-spacing}",
+        "lineHeight": "{font.scale.30.line-height}"
+      },
+      "$description": "Section heading."
+    },
+    "subheading": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.24.size}",
+        "fontWeight": "{font.weight.semi-bold}",
+        "letterSpacing": "{font.scale.24.letter-spacing}",
+        "lineHeight": "{font.scale.24.line-height}"
+      },
+      "$description": "Subheading inside a summary."
+    },
+    "finding-title": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.21.size}",
+        "fontWeight": "{font.weight.semi-bold}",
+        "letterSpacing": "{font.scale.21.letter-spacing}",
+        "lineHeight": "{font.scale.21.line-height}"
+      },
+      "$description": "Finding titles in lists."
+    },
+    "body": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": "{font.scale.18.size}",
+        "fontWeight": "{font.weight.regular}",
+        "letterSpacing": "{font.scale.18.letter-spacing}",
+        "lineHeight": "{font.scale.18.line-height-serif}"
+      },
+      "$description": "Summary body. Italic 400 is available for emphasis; DTCG typography has no font-style field, so set it in code."
+    },
+    "interface": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": "{font.scale.18.size}",
+        "fontWeight": "{font.weight.regular}",
+        "letterSpacing": "{font.scale.18.letter-spacing}",
+        "lineHeight": "{font.scale.18.line-height-sans}"
+      },
+      "$description": "Interface text and figure captions."
+    },
+    "interface-strong": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": "{font.scale.18.size}",
+        "fontWeight": "{font.weight.bold}",
+        "letterSpacing": "{font.scale.18.letter-spacing}",
+        "lineHeight": "{font.scale.18.line-height-sans}"
+      },
+      "$description": "Emphasised interface text and button labels."
+    },
+    "meta": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": "{font.scale.16.size}",
+        "fontWeight": "{font.weight.regular}",
+        "letterSpacing": "{font.scale.16.letter-spacing}",
+        "lineHeight": "{font.scale.16.line-height}"
+      },
+      "$description": "Metadata, axis labels, the footer disclosure."
+    },
+    "meta-strong": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": "{font.scale.16.size}",
+        "fontWeight": "{font.weight.bold}",
+        "letterSpacing": "{font.scale.16.letter-spacing}",
+        "lineHeight": "{font.scale.16.line-height}"
+      },
+      "$description": "Emphasised metadata, such as grade level words."
+    },
+    "figures": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": "{font.scale.16.size}",
+        "fontWeight": "{font.weight.regular}",
+        "letterSpacing": "{font.scale.16.letter-spacing}",
+        "lineHeight": "{font.scale.16.line-height}"
+      },
+      "$description": "Numbers that are compared or aligned: the at-a-glance panel, tables, axis ticks. Uses tabular figures.",
+      "$extensions": {
+        "io.github.wpalombini.nutri-minutes": { "fontVariantNumeric": "tabular-nums", "fontFeatureSettings": "\"tnum\" 1" }
+      }
+    }
+  },
+  "measure": {
+    "body": {
+      "$type": "number",
+      "$value": 66,
+      "$description": "Summary body max line length, in ch. DTCG dimensions allow only px and rem, so the unit lives here: emit as 66ch."
+    },
+    "caption": {
+      "$type": "number",
+      "$value": 62,
+      "$description": "Captions and notes max line length, in ch."
+    }
+  },
+  "layout": {
+    "content-max": {
+      "$type": "dimension",
+      "$value": "{width.1120}",
+      "$description": "Max content width."
+    },
+    "gutter": {
+      "$type": "dimension",
+      "$value": "{space.16}",
+      "$description": "Side gutter below 720px."
+    },
+    "gutter-wide": {
+      "$type": "dimension",
+      "$value": "{space.32}",
+      "$description": "Side gutter from 720px."
+    },
+    "study-column-max": {
+      "$type": "dimension",
+      "$value": "{width.680}",
+      "$description": "Study page reading column, desktop."
+    },
+    "study-panel": {
+      "$type": "dimension",
+      "$value": "{width.300}",
+      "$description": "Study-at-a-glance column, from 960px."
+    },
+    "study-gap": {
+      "$type": "dimension",
+      "$value": "{space.56}",
+      "$description": "Gap between reading column and panel."
+    },
+    "breakpoint-gutter": {
+      "$type": "dimension",
+      "$value": "{breakpoint.720}"
+    },
+    "breakpoint-study-grid": {
+      "$type": "dimension",
+      "$value": "{breakpoint.960}"
+    }
+  },
+  "target": {
+    "min": {
+      "$value": { "value": 24, "unit": "px" },
+      "$type": "dimension",
+      "$description": "Smallest target for any interactive element (WCAG 2.5.8)."
+    },
+    "primary": {
+      "$value": { "value": 44, "unit": "px" },
+      "$type": "dimension",
+      "$description": "Primary touch controls: buttons, the 'Why this grade' toggle, nav links."
+    }
+  },
+  "radius": {
+    "control": {
+      "$type": "dimension",
+      "$value": "{radius.6}",
+      "$description": "Buttons, inputs, topic links: anything with a solid outline."
+    },
+    "block": {
+      "$type": "dimension",
+      "$value": "{radius.12}",
+      "$description": "The study-at-a-glance panel and the dashed limits block."
+    },
+    "mark": {
+      "$type": "dimension",
+      "$value": "{radius.2}",
+      "$description": "Evidence-grade squares."
+    }
+  },
+  "border": {
+    "control-width": {
+      "$type": "dimension",
+      "$value": "{border-width.2}",
+      "$description": "Solid outline of a control at rest."
+    },
+    "control-hover-width": {
+      "$type": "dimension",
+      "$value": "{border-width.3}",
+      "$description": "Control outline on hover. Draw the extra pixel inside (inset box-shadow) so layout does not shift."
+    },
+    "control-style": {
+      "$type": "strokeStyle",
+      "$value": "solid",
+      "$description": "Solid outline means a control."
+    },
+    "limits-width": {
+      "$type": "dimension",
+      "$value": "{border-width.2}",
+      "$description": "'What this study does not show' block."
+    },
+    "limits-style": {
+      "$type": "strokeStyle",
+      "$value": "dashed",
+      "$description": "Dashed outline means absence or limits (and, in the preview only, sample content). Never used on controls."
+    },
+    "divider-width": {
+      "$type": "dimension",
+      "$value": "{border-width.1}",
+      "$description": "Decorative row divider."
+    }
+  },
+  "link": {
+    "underline-width": {
+      "$type": "dimension",
+      "$value": "{border-width.1}",
+      "$description": "Links are always underlined."
+    },
+    "underline-hover-width": {
+      "$type": "dimension",
+      "$value": "{border-width.2}",
+      "$description": "Hover thickens the underline; the colour does not change."
+    },
+    "underline-offset": {
+      "$value": { "value": 3, "unit": "px" },
+      "$type": "dimension"
+    }
+  },
+  "focus": {
+    "ring-width": {
+      "$type": "dimension",
+      "$value": "{border-width.3}"
+    },
+    "ring-offset": {
+      "$value": { "value": 3, "unit": "px" },
+      "$type": "dimension",
+      "$description": "The gap is always the page or raised surface, so the ring is checked against those."
+    },
+    "ring-style": {
+      "$type": "strokeStyle",
+      "$value": "solid"
+    }
+  },
+  "grade": {
+    "mark-size": {
+      "$value": { "value": 12, "unit": "px" },
+      "$type": "dimension",
+      "$description": "Each of the four squares."
+    },
+    "mark-gap": {
+      "$value": { "value": 4, "unit": "px" },
+      "$type": "dimension"
+    },
+    "mark-border-width": {
+      "$type": "dimension",
+      "$value": "{border-width.2}",
+      "$description": "Outline of an unfilled square. Filled squares use the same colour as fill."
+    }
+  },
+  "data": {
+    "interval-thickness": {
+      "$value": { "value": 12, "unit": "px" },
+      "$type": "dimension",
+      "$description": "Confidence-interval bar on the study page and lead finding."
+    },
+    "interval-glyph-thickness": {
+      "$value": { "value": 6, "unit": "px" },
+      "$type": "dimension",
+      "$description": "Bar in the 120px list glyph."
+    },
+    "interval-glyph-width": {
+      "$type": "dimension",
+      "$value": "{width.120}"
+    },
+    "estimate-size": {
+      "$value": { "value": 22, "unit": "px" },
+      "$type": "dimension",
+      "$description": "Point-estimate diamond, full size. Larger than the bar, so its outline also sits on the page surface."
+    },
+    "estimate-glyph-size": {
+      "$value": { "value": 12, "unit": "px" },
+      "$type": "dimension"
+    },
+    "estimate-border-width": {
+      "$type": "dimension",
+      "$value": "{border-width.2}"
+    },
+    "axis-width": {
+      "$type": "dimension",
+      "$value": "{border-width.1}"
+    },
+    "null-width": {
+      "$type": "dimension",
+      "$value": "{border-width.2}",
+      "$description": "The labelled no-difference line."
+    }
+  },
+  "motion": {
+    "interval-grow": {
+      "$type": "transition",
+      "$value": {
+        "duration": "{duration.500}",
+        "delay": { "value": 0, "unit": "ms" },
+        "timingFunction": "{easing.out}"
+      },
+      "$description": "The one orchestrated moment: the interval grows out from the estimate once on load. Removed under prefers-reduced-motion: reduce."
+    },
+    "expand": {
+      "$type": "transition",
+      "$value": {
+        "duration": "{duration.200}",
+        "delay": { "value": 0, "unit": "ms" },
+        "timingFunction": "{easing.in-out}"
+      },
+      "$description": "Opening 'Why this grade' in place. Instant under reduced motion."
+    },
+    "hover": {
+      "$type": "transition",
+      "$value": {
+        "duration": "{duration.120}",
+        "delay": { "value": 0, "unit": "ms" },
+        "timingFunction": "{easing.out}"
+      },
+      "$description": "Underline and border weight changes. Animate transform, opacity or box-shadow only; never transition: all."
+    }
+  }
+}

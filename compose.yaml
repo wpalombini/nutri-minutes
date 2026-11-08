@@ -27,7 +27,7 @@ x-worker-env: &worker-env
 
 services:
   db:
-    image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
     restart: unless-stopped
     environment:
       POSTGRES_USER: pipeline
@@ -59,7 +59,7 @@ services:
 
   # Creates or updates the login roles for the workers and the API, then exits.
   db-roles:
-    image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
     entrypoint:
       - sh
       - -c

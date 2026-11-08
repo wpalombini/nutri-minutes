@@ -89,7 +89,7 @@ Keep `maskable` and `any` as separate entries; a single icon with `purpose: "any
 
 ## Re-exporting
 
-Edit the SVGs by hand (keep them free of editor metadata), then run the script from the repo root with an existing `sharp` install on `NODE_PATH`. The repo doesn't declare `sharp` anywhere. The web app (`web/`) doesn't exist yet. Once it does, an npm install of it normally includes `sharp`, because it is an optional dependency of Next.js, but pnpm or `--omit=optional` installs leave it out. Until then, point `NODE_PATH` at any local `sharp` install, or produce the files by hand from the export spec above. For example, once `web/` exists:
+Edit the SVGs by hand (keep them free of editor metadata), then run the script from the repo root with an existing `sharp` install on `NODE_PATH`. The repo doesn't declare `sharp` anywhere. The web app (`web/`) doesn't exist yet. Once it does, an npm install of it normally includes `sharp`, because it is an optional dependency of Next.js, but pnpm or `--omit=optional` installs leave it out. Until then, point `NODE_PATH` at any local `sharp` install, or produce the files by hand from the export spec below. For example, once `web/` exists:
 
 ```sh
 NODE_PATH=web/node_modules node design/icons/export-icons.cjs

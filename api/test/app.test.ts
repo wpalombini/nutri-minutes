@@ -29,6 +29,14 @@ describe('health checks', () => {
     expect(logs.lines).toHaveLength(0)
   })
 
+  it('hides health checks from requests that came through Cloudflare', async () => {
+    const { app } = await setup()
+    for (const path of ['/healthz', '/readyz']) {
+      const res = await app.request(path, { headers: { 'cf-ray': '8f0000000000abcd-SYD' } })
+      expect(res.status).toBe(404)
+    }
+  })
+
   it('reports ready when the database answers', async () => {
     const { app } = await setup()
     const res = await app.request('/readyz')

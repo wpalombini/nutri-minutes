@@ -54,6 +54,15 @@ export function createApp(deps: AppDependencies) {
     }),
   )
 
+  // Health checks are for Docker and operators on the VM. Requests through Cloudflare carry
+  // CF-Ray, so they get a 404 and can't run database checks at will.
+  const internalOnly = createMiddleware<Env>(async (c, next) => {
+    if (c.req.header('cf-ray')) return c.json({ error: 'not_found' }, 404)
+    await next()
+  })
+  app.use('/healthz', internalOnly)
+  app.use('/readyz', internalOnly)
+
   // Liveness: the process is serving requests. It doesn't touch the database.
   app.get('/healthz', (c) => c.json({ status: 'ok' }))
 

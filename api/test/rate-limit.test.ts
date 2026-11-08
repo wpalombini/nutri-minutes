@@ -40,6 +40,13 @@ describe('rateLimit', () => {
     expect((await request('client-b')).status).toBe(200)
   })
 
+  it('keeps memory bounded by forgetting the oldest client', async () => {
+    const { request } = setup(1)
+    expect((await request('first')).status).toBe(200)
+    for (let i = 0; i < 1_000; i++) await request(`client-${i}`)
+    expect((await request('first')).status).toBe(200)
+  })
+
   it('starts a new window after the period', async () => {
     const { request, advance } = setup(1)
     expect((await request()).status).toBe(200)

@@ -137,10 +137,17 @@ services:
   # configured on the tunnel in Cloudflare; the token only identifies this connector.
   cloudflared:
     image: cloudflare/cloudflared:2026.10.3@sha256:faa8e0a1475f137c910be6025f43c8e4092fdd35461b31e19fd1390657a1ff39
-    command: ["tunnel", "run"]
+    # Metrics listen on loopback only, for the health check.
+    command: ["tunnel", "--metrics", "127.0.0.1:20241", "run"]
     restart: unless-stopped
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:20241", "ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]

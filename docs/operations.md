@@ -28,7 +28,8 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 - **Re-run a past window:** `docker compose run --rm scout --window-start YYYY-MM-DD --window-end YYYY-MM-DD`.
 - **API checks:** `docker compose exec api node -e "fetch('http://127.0.0.1:3000/readyz').then(async (r) => console.log(r.status, await r.text()))"`. `/healthz` reports the process is up and `/readyz` that the database answers. Neither needs a token.
 - **Database shell:** `docker compose exec db psql -U pipeline pipeline`.
-- **Dependency updates:** Dependabot opens weekly PRs for npm and uv packages, base images and pinned actions, 14 days after each release. They go through the normal review. The Postgres image in `.github/workflows/workers.yml` must be updated by hand to match `compose.yaml`.
+- **Dependency updates:** Dependabot opens weekly PRs for npm and uv packages, base images and pinned actions, 14 days after each release. They go through the normal review. Two pins must be updated by hand: the Postgres service image in `.github/workflows/workers.yml`, to match `compose.yaml`, and the `setup-uv` `version` there, to match the uv image in `workers/Dockerfile`.
+- **Login roles test:** CI checks `infra/postgres/login-roles.sql` with `infra/postgres/test-login-roles.sh`. Roles are server-wide, so the script refuses to run outside CI unless `ALLOW_SERVER_ROLE_CHANGES=1` is set; never run it against the stack's database server.
 - **Change the schedule:** edit `workers/crontab` (times are UTC), then redeploy.
 - **Project mail:** `contact@nutriminutes.com` is the contact address Scout sends to Europe PMC. Cloudflare Email Routing forwards it to the owner's inbox, so manage it in the Cloudflare dashboard under Email Routing.
 

@@ -6,10 +6,12 @@
 \set ON_ERROR_STOP on
 
 -- Keep passwords out of the server log. A failing statement is normally logged with its text,
--- which here would include a password. Both settings need a superuser, which the schema owner
--- is in the Compose stack.
+-- which here would include a password. These settings need a superuser, which the schema owner
+-- is in the Compose stack. On managed Postgres without one, remove them and set the passwords
+-- another way.
 SET log_min_error_statement = panic;
 SET log_statement = 'none';
+SET log_min_duration_statement = -1;
 
 SELECT 'CREATE ROLE pipeline_runner LOGIN'
 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'pipeline_runner')

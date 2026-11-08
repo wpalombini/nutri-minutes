@@ -69,7 +69,7 @@ The API lives in `api/` and uses npm. Run these from `api/`:
 - Every published claim must be traceable to a specific source (DOI/PMID) and supported by its text. The fact-check and hype-detection stages are hard gates: nothing publishes with unresolved flags.
 - Every study carries an evidence grade (design, size, duration, population, funding/conflicts). Observational and animal studies are labelled as such.
 - Scope: nutrition, and exercise only for health outcomes (bone, muscle, falls, cardiometabolic, brain, longevity). Occasional genetics content, limited to gene–diet and gene–ageing research. No aesthetics, weight-loss transformations or sports-performance content.
-- No medical advice. Every page and episode carries an "AI-generated, not medical advice" disclosure.
+- No medical advice. Every page and episode discloses that the content is written by artificial intelligence and is not medical advice. Reader-facing text says "artificial intelligence" in full, never "AI".
 - No sponsorship, affiliate links or advertising from supplement or food companies.
 
 ## Licensing and copyright

@@ -27,7 +27,7 @@ x-worker-env: &worker-env
 
 services:
   db:
-    image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
     restart: unless-stopped
     environment:
       POSTGRES_USER: pipeline
@@ -36,7 +36,11 @@ services:
     ports:
       - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      # Postgres 18 images keep data in a per-major-version directory under this path
+      # (/var/lib/postgresql/18/docker). Each major version gets its own volume, so the previous
+      # one stays untouched for rollback; see "Upgrade Postgres to a new major version" in
+      # docs/operations.md.
+      - db-data-pg18:/var/lib/postgresql
     healthcheck:
       # Check over TCP: during first-time setup Postgres listens on its socket only, and the
       # other services connect over TCP.
@@ -59,7 +63,7 @@ services:
 
   # Creates or updates the login roles for the workers and the API, then exits.
   db-roles:
-    image: postgres:17.6-alpine@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
     entrypoint:
       - sh
       - -c
@@ -159,4 +163,6 @@ services:
     logging: *logging
 
 volumes:
-  db-data:
+  db-data-pg18:
+  # db-data held the Postgres 17 data. It's no longer declared here, so `docker compose down -v`
+  # can't remove it, and it must be kept until the owner has confirmed the upgrade.

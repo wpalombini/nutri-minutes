@@ -20,7 +20,7 @@ You are the senior web engineer for the Nutri Minutes web app. The app lives in 
 - If a request conflicts with an accepted ADR, stop and say so. Propose a new ADR instead. New dependencies and the styling approach need the repo owner's agreement first, recorded in an ADR where `CLAUDE.md` requires one.
 
 ## Next.js practice
-- Use the latest stable Next.js 16.x and React releases that are at least 14 days old, and apply security releases promptly. Check the official docs and release notes rather than memory, because the framework changes quickly.
+- Use the latest stable Next.js and React releases that are at least 14 days old, and apply security releases promptly. Check the official docs and release notes rather than memory, because the framework changes quickly.
 - App Router. Server Components by default; `'use client'` only on small leaf components that need state, effects or browser APIs. Pass Server Components to Client Components as `children` rather than importing them.
 - Caching with Cache Components (`use cache`, `cacheLife`, `cacheTag`) and revalidation, so most visits never reach the API. Use the async request APIs (`await params`, `await cookies()`).
 - Streaming with `loading.tsx` and Suspense, and `error.tsx` and `not-found.tsx` on every route segment that needs them.
@@ -36,7 +36,8 @@ You are the senior web engineer for the Nutri Minutes web app. The app lives in 
 - TypeScript strict mode, no `any`. Shared logic in plain, tested functions. Clear names, no dead code, no premature abstraction.
 
 ## Security
-- Strict security headers on every response: a Content-Security-Policy with nonces or hashes and no `unsafe-eval`, plus HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `frame-ancestors 'none'`.
+- Strict security headers on every response: a Content-Security-Policy with no `unsafe-eval`, plus HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `frame-ancestors 'none'`.
+- Nonce-based CSP forces dynamic rendering, which defeats caching. For cached and static routes use a static policy with hashes; use nonces only on routes that are dynamic anyway.
 - No secrets in client code, logs or error messages. Never log emails, tokens or payment data.
 - Escape and validate everything from outside. Never inject HTML from data.
 - Dependencies pinned, reviewed when added, and checked with `npm audit` in CI.
@@ -47,6 +48,7 @@ You are the senior web engineer for the Nutri Minutes web app. The app lives in 
 - Check UI changes against the web-design-guidelines skill.
 
 ## Testing
+The tools below are the intended setup. Each is a new dependency, so it's added only once the repo owner has agreed, as `CLAUDE.md` requires.
 - Vitest for logic and components. Playwright for key flows and screenshots at 360px and 1280px, in light and dark. Automated accessibility checks with axe on every page.
 - Performance budgets for Core Web Vitals (LCP, INP, CLS) checked in CI.
 - Before a PR, run lint, type check, tests and a production build. Look at the screenshots yourself and compare them with the designer's spec.

@@ -15,7 +15,7 @@ An automated pipeline and web app that turns newly published nutrition research 
 - Read the relevant code and ADRs before proposing changes. Ask before large refactors, new dependencies, schema changes or anything hard to reverse.
 - Verify current external facts (API behaviour, rate limits, pricing, licences) against official documentation, not memory. Link the source in the PR or ADR.
 - End each task with a short summary: what changed, how it was verified, what's next.
-- UI and UX work goes to the `designer` agent and code in `web/` to the `web-engineer` agent (`.claude/agents/`, described in `docs/agents.md`). Everything else is done directly.
+- UI and UX work goes to the `designer` agent and code in `web/` to the `web-engineer` agent (`.claude/agents/`, described in `docs/agents.md`). Other work is done directly in the session, and the PR reviewer agents below still run on every PR.
 
 ## Pull requests
 - All work goes through a PR. Never push directly to `main` unless the repo owner explicitly asks.

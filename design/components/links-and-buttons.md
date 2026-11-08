@@ -6,7 +6,7 @@ Shared rules:
 - Focus: the standard ring on `:focus-visible` (`focus.ring`, `focus.ring-width`, `focus.ring-offset`), on every variant, in every state. See [App shell](../screens/app-shell.md#focus).
 - Hover never moves anything: no lift, no scale, no shadow. It thickens an underline or a border.
 - Hover is not the only feedback: on touch, where there's no hover, the rest state already shows the element is interactive.
-- Never `transition: all`. Border weight changes animate `box-shadow` over `motion.hover`; underline thickness changes are instant.
+- Hover changes are instant: border weight, border colour and underline thickness all change with no transition. PLAN section 7 allows animating only `transform` and `opacity`, and none of these hover changes use them. Never `transition: all`.
 - Under `prefers-reduced-motion: reduce`, nothing animates.
 - `touch-action: manipulation` on all of them.
 
@@ -59,7 +59,7 @@ The "Browse by topic" links on the home page and the list on `/topics`: links st
 | State | Treatment |
 |---|---|
 | Rest | `type.interface`, `color: text.link`, no underline; `border: border.control-width border.control-style border.control`; `border-radius: radius.control`; `padding-inline: space.16`; `min-block-size: target.primary`; inline-flex, centred vertically; background none |
-| Hover | `border-color: border.control-hover`, and the extra width drawn inside with `box-shadow: inset 0 0 0 calc(border.control-hover-width − border.control-width) border.control-hover`, so the layout doesn't shift |
+| Hover | `border-color: border.control-hover`, and the extra width drawn inside with `box-shadow: inset 0 0 0 calc(border.control-hover-width - border.control-width) border.control-hover`, so the layout doesn't shift |
 | Focus | Ring outside the outline (`focus.ring-offset`) |
 | Visited | Unchanged |
 | Disabled | Not used |
@@ -98,7 +98,7 @@ For a second action next to a primary one (none in the MVP yet; specified so the
 | Focus, active, busy, disabled | As the primary button |
 
 ## The "Why this grade" toggle
-A `<summary>`, specified in [Why this grade](why-this-grade.md#tokens): full-width row, `target.primary` tall, heading text underlined on hover, standard ring.
+A `<button>` inside an `h2`, specified in [Why this grade](why-this-grade.md#tokens): full-width row, `target.primary` tall, heading text underlined on hover, standard ring.
 
 ## Data
 None.

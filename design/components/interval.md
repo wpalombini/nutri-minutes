@@ -60,7 +60,7 @@ still plausible.
 
 | Part | Tokens |
 |---|---|
-| Figure | Full container width (`layout.content-max` minus gutters), `margin: 0` |
+| Figure | The full content width: up to `layout.content-max` (1120px at a 1280px viewport, the same as the [app shell](../screens/app-shell.md#layout-and-widths)), `margin: 0` |
 | Outcome | `type.meta-strong`, `text.primary` |
 | Comparison | `type.meta`, `text.secondary`, `margin-block-end: space.16` |
 | "No difference" label | `type.meta`, `text.secondary`, centred on the null line (`inset-inline-start: 50%; translate: -50% 0`), `margin-block-end: space.4` |
@@ -73,11 +73,11 @@ still plausible.
 | Direction words | `type.meta-strong`, `text.primary`, one row: lower word at the start, higher word at the end (`display: flex; justify-content: space-between; gap: space.16`), `margin-block-start: space.4`. If both don't fit on one line, each wraps within its half (`max-inline-size: 50%`; the higher word `text-align: end`). |
 | Caption | `type.interface`, `text.primary`, `max-inline-size: measure.caption`, `margin-block-start: space.16` |
 
-Every colour here has a recorded pair: bar on `surface.page` 6.83 / 7.74, diamond fill on the bar 6.83 / 7.74, diamond outline on the page 13.24 / 14.64, null and axis 6.04 / 8.21 (light / dark). The diamond's outline is only about 1.9:1 against the bar, so the fill carries it there; nothing else relies on the outline. The interval is only drawn on `surface.page` (`data.estimate-fill` is recorded only there).
+Every colour here has a recorded pair: bar on `surface.page` 6.83 / 7.74, diamond fill on the bar 6.83 / 7.74, diamond outline on the page 13.24 / 14.64, null and axis 6.04 / 8.21 (light / dark). The diamond's outline is only about 1.9:1 against the bar, so the fill carries it there; nothing else relies on the outline. `data.estimate-fill` is recorded against `data.interval` (the bar), not against a surface. It is the page colour, so the hollow diamond only reads correctly on `surface.page`: draw the interval only on the page, never on the raised panel.
 
 ### At 360px and 1280px
 - **360px:** the figure is 328px wide. Tick labels: only the two ends and the null value ("0.5", "1", "2"); the intermediate ticks are drawn but unlabelled, so labels can't collide at large text sizes.
-- **From `breakpoint.720` (and at 1280px):** all five tick labels. At 1280px the figure is the full 1056px container, the boldest thing on the page.
+- **From `breakpoint.720` (and at 1280px):** all five tick labels. At 1280px the figure is the full 1120px content width, the boldest thing on the page.
 - At 200% browser zoom the viewport narrows, so the phone rule applies and labels don't collide.
 
 ## Scale rules
@@ -88,7 +88,7 @@ The scale depends on the kind of measure. The API says which (`scale`: `ratio` o
 For risk ratio, odds ratio, hazard ratio and rate ratio.
 
 - Position: `p(v) = (ln v − ln lo) / (ln hi − ln lo) × 100%`.
-- The domain is always symmetric around 1 on the log scale, so 1 is always at 50% and 0.5 and 2 sit equally far from it. Pick the first of these that contains both interval limits strictly inside it:
+- The domain is always symmetric around 1 on the log scale, so 1 is always at 50% and 0.5 and 2 sit equally far from it. Pick the first of these that contains both limits strictly inside it (a limit exactly at 0.5 or 2 moves up to 0.25 to 4, and one exactly at 0.25 or 4 moves up to 0.1 to 10):
 
 | Domain | Tick values | Labels |
 |---|---|---|
@@ -97,7 +97,9 @@ For risk ratio, odds ratio, hazard ratio and rate ratio.
 | 0.1 to 10 | 0.1, 0.33, 1, 3, 10 | "0.1", "0.33", "1", "3", "10" |
 
   (0.67 and 0.33 stand for 1/1.5 and 1/3, placed at their exact log positions.)
-- If a limit is outside 0.1 to 10, use 0.1 to 10 and [clip](#clipped-ends) that end.
+- In 0.1 to 10, a limit exactly at 0.1 or 10 is drawn to the edge with a square end (it is on the scale, not beyond it).
+- If one or both limits are beyond 0.1 to 10 on opposite sides of 1, use 0.1 to 10 and [clip](#clipped-ends) each end that is beyond.
+- If **both** limits are beyond the same edge (for example 12 to 30), there's no bar to draw: use the [inconsistent numbers](#states) state's layout (no drawing), but keep the numbers in the caption and add "The whole range is beyond the scale shown."
 
 ### Differences: linear scale, no-difference line at 0
 For mean difference, risk difference (percentage points) and standardised mean difference.
@@ -106,6 +108,7 @@ For mean difference, risk difference (percentage points) and standardised mean d
 - The domain is symmetric around 0, so 0 is always at 50%: `lo = −m`, `hi = m`, where `m` is the smallest "nice" number (1, 2, 2.5 or 5 times a power of 10) that is at least 1.1 times the larger of `|lower limit|` and `|upper limit|`. The 1.1 keeps the bar off the edge.
 - Ticks at `−m`, `−m/2`, 0, `m/2`, `m`. Labels with the minus sign, no units (the unit is in the outcome line).
 - No clipping is needed: the domain always contains the interval.
+- **Both limits zero,** or more generally lower equal to upper: a range of zero width isn't a real confidence interval, and `m` would be 0. Route it to the [inconsistent numbers](#states) state.
 
 ### Both scales
 - The bar runs from `p(lower)` to `p(upper)`; the diamond is at `p(estimate)`.
@@ -113,7 +116,7 @@ For mean difference, risk difference (percentage points) and standardised mean d
 - The domain does not depend on other studies on the page. Two full-size intervals for different studies can't be compared by eye, and the page never puts two side by side.
 
 ### Clipped ends
-Only for ratios beyond 0.1 or 10. The bar runs to the edge of the plot and that end is drawn as a point, with `clip-path: polygon()` built from `space.8` (for example the right end: `polygon(0 0, calc(100% − space.8) 0, 100% 50%, calc(100% − space.8) 100%, 0 100%)`). The caption still gives the real limit, and adds "The upper end of the range is beyond the scale shown." (or "lower").
+Only for ratios beyond 0.1 or 10. The bar runs to the edge of the plot and that end is drawn as a point, with `clip-path: polygon()` built from `space.8` (for example the right end: `polygon(0 0, calc(100% - space.8) 0, 100% 50%, calc(100% - space.8) 100%, 0 100%)`). The caption still gives the real limit, and adds "The upper end of the range is beyond the scale shown." (or "lower").
 
 ## The caption
 
@@ -140,9 +143,9 @@ The same picture with no words, for comparing rows at a glance. The row's headli
 - Null line: at 50%, full box height, `data.null-width`, `data.null`.
 - Bar: centred vertically, `block-size: data.interval-glyph-thickness`, `data.interval`.
 - Diamond: diagonal `data.estimate-glyph-size` (side `calc(data.estimate-glyph-size / 1.4142)`), `data.estimate-fill` with a `data.estimate-border-width` `data.estimate-outline` border. At this size the border takes much of the diamond; that's expected and still reads as a hollow diamond.
-- **Glyph domains:** ratios always use the fixed domain 0.25 to 4, so ratio glyphs in a list are drawn on the same scale and can be compared; limits beyond it are clipped with a point built from `space.4`. Differences use the full-size rule, per row (units differ, so they can't share a scale).
+- **Glyph domains:** ratios always use the fixed domain 0.25 to 4, so ratio glyphs in a list are drawn on the same scale and can be compared; a limit exactly at 0.25 or 4 is drawn to the edge with a square end; a limit beyond it is clipped with a point built from `space.4`; if both limits are beyond the same edge, the glyph is replaced by the text "Outside scale" in the no-range style, and the hidden sentence still gives the numbers. Differences use the full-size rule, per row (units differ, so they can't share a scale).
 - No ticks, labels or animation.
-- **Accessibility:** the glyph is `aria-hidden="true"`. Next to it, a [visually hidden](../screens/app-shell.md#visually-hidden-text) sentence: "Main result: hazard ratio 0.91, 95% confidence interval 0.80 to 1.04, which includes no difference." (drop the last clause when it doesn't).
+- **Accessibility:** the glyph is `aria-hidden="true"`. Next to it, a [visually hidden](../screens/app-shell.md#visually-hidden-text) sentence that names the outcome: "Main result for hip fracture risk: hazard ratio 0.91, 95% confidence interval 0.80 to 1.04, which includes no difference." (drop the last clause when it doesn't). The row data therefore includes `outcome_label`.
 
 ## States
 
@@ -151,7 +154,7 @@ The same picture with no words, for comparing rows at a glance. The row's headli
 | Normal | As above | As above |
 | **No interval reported** (estimate but no limits) | Don't draw anything: no bar, no diamond, no axis. An invented range would be a false number. Keep the outcome lines, then the caption: the plain result, the estimate in words ("Hazard ratio 0.91."), and the fixed sentence "The abstract doesn't report a range." When the summary was written from the full text (`source_basis` is `full_text`), say "The paper doesn't report a range." instead. | No glyph. In its place, the text "No range reported" in `type.meta`, `text.secondary`, in the same 120px column (it may wrap to two lines). |
 | **No effect size at all** (for example a lab study with no comparable number) | The figure is left out. The study page's summary carries the result in words. | Text "No effect size" in the glyph column, same style. |
-| **Inconsistent numbers** (estimate outside its limits, lower above upper, a ratio ≤ 0) | Treat as "no interval reported" but say nothing about why on the page; log it with the summary ID. Never draw it. | As "No range reported". |
+| **Inconsistent numbers** (estimate outside its limits, lower above upper, lower equal to upper including both zero, a ratio ≤ 0) | Treat as "no interval reported" but say nothing about why on the page; log it with the summary ID. Never draw it. | As "No range reported". |
 | Loading, empty, error | Rendered with its page; no state of its own. | Same |
 
 ## Motion

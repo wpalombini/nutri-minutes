@@ -1,6 +1,6 @@
 # "Why this grade"
 
-An expandable section on the study page that explains the evidence grade: what raised and what lowered confidence. Closed by default, so the page stays short, and one keypress away.
+An expandable section on the study page that explains the evidence grade: what raised and what lowered certainty. Closed by default, so the page stays short, and one keypress away.
 
 ## Content
 - **Toggle:** "Why this grade is {level words, lower case}", for example "Why this grade is low certainty".
@@ -10,10 +10,11 @@ An expandable section on the study page that explains the evidence grade: what r
      - Review of studies: "A review starts from the certainty of the studies it combines, then moves up or down."
      - Observational study: "Observational studies start at low certainty, then move up or down."
      - Animal and lab studies: "Animal and lab studies start at very low certainty, because they don't test people."
-     (These follow GRADE's usual starting points. The exact rules belong to the Evidence Grader; confirm the sentences match it before launch.)
-  2. **"Raises confidence"** (plus icon) with its reasons.
-  3. **"Lowers confidence"** (minus icon) with its reasons.
+     (These follow GRADE's usual starting points. The exact rules belong to the Evidence Grader; whether these sentences match it is in the [open questions](../OPEN-QUESTIONS.md).)
+  2. **"Raises certainty"** (plus icon) with its reasons.
+  3. **"Lowers certainty"** (minus icon) with its reasons.
   4. A text link: "How we grade" (`/how-we-grade`).
+- "Certainty" replaces the plan's "Raises confidence" and "Lowers confidence" (PLAN section 5), so the section uses the same word as the grade itself (decision 1). This is a small change to the approved plan.
 - Each reason names its factor, then says what we found: "**Size:** 31,200 people, followed for 11 years." Factors come from a fixed list: Design, Size, Duration, Population, Funding and conflicts.
 - Both group headings always show. An empty group says "Nothing for this study."
 
@@ -35,11 +36,11 @@ Open:
     Observational studies start at       type.body
     low certainty, then move up or down.
 
-    (+) Raises confidence                h3, type.interface-strong, plus icon
+    (+) Raises certainty                  h3, type.interface-strong, plus icon
         - Size: 31,200 people, followed  list, type.body
           for 11 years.
 
-    (-) Lowers confidence                h3, minus icon
+    (-) Lowers certainty                  h3, minus icon
         - Design: dairy intake was       list
           self-reported once, at the
           start.
@@ -53,37 +54,40 @@ Open:
 
 ## Structure
 
-Native `<details>` and `<summary>`: keyboard and screen-reader support for free, works with no JavaScript, and browsers that support it open it for find-in-page.
+The [APG disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): a `<button>` inside the `h2`, controlling the panel after it. Screen readers keep the heading for navigation and announce the button's state.
 
 ```html
-<details class="why-grade" id="why-this-grade">
-  <summary>
-    <svg class="chevron" aria-hidden="true" …/>
-    <h2>Why this grade is low certainty</h2>
-  </summary>
-  <div class="content">
+<section class="why-grade" id="why-this-grade" aria-labelledby="why-grade-heading">
+  <h2 id="why-grade-heading">
+    <button type="button" aria-expanded="false" aria-controls="why-grade-panel">
+      <svg class="chevron" aria-hidden="true" …/>
+      Why this grade is low certainty
+    </button>
+  </h2>
+  <div id="why-grade-panel" class="content">
     <p>Observational studies start at low certainty, then move up or down.</p>
-    <h3><svg aria-hidden="true" …plus/>Raises confidence</h3>
+    <h3><svg aria-hidden="true" …plus/>Raises certainty</h3>
     <ul>…</ul>
-    <h3><svg aria-hidden="true" …minus/>Lowers confidence</h3>
+    <h3><svg aria-hidden="true" …minus/>Lowers certainty</h3>
     <ul>…</ul>
     <p><a href="/how-we-grade">How we grade</a></p>
   </div>
-</details>
+</section>
 ```
 
-- The `h2` inside `<summary>` is valid HTML (summary allows one heading) and keeps the section in the page outline. Test it in NVDA and VoiceOver: some screen readers announce the summary as a button and not the heading. If heading navigation fails in testing, fall back to an `h2` containing a `<button aria-expanded aria-controls>` (the APG disclosure pattern) and render the content visible when JavaScript is off.
-- Screen readers announce the state ("collapsed", "expanded") from `<summary>`; no `aria-expanded` is added by hand.
-- Remove the default marker (`summary { list-style: none }` and `summary::-webkit-details-marker { display: none }`) and use the chevron.
-- If the page is opened with `#why-this-grade`, open the details on load.
+- Enter and Space toggle it (a native `<button>` does this). `aria-expanded` changes between `"false"` and `"true"`. Focus stays on the button.
+- The button is the only content of the `h2`, so the heading's name is the button's text.
+- **Without JavaScript the content must still be readable.** The server renders the panel without `hidden`. A small inline script in `<head>` adds a `js` class to `<html>` before first paint, and only under `.js` is the closed panel hidden (`.js .content:not(.open) { display: none }`). There's no flash and no layout shift, and without JavaScript the panel is simply open with the button doing nothing. The inline script needs a CSP hash, like any static inline script.
+- If the page is opened with `#why-this-grade`, open the panel on load.
 - The open state is not stored in the URL: it's a reading aid, not page state.
+- Why not `<details>` and `<summary>`? HTML does allow a heading inside `<summary>`, but `<summary>` is exposed as a button and screen readers commonly drop the heading inside it, so the section disappears from heading navigation.
 
 ## Tokens
 - Section: `border-block: border.divider-width solid border.divider`, `margin-block: space.40`.
-- Summary: `display: flex; align-items: center; gap: space.12; min-block-size: target.primary; padding-block: space.12; cursor: pointer`. The `h2` inside: `type.interface-strong`, `text.primary`, `margin: 0`. The whole summary row is the target.
-- Hover on the summary: the heading text gets an underline at `link.underline-width` (it's a control, so it reacts like one; no colour change).
-- Focus: the standard ring on the `summary` (`:focus-visible`).
-- Chevron: `inline-size` and `block-size` `space.16`, `color: icon.default`, `flex: none`. Points right when closed and down when open (`rotate: 90deg` on `details[open]`).
+- `h2`: `margin: 0`. Button: reset its native styles (`appearance: none; background: none; border: none; padding-inline: 0; inline-size: 100%; text-align: start`), then `display: flex; align-items: center; gap: space.12; min-block-size: target.primary; padding-block: space.12; cursor: pointer`, `type.interface-strong`, `color: text.primary`. The whole row is the target.
+- Hover on the button: its text gets an underline at `link.underline-width`, instantly (it's a control, so it reacts like one; no colour change).
+- Focus: the standard ring on the button (`:focus-visible`).
+- Chevron: `inline-size` and `block-size` `space.16`, `color: icon.default`, `flex: none`. Points right when closed and down when open (`rotate: 90deg` when `aria-expanded="true"`).
 - Content: `padding-block-end: space.24`, `padding-inline-start: calc(space.16 + space.12)` so it lines up with the heading text; `max-inline-size: measure.body`.
 - Starting sentence: `type.body`, `text.primary`, `margin-block-end: space.24`.
 - Group headings (`h3`): `type.interface-strong`, `text.primary`, `display: flex; align-items: center; gap: space.8; margin-block: space.24 space.8`. Icons `space.16` square, `icon.default` (13.24 / 14.64 on the page, light / dark).

@@ -17,7 +17,7 @@ The scope in `CLAUDE.md`, as seven topics, in this order:
 | Longevity | `longevity` |
 | Genes and diet | `genes-and-diet` |
 
-The list comes from the API so it can change without a release, but the app expects names and slugs like these. Each topic also has a one-sentence description of what it covers (copy to be written; see the PR).
+The list comes from the API so it can change without a release, but the app expects names and slugs like these. Each topic also has a one-sentence description of what it covers. The descriptions in the wireframes are samples; who writes them, and where descriptions and counts come from, is in the [open questions](../OPEN-QUESTIONS.md). The seven topics don't cover every nutrition study in scope; that gap is listed there too.
 
 ## `/topics`
 
@@ -142,7 +142,7 @@ Every published summary in one topic, newest first, scannable by headline, grade
 - "Topics" link to `/topics` above the `h1`: `type.meta`, a [text link](../components/links-and-buttons.md#text-link), `margin-block-end: space.8`. It's a plain link, not a breadcrumb trail, so it needs no `nav`.
 - `h1`: as on `/topics`, `text-wrap: balance`.
 - Description: `type.interface`, `text.secondary`, `max-inline-size: measure.body`, `margin-block-start: space.8`. Count as on `/topics`, `margin-block-start: space.4`.
-- Month groups: `<section aria-labelledby>`, `h2` in `type.subheading`, `margin-block: space.40 space.8`. Months in `Intl.DateTimeFormat('en-AU', { month: 'long', year: 'numeric' })`.
+- Month groups: a plain `<section>` with no accessible name, so it isn't exposed as a region and the landmark list stays short; `h2` in `type.subheading`, `margin-block: space.40 space.8`. Months in `Intl.DateTimeFormat('en-AU', { month: 'long', year: 'numeric' })`.
 - Rows: the finding row with `headingLevel=3`, `showTopic=false`, `showDate=true`.
 - A month that spans two pages repeats its heading on the second page.
 

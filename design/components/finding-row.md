@@ -15,7 +15,7 @@ Headlines are never truncated: they carry the limits of the finding ("…but the
 
 ## Wireframes
 
-360px: text stacked, then the glyph and the grade on one line when they fit (they wrap at large text sizes).
+360px: everything stacked in one column: text, then the glyph, then the grade and design label.
 
 ```
 --------------------------------  divider
@@ -23,10 +23,9 @@ Twice-weekly balance classes cut   headline, type.finding-title, link
 falls in adults over 70
 Falls and independence             topic, type.meta, text link
                                    space.12
- --<==◆==>-|----  [■][■][■][□]     glyph, then grade (compact)
-                  Moderate         and design label
-                  certainty
-                  (Randomised trial)
+ --<==◆==>-|----                   glyph
+[■][■][■][□] Moderate certainty    grade (compact)
+(Randomised trial)                 design label, wraps if needed
 --------------------------------  divider
 ```
 
@@ -68,7 +67,7 @@ Falls and independence                      |                   |
 - Meta: `display: flex; flex-wrap: wrap; align-items: center; column-gap: space.16; row-gap: space.4`.
 
 ### Below 720px
-Headline, topic and date stack. Result and meta share a line: make the `article` `display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: space.16; row-gap: 0` with the text items spanning both columns (`grid-column: 1 / -1`), so the glyph sits in column 1 and the meta in column 2, both with `margin-block-start: space.12`. In column 2 the meta stacks if it doesn't fit.
+One column, in DOM order: headline, topic, date, result, meta, each full width. The result and the meta each have `margin-block-start: space.12`. Putting the glyph and the meta side by side would leave the meta about 152px at 320px, narrower than "(Observational study)" (about 185px), so they stack. Inside the meta, the grade and the design label wrap onto separate lines when they don't fit.
 
 ### From 720px (and at 1280px)
 `grid-template-columns: minmax(0, 1fr) data.interval-glyph-width max-content; column-gap: space.32; align-items: start`, with named areas:
@@ -102,10 +101,10 @@ None. No hover lift, no reveal on scroll.
 |---|---|---|
 | `public_id` | string | For the study URL |
 | `headline` | string | The finding, sentence case |
-| `topic` | `{ name, slug }` | Primary topic |
+| `topic` | `{ name, slug }` | Primary topic (no planned stage produces this yet; see the [open questions](../OPEN-QUESTIONS.md)) |
 | `grade_level` | 1–4 | [Evidence grade](evidence-grade.md) |
 | `design_category` | enum | [Study design label](study-design-label.md) |
-| `effect` | object or null | `measure`, `scale`, `estimate`, `ci_lower`, `ci_upper`, `ci_level`, `unit`: the [interval](interval.md#data) fields the glyph needs |
+| `effect` | object or null | `measure`, `scale`, `estimate`, `ci_lower`, `ci_upper`, `ci_level`, `unit` and `outcome_label`: the [interval](interval.md#data) fields the glyph and its hidden sentence need |
 | `published_on` | date | When our summary was published |
 | `retracted` | boolean | From the article's relations (`retraction_in`) |
 | `doi` | string | Not shown in the row, but required: a row without one is invalid |

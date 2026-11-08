@@ -133,7 +133,7 @@
     },
     "control-hover": {
       "$value": "{palette.spruce-ink.dark}",
-      "$description": "Control outline on hover: darker and thicker, so hover raises contrast.",
+      "$description": "Control outline on hover: Spruce ink, the highest-contrast ink in each theme (darkest in light, lightest in dark), and thicker, so hover raises contrast.",
       "$extensions": {
         "io.github.wpalombini.nutri-minutes": {
           "contrast": [
@@ -250,11 +250,18 @@
     },
     "estimate-outline": {
       "$value": "{palette.spruce-ink.dark}",
-      "$description": "Point-estimate diamond outline. Against the bar it is only about 1.9:1, so nothing relies on it there; where the diamond extends past the bar, it is checked against the page.",
+      "$description": "Point-estimate diamond outline. Against the bar it is only about 1.9:1, so nothing relies on it there; where the diamond extends past the bar, it is checked against the surfaces.",
       "$extensions": {
         "io.github.wpalombini.nutri-minutes": {
           "contrast": [
-            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "diamond outline on page" }
+            { "on": "{surface.page}", "kind": "non-text", "min": 3.0, "ratio": 14.64, "use": "diamond outline on page" },
+            {
+              "on": "{surface.raised}",
+              "kind": "non-text",
+              "min": 3.0,
+              "ratio": 12.74,
+              "use": "diamond outline on raised"
+            }
           ]
         }
       }

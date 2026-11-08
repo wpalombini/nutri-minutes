@@ -7,7 +7,7 @@
 ## Context
 The web app needs hosting with previews and a CDN, and Vercel provides both for Next.js. Postgres runs in Docker Compose on the VM, bound to `127.0.0.1`, with no inbound ports open to the internet.
 
-ADR 0002 has the web app query Postgres with Kysely, which needs a direct database connection. From Vercel's serverless functions that would mean publishing the Postgres port to the internet. Cloudflare Tunnel can't avoid that here, because reaching a private TCP service through a tunnel needs a Cloudflare client (`cloudflared` or the Cloudflare One client) on the connecting side, and serverless functions can't run one. Vercel offers [static egress IPs](https://vercel.com/docs/connectivity/static-ips) on Pro and Enterprise as an add-on, but they come from a pool shared with other Vercel customers, and allowlisting them would still leave Postgres on the internet.
+ADR 0002 has the web app query Postgres with Kysely, which needs a direct database connection. From Vercel's serverless functions that would mean publishing the Postgres port to the internet. Cloudflare Tunnel can't avoid that here, because reaching a private TCP service through a tunnel needs a Cloudflare client (`cloudflared` or the Cloudflare One client) on the connecting side, and serverless functions can't run one. Vercel offers [static egress IPs](https://vercel.com/docs/networking/static-ips) on Pro and Enterprise as an add-on, but they come from a pool shared with other Vercel customers, and allowlisting them would still leave Postgres on the internet.
 
 Mobile apps are expected later, and ADR 0002 already says they will use an API, never Postgres directly.
 
@@ -24,15 +24,15 @@ An earlier prototype put PostgREST behind a Cloudflare Tunnel and called it from
 - **Authenticated at the edge and at the API:**
   - The API subdomain is a Cloudflare Access application with a single Service Auth policy that allows only the web app's own [service token](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/), not any token on the account.
   - The web app sends that token (`CF-Access-Client-Id` and `CF-Access-Client-Secret`) on every request.
-  - The API also [validates the Access JWT](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/) in the `Cf-Access-Jwt-Assertion` header, so a misrouted tunnel can't bypass Access. It checks the RS256 signature against the team's public keys, choosing the key by `kid` and caching the keys with a refresh because Cloudflare rotates them. It also checks that `aud` is this application's AUD tag, `iss` is the team domain and the token hasn't expired. Without the `aud` check, a token issued for any other Access application on the team would pass.
+  - The API also [validates the Access JWT](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/) in the `Cf-Access-Jwt-Assertion` header, so a misrouted tunnel can't bypass Access. It checks the RS256 signature against the team's public keys, choosing the key by `kid` and caching the keys with a refresh because Cloudflare rotates them. It also checks that `aud` is this application's AUD tag, `iss` is the team domain and the token hasn't expired, allowing a small leeway for clock skew. Without the `aud` check, a token issued for any other Access application on the team would pass.
   - Requests are rate limited at Cloudflare and in the API, so a leaked token can't be used for unlimited reads.
-  - The token is rotated on a schedule and at once if it may have leaked. Access allows two tokens at a time, so the new one is added to the policy, deployed to Vercel, and only then is the old one revoked. An alert fires before a token expires.
+  - The token is rotated on a schedule and at once if it may have leaked. The policy lists both the old and new tokens during the switch: the new one is added, deployed to Vercel, and only then is the old one revoked. An alert fires before a token expires.
   - Logs never include the `CF-Access-*` headers, the JWT or database credentials. They may include the token's client ID, which isn't secret.
 - **Explicit, versioned endpoints:**
   - Paths are versioned, starting with `/v1/`.
   - Each endpoint validates its input and returns only the fields the client needs.
   - There is no generic query language, so clients can't compose arbitrary filters.
-- **Least-privilege database role:** the API connects as its own login role, created and kept up to date outside migrations like `pipeline_runner`, with its password set in `.env` and a connection limit. That role reads published views only, never base tables, as planned in `docs/database.md`. It gets write access only to the tables the web app owns, such as accounts and billing, when they are added.
+- **Least-privilege database role:** the API connects as its own login role, created and kept up to date outside migrations like `pipeline_runner` but granted its own group role rather than `pipeline_worker`, with its password set in `.env` and a connection limit. That role reads published views only, never base tables, as planned in `docs/database.md`. It gets write access only to the tables the web app owns, such as accounts and billing, when they are added.
 - **Server-side only in Next.js:**
   - All data is fetched in Server Components, Route Handlers or Server Actions.
   - The module that calls the API starts with `import 'server-only'`, so importing it from a Client Component fails the build.
@@ -62,7 +62,7 @@ An earlier prototype put PostgREST behind a Cloudflare Tunnel and called it from
 ## References
 - [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
 - [Cloudflare Access: validating JWTs](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
-- [Vercel static IPs](https://vercel.com/docs/connectivity/static-ips)
+- [Vercel static IPs](https://vercel.com/docs/networking/static-ips)
 - [Cloudflare Access service tokens](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/)
 - [Cloudflare: connect to a private database through a tunnel (client required)](https://developers.cloudflare.com/cloudflare-one/tutorials/mysql-network-policy/)
 - [Cloudflare Hyperdrive with a private database](https://developers.cloudflare.com/hyperdrive/configuration/connect-to-private-database/)

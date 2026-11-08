@@ -6,7 +6,7 @@ One summary in a list: its headline, topic, grade, design and a glyph of its mai
 1. **Headline** (the finding, as a link to the study page).
 2. **Topic** (a link to its archive). Left out on that topic's own archive page.
 3. **Published date,** on topic archives only (on the home page every row is from the same week).
-4. **Interval glyph,** or "No range reported" / "No effect size".
+4. **Interval glyph,** or "No range reported" / "No effect size" / "Outside scale".
 5. **Evidence grade** (compact) and **study design label,** plus "Retracted" if the study was retracted (see [states](#states)).
 
 This is also the DOM order, at every width, so reading order, tab order and visual order always match.
@@ -63,7 +63,7 @@ Falls and independence                      |                   |
 - Headline: `type.finding-title`, `text-wrap: balance`, `overflow-wrap: anywhere`, `margin: 0`. The link is a [headline link](links-and-buttons.md#headline-link).
 - Topic: `type.meta`, a [text link](links-and-buttons.md#text-link), `margin-block-start: space.4`.
 - Date: `type.meta`, `text.secondary`, `margin-block-start: space.4`.
-- Result: the [glyph](interval.md#the-glyph-120px), or the "No range reported" / "No effect size" text in `type.meta`, `text.secondary`, `max-inline-size: data.interval-glyph-width`.
+- Result: the [glyph](interval.md#the-glyph-120px), or the "No range reported" / "No effect size" / "Outside scale" text in `type.meta`, `text.secondary`, `max-inline-size: data.interval-glyph-width`.
 - Meta: `display: flex; flex-wrap: wrap; align-items: center; column-gap: space.16; row-gap: space.4`.
 
 ### Below 720px

@@ -1,6 +1,6 @@
 // Re-exports the raster icons from icon.svg, icon-app.svg and icon-maskable.svg.
 // Needs the `sharp` package (it renders SVG with librsvg). Nothing is downloaded:
-// run it with an existing install on NODE_PATH, for example from the web app:
+// run it with an existing install on NODE_PATH (see README.md), for example once web/ exists:
 //   NODE_PATH=web/node_modules node design/icons/export-icons.cjs
 "use strict";
 

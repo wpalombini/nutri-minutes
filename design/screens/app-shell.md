@@ -23,8 +23,8 @@ The frame around every page: skip link, header, main and footer. It is built fir
 - One `<header>` (banner landmark), one `<nav aria-label="Main">`, one `<main>`, one `<footer>` (contentinfo landmark). No other landmarks in the shell. Pages may add an `<aside>` (the study page does) and labelled `<section>`s.
 - `lang="en-AU"`.
 - `<meta name="viewport" content="width=device-width, initial-scale=1">`. Never `maximum-scale` or `user-scalable=no`.
-- `color-scheme: light dark` on `:root`, and `<meta name="theme-color">` twice, one per scheme, matching `surface.page`: `#EDF2EF` with `media="(prefers-color-scheme: light)"` and `#0E1C19` with `media="(prefers-color-scheme: dark)"`, through Next.js's `viewport` export (see [`icons/README.md`](../icons/README.md#using-it-in-the-web-app-nextjs-app-router)). The [theme control](../components/theme-control.md) narrows both when the reader picks Light or Dark.
-- One tiny inline script in `<head>` applies a stored theme before first paint ([theme control](../components/theme-control.md#applied-before-first-paint)).
+- `color-scheme` set by each generated colour block (`light` in the light block, `dark` in the dark blocks), and `<meta name="theme-color">` twice, one per scheme, matching `surface.page`: `#EDF2EF` with `media="(prefers-color-scheme: light)"` and `#0E1C19` with `media="(prefers-color-scheme: dark)"`, through Next.js's `viewport` export (see [`icons/README.md`](../icons/README.md#using-it-in-the-web-app-nextjs-app-router)). The [theme control](../components/theme-control.md) narrows both when the reader picks Light or Dark.
+- `<html>` has `suppressHydrationWarning`. One tiny inline script, a plain `<script>` in `<head>` of the server root layout, applies a stored theme before first paint ([theme control](../components/theme-control.md#applied-before-first-paint)).
 - `body`: background `surface.page`, colour `text.primary`, `type.interface` as the default text style, `font-optical-sizing: auto` (Literata's optical size axis) and `-webkit-text-size-adjust: 100%`.
 - `<title>`: "{page title} – Nutri Minutes" with an en dash, for example "Page not found – Nutri Minutes". Each spec gives its page title. Every page has exactly one `h1`.
 
@@ -158,8 +158,8 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 - `padding-block: space.40 space.56`.
 - All footer text `type.meta`, colour `text.secondary`. The disclosure and the no-advertising line `max-inline-size: measure.caption`.
 - Links: [text links](../components/links-and-buttons.md#text-link) (`text.link`, always underlined), `type.meta`. Each link `min-block-size: target.min` with `display: inline-flex; align-items: center`, stacked with `gap: space.4` (targets at least 24px tall and never overlapping).
-- From 720px: grid `grid-template-columns: minmax(0, 1fr) auto`, `column-gap: space.56`; the links sit in the second column, top-aligned, stacked. Below 720px everything stacks with `gap: space.16`.
-- Theme control: in the first column, after the no-advertising line, `margin-block-start: space.24` at every width. Its tokens and states are in [its spec](../components/theme-control.md#tokens-and-states).
+- From 720px: grid `grid-template-columns: minmax(0, 1fr) auto`, `column-gap: space.56`; the links sit in the second column, top-aligned, stacked. Below 720px everything stacks with `gap: space.16`; from 720px the rows of the first column keep `row-gap: space.16`.
+- Theme control: `grid-column: 1` from 720px, after the no-advertising line. `margin-block-start: space.8`, which adds to the `space.16` gap for 24px at every width. Its space is reserved before it is shown, so it never shifts the footer. Its tokens and states are in [its spec](../components/theme-control.md#tokens-and-states).
 
 ## Focus
 
@@ -196,6 +196,8 @@ The one utility with fixed values, because it is a standard technique rather tha
   white-space: nowrap;
 }
 ```
+
+For inputs that are drawn by their label and must stay hidden even when focused (the [theme control](../components/theme-control.md) radios), use `.visually-hidden-always`: the same declarations without the `:not(:focus):not(:active)` exemption, which exists only for the skip link.
 
 Use it for screen-reader-only text such as "Evidence grade: " before a grade. Never use `display: none` or `aria-hidden` on text that should be read.
 

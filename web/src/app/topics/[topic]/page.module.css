@@ -1,0 +1,17 @@
+.empty {
+  margin-block-start: var(--space-40);
+  font-family: var(--type-body-font-family);
+  font-size: var(--type-body-font-size);
+  font-weight: var(--type-body-font-weight);
+  letter-spacing: var(--type-body-letter-spacing);
+  line-height: var(--type-body-line-height);
+}
+
+.findings {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  margin-block-start: var(--space-8);
+  font-family: var(--type-body-font-family);
+  font-size: var(--type-body-font-size);
+}

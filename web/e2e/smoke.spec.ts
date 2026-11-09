@@ -31,6 +31,20 @@ const pages = [
     title: 'How summaries are made – Nutri Minutes',
   },
   {
+    name: 'topics',
+    path: '/topics',
+    status: 200,
+    heading: 'Topics',
+    title: 'Topics – Nutri Minutes',
+  },
+  {
+    name: 'topic-bone-health',
+    path: '/topics/bone-health',
+    status: 200,
+    heading: 'Bone health',
+    title: 'Bone health – Nutri Minutes',
+  },
+  {
     name: 'not-found',
     path: '/no-such-page',
     status: 404,
@@ -197,4 +211,51 @@ test('after a client-side navigation, focus moves to the new page heading', asyn
   const heading = page.getByRole('heading', { level: 1 })
   await expect(heading).toHaveText('Nutri Minutes is being rebuilt')
   await expect(heading).toBeFocused()
+})
+
+const topicNames = [
+  ['bone-health', 'Bone health'],
+  ['muscle-and-strength', 'Muscle and strength with age'],
+  ['falls-and-independence', 'Falls and independence'],
+  ['heart-and-metabolism', 'Heart and metabolism'],
+  ['brain-health', 'Brain health'],
+  ['longevity', 'Longevity'],
+  ['genes-and-diet', 'Genes and diet'],
+] as const
+
+test('/topics lists all seven topics with descriptions and counts', async ({ page }) => {
+  await page.goto('/topics')
+  const rows = page.getByRole('listitem').filter({ has: page.getByRole('heading', { level: 2 }) })
+  await expect(rows).toHaveCount(7)
+  for (const [index, [slug, name]] of topicNames.entries()) {
+    const row = rows.nth(index)
+    await expect(row.getByRole('link', { name })).toHaveAttribute('href', `/topics/${slug}`)
+    await expect(row.locator('p').first()).toContainText('Research on')
+    await expect(row.getByText('No summaries yet')).toBeVisible()
+  }
+})
+
+for (const [slug, name] of topicNames) {
+  test(`the ${slug} archive shows the empty-topic state`, async ({ page }) => {
+    const response = await page.goto(`/topics/${slug}`)
+    expect(response?.status()).toBe(200)
+    await expect(page).toHaveTitle(`${name} – Nutri Minutes`)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
+    await expect(page.getByText('No summaries yet', { exact: true })).toBeVisible()
+    await expect(page.getByText('No summaries in this topic yet.')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'See this week’s findings' })).toHaveAttribute(
+      'href',
+      '/',
+    )
+    await expect(page.getByRole('main').getByRole('link', { name: 'Topics' })).toHaveAttribute(
+      'href',
+      '/topics',
+    )
+  })
+}
+
+test('an unknown topic is a real 404', async ({ request, page }) => {
+  expect((await request.get('/topics/no-such-topic')).status()).toBe(404)
+  await page.goto('/topics/no-such-topic')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page not found')
 })

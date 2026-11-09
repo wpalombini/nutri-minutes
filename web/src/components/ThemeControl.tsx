@@ -13,8 +13,16 @@ import {
 import styles from './ThemeControl.module.css'
 
 const listeners = new Set<() => void>()
-/** The choice for this page view when storage is blocked. */
+/** The choice for this page view, used when storage can't be read or the last write failed. */
 let memoryChoice: ThemeChoice = 'system'
+/** Set when a write fails (for example a full quota), so stale stored values don't win. */
+let preferMemory = false
+
+/** Test only: forgets the choice made in this page view, between unit tests. */
+export function resetThemeMemoryForTests(): void {
+  memoryChoice = 'system'
+  preferMemory = false
+}
 
 function subscribe(onChange: () => void): () => void {
   listeners.add(onChange)
@@ -29,7 +37,7 @@ function subscribe(onChange: () => void): () => void {
 }
 
 function getSnapshot(): ThemeChoice {
-  return readStoredTheme() ?? memoryChoice
+  return preferMemory ? memoryChoice : (readStoredTheme() ?? memoryChoice)
 }
 
 /** No option is checked and the control isn't ready until the client has read storage. */
@@ -39,7 +47,7 @@ function getServerSnapshot(): null {
 
 function choose(choice: ThemeChoice): void {
   memoryChoice = choice
-  writeStoredTheme(choice)
+  preferMemory = !writeStoredTheme(choice)
   for (const listener of listeners) listener()
 }
 
@@ -63,7 +71,7 @@ export function ThemeControl() {
 
   return (
     <fieldset className={styles.control} data-ready={theme === null ? 'false' : 'true'}>
-      <legend className={styles.legend}>Colour theme</legend>
+      <legend className={styles.legend}>Theme</legend>
       <div className={styles.options}>
         {themeChoices.map(({ value, label }) => (
           <label key={value} className={styles.option}>

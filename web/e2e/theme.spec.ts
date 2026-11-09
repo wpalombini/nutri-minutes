@@ -15,7 +15,7 @@ const stored = (page: Page) => page.evaluate(() => window.localStorage.getItem('
 
 /** The visible option: the radios themselves are hidden and drawn by their labels. */
 const option = (page: Page, name: 'System' | 'Light' | 'Dark') =>
-  page.getByRole('group', { name: 'Colour theme' }).getByText(name, { exact: true })
+  page.getByRole('group', { name: 'Theme' }).getByText(name, { exact: true })
 const radio = (page: Page, name: 'System' | 'Light' | 'Dark') => page.getByRole('radio', { name })
 
 /** Blocks the app's scripts, so the page stays as the server and the head script left it. */
@@ -129,6 +129,34 @@ test('Tab reaches the group once, on the checked option', async ({ page }) => {
   expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('INPUT')
 })
 
+test('a real Tab shows the focus ring on the option', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'How we grade' }).last().focus()
+  await page.keyboard.press('Tab')
+  await expect(radio(page, 'System')).toBeFocused()
+  const ring = await option(page, 'System').evaluate((el) => {
+    const style = getComputedStyle(el)
+    return { style: style.outlineStyle, width: style.outlineWidth }
+  })
+  expect(ring.style).not.toBe('none')
+  expect(Number.parseFloat(ring.width)).toBeGreaterThan(0)
+})
+
+test('in forced colours the checked option is distinguishable', async ({ page }) => {
+  await page.emulateMedia({ forcedColors: 'active' })
+  await page.goto('/')
+  await option(page, 'Light').click()
+  await expect(radio(page, 'Light')).toBeChecked()
+  const look = (name: 'System' | 'Light' | 'Dark') =>
+    option(page, name).evaluate((el) => {
+      const style = getComputedStyle(el)
+      return `${style.backgroundColor}|${style.color}|${style.borderColor}`
+    })
+  const checked = await look('Light')
+  expect(await look('System')).not.toBe(checked)
+  expect(await look('Dark')).not.toBe(checked)
+})
+
 test('without JavaScript the control is invisible and the page follows the system', async ({
   browser,
 }) => {
@@ -136,7 +164,7 @@ test('without JavaScript the control is invisible and the page follows the syste
   const page = await context.newPage()
   await page.goto('/')
   await expect(page.locator('fieldset')).toBeHidden()
-  await expect(page.getByRole('group', { name: 'Colour theme' })).toHaveCount(0)
+  await expect(page.getByRole('group', { name: 'Theme' })).toHaveCount(0)
   expect(await background(page)).toBe(DARK)
   await context.close()
 })

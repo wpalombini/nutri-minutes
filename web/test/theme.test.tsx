@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ThemeControl } from '@/components/ThemeControl'
+import { ThemeControl, resetThemeMemoryForTests } from '@/components/ThemeControl'
 import {
   applyTheme,
   parseTheme,
@@ -12,6 +12,7 @@ import {
 } from '@/lib/theme'
 
 beforeEach(() => {
+  resetThemeMemoryForTests()
   window.localStorage.clear()
   delete document.documentElement.dataset.theme
 })
@@ -103,7 +104,7 @@ describe('ThemeControl', () => {
   it('is a labelled group of three radios, checked from storage after mount', () => {
     window.localStorage.setItem(THEME_KEY, 'dark')
     render(<ThemeControl />)
-    const group = screen.getByRole('group', { name: 'Colour theme' })
+    const group = screen.getByRole('group', { name: 'Theme' })
     expect(group.getAttribute('data-ready')).toBe('true')
     expect(screen.getAllByRole('radio').map((radio) => radio.getAttribute('value'))).toEqual([
       'system',
@@ -140,6 +141,26 @@ describe('ThemeControl', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Light' }))
     expect(document.documentElement.dataset.theme).toBe('light')
     expect((screen.getByRole('radio', { name: 'Light' }) as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('applies the choice for this page view when a write fails but reads still work', () => {
+    window.localStorage.setItem(THEME_KEY, 'dark')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError')
+    })
+    render(<ThemeControl />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Light' }))
+    expect(window.localStorage.getItem(THEME_KEY)).toBe('dark')
+    expect(document.documentElement.dataset.theme).toBe('light')
+    expect((screen.getByRole('radio', { name: 'Light' }) as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('starts each test from System, after the reset', () => {
+    vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError')
+    })
+    render(<ThemeControl />)
+    expect((screen.getByRole('radio', { name: 'System' }) as HTMLInputElement).checked).toBe(true)
   })
 
   it('follows a change made in another tab without moving focus', () => {

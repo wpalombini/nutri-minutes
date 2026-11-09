@@ -9,7 +9,7 @@ Let a reader understand in under a minute what the study found, how sure we can 
 1. Topic link (where this sits).
 2. Retraction or correction notice, if any.
 3. **Headline** (`h1`): the finding, with its limits.
-4. [Evidence grade](../components/evidence-grade.md) (full) and [study design label](../components/study-design-label.md).
+4. [Evidence grade](../components/evidence-grade.md) (full) and [study design label](../components/study-design-label.md). When the funder sells the product tested, a line follows them: "Funded by the maker of the product tested." It uses `type.meta` and `text.primary` and has no icon. It is plain text, not a warning, and comes before the interval.
 5. [The interval](../components/interval.md), full size, with its caption.
 6. "What the study found" (`h2`): the summary body.
 7. ["What this study does not show"](../components/limits-block.md) (`h2`).

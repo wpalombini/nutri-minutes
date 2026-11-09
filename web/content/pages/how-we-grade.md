@@ -37,6 +37,8 @@ From the starting point, a study's grade can move up or down. We look at:
 - **Population:** whether the people studied are like the people the result is meant for.
 - **Funding and conflicts:** who paid for the study and whether the researchers declared interests that could affect it.
 
+Who pays for a study matters, but it doesn't make a study wrong on its own. We lower a grade for funding only when it comes with a concrete risk: for example, when the company that sells the product tested also ran the analysis, or when a trial changed its main outcome after it started. When a study is funded by the maker of the product tested, we say so next to the grade.
+
 On each study page, "Why this grade" lists what raised and what lowered certainty for that study.
 
 ## What a grade doesn't tell you

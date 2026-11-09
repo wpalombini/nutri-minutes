@@ -15,7 +15,7 @@ An expandable section on the study page that explains the evidence grade: what r
   3. **"Lowers certainty"** (minus icon) with its reasons.
   4. A text link: "How we grade" (`/how-we-grade`).
 - "Certainty" replaces the plan's "Raises confidence" and "Lowers confidence" (PLAN section 5), so the section uses the same word as the grade itself (decision 1). This is a small change to the approved plan.
-- Each reason names its factor, then says what we found: "**Size:** 31,200 people, followed for 11 years." Factors come from a fixed list: Design, Size, Duration, Population, Funding and conflicts.
+- Each reason names its factor, then says what we found: "**Size:** 31,200 people, followed for 11 years." Factors come from a fixed list: Design, Size, Duration, Population, Funding and conflicts. A funding concern can appear under "Lowers certainty" whether or not it moved the grade. The Grader's rule is in [`docs/agents.md`](../../docs/agents.md#evidence-grader-funding-and-conflicts).
 - Both group headings always show. An empty group says "Nothing for this study."
 
 ## Wireframes

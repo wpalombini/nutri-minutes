@@ -10,6 +10,7 @@ EXPECTED_TABLES = {
     "article_relations",
     "pipeline_runs",
     "pipeline_run_errors",
+    "model_calls",
 }
 
 

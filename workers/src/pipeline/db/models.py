@@ -5,6 +5,7 @@ Alembic migrations are the source of truth for the schema. These models must mat
 """
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
@@ -19,6 +20,7 @@ from sqlalchemy import (
     Index,
     Integer,
     MetaData,
+    Numeric,
     Text,
     func,
     text,
@@ -59,6 +61,8 @@ RELATION_TYPES: tuple[str, ...] = (
 """Normalised bibliographic relation types, from Europe PMC's `commentCorrectionList`."""
 
 RUN_STATUSES: tuple[str, ...] = ("running", "succeeded", "partial", "failed")
+
+MODEL_CALL_OUTCOMES: tuple[str, ...] = ("succeeded", "invalid_reply", "error", "refused")
 
 
 def _in_list(column: str, values: tuple[str, ...]) -> str:
@@ -210,3 +214,46 @@ class PipelineRunError(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (Index(None, "run_id"),)
+
+
+class ModelCall(Base):
+    """One attempt by the model client. See `pipeline.models` and ADR 0005."""
+
+    __tablename__ = "model_calls"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    run_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("pipeline_runs.id"))
+    stage: Mapped[str] = mapped_column(Text)
+    article_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("articles.id"))
+    prompt_name: Mapped[str] = mapped_column(Text)
+    prompt_version: Mapped[str] = mapped_column(Text)
+    attempt: Mapped[int] = mapped_column(Integer)
+    input_values: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    model_requested: Mapped[str] = mapped_column(Text)
+    model_answered: Mapped[str | None] = mapped_column(Text)
+    provider: Mapped[str | None] = mapped_column(Text)
+    generation_id: Mapped[str | None] = mapped_column(Text)
+    outcome: Mapped[str] = mapped_column(Text)
+    http_status: Mapped[int | None] = mapped_column(Integer)
+    raw_reply: Mapped[str | None] = mapped_column(Text)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer)
+    reasoning_tokens: Mapped[int | None] = mapped_column(Integer)
+    cached_tokens: Mapped[int | None] = mapped_column(Integer)
+    cost_usd: Mapped[Decimal | None] = mapped_column(Numeric)
+    max_cost_usd: Mapped[Decimal] = mapped_column(Numeric)
+    latency_ms: Mapped[int | None] = mapped_column(Integer)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(_in_list("outcome", MODEL_CALL_OUTCOMES), name="outcome"),
+        CheckConstraint("attempt >= 1", name="attempt"),
+        CheckConstraint("cost_usd >= 0 AND max_cost_usd >= 0", name="costs_not_negative"),
+        CheckConstraint(
+            "(outcome = 'succeeded') = (raw_reply IS NOT NULL AND error IS NULL)",
+            name="succeeded_has_reply",
+        ),
+        Index(None, "run_id", "stage"),
+        Index(None, "article_id"),
+    )

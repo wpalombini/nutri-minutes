@@ -2,7 +2,7 @@
 
 The Postgres schema: what each table holds and why. Change this document in the same PR as any migration. [ADR 0002](adr/0002-database-migrations-and-schema-growth.md) covers migration tooling and how the schema grows.
 
-**Status:** migration `0001` creates the tables below, which contain only what [Scout](agents.md#scout) needs. Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
+**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, and `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
 
 ## Overview
 
@@ -11,6 +11,8 @@ erDiagram
     articles ||--o{ article_licences : "has"
     articles ||--o{ article_relations : "has"
     pipeline_runs ||--o{ pipeline_run_errors : "records"
+    pipeline_runs ||--o{ model_calls : "makes"
+    articles ||--o{ model_calls : "is the subject of"
 
     articles {
         bigint id PK
@@ -39,6 +41,13 @@ erDiagram
         bigint id PK
         bigint run_id FK
         text source_record_id
+    }
+    model_calls {
+        bigint id PK
+        bigint run_id FK
+        bigint article_id FK
+        text prompt_version
+        numeric cost_usd
     }
 ```
 
@@ -195,6 +204,43 @@ Records that failed during a run. One bad record doesn't stop the run, and it ma
 
 A page can be processed twice, for example when a worker loses its lock connection after storing a page, so this log can hold the same error twice and the totals in `counts` are approximate. Articles and licences are not affected.
 
+### `model_calls`
+One row per attempt by the model client, including attempts the budget check refused. This is the trace [ADR 0005](adr/0005-model-client-prompts-and-evals.md) requires: it shows which model and prompt version produced an output, what it cost and why a call failed. Agents' output rows will reference the `id` of the attempt that produced them.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | `bigint` identity | No | Primary key |
+| `run_id` | `bigint` | No | References `pipeline_runs` |
+| `stage` | `text` | No | The prompt's stage, such as `triage`. Budgets are per run and stage. |
+| `article_id` | `bigint` | Yes | References `articles`, when the call is about one article |
+| `prompt_name` | `text` | No | Such as `triage/scope`, from `workers/src/pipeline/prompts/` |
+| `prompt_version` | `text` | No | A hash of the prompt's template and settings |
+| `attempt` | `integer` | No | 1 for the first attempt of a call, then 2, 3 and so on |
+| `input_values` | `jsonb` | No | The values filled into the template. With the prompt version, they rebuild the exact prompt. |
+| `model_requested` | `text` | No | The model ID in the prompt's settings |
+| `model_answered` | `text` | Yes | The model the response names |
+| `provider` | `text` | Yes | The provider that served it, when the response says |
+| `generation_id` | `text` | Yes | OpenRouter's ID for the generation |
+| `outcome` | `text` | No | `succeeded`, `invalid_reply` (a reply that wasn't JSON matching the schema), `error` (an HTTP error, a timeout or an error in the body) or `refused` (the budget check stopped it, so nothing was sent) |
+| `http_status` | `integer` | Yes | Null when no response arrived |
+| `raw_reply` | `text` | Yes | The model's reply as received |
+| `prompt_tokens`, `completion_tokens`, `reasoning_tokens`, `cached_tokens` | `integer` | Yes | As reported |
+| `cost_usd` | `numeric` | Yes | The cost the response reported. Null when it reported none. |
+| `max_cost_usd` | `numeric` | No | The attempt's worst-case cost, worked out before sending |
+| `latency_ms` | `integer` | Yes | Null for refused attempts |
+| `error` | `text` | Yes | Why the attempt failed. It never holds the API key. |
+| `created_at` | `timestamptz` | No | |
+
+**Spend:** a stage's spend in a run is the sum, over attempts that weren't refused, of `cost_usd`, or `max_cost_usd` when no cost was reported. An attempt that timed out may still have been charged, so its worst case counts.
+
+**Constraints and indexes:**
+- A check constraint limits `outcome` to the values above.
+- `attempt` is at least 1, and costs can't be negative.
+- A `succeeded` row has a reply and no error, and any other row lacks one or the other.
+- An index on `(run_id, stage)` sums a run's spend, and one on `article_id` finds an article's calls.
+
+**Contents:** inputs and replies hold abstracts and metadata, which are public, never reader data. Rows are kept with the outputs they trace.
+
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.
 - **No match:** insert a new article.
@@ -205,7 +251,7 @@ A page can be processed twice, for example when a worker loses its lock connecti
 
 ## Roles and access
 Migrations run as the role that owns the schema. Migration `0001` also creates a `pipeline_worker` group role, which can't log in, so the migrating role needs `CREATEROLE` unless the group role already exists. On managed Postgres without it, create the role first. The migration lock covers one database only, so don't run the first migration on two databases on the same server at the same time.
-- **`pipeline_worker`:** can select, insert and update the Scout tables, and select and insert into `pipeline_run_errors`. It can't delete rows, edit logged errors or change the schema.
+- **`pipeline_worker`:** can select, insert and update the Scout tables, and select and insert into `pipeline_run_errors` and `model_calls`. It can't delete rows, edit logged errors or model calls, or change the schema.
 - **Login roles:** created outside migrations, with their passwords kept out of the repo, then granted a group role. Both are kept up to date by `infra/postgres/login-roles.sql` (see `docs/operations.md`). The workers' login role is `pipeline_runner`, granted `pipeline_worker`. The API's is `api_runner`, limited to 10 connections, which has no group role and no access to any table until the published views and its group role are added.
 - **Server-wide roles:** roles belong to the whole Postgres server, not one database. A downgrade revokes the role's access but doesn't drop it, because it may have access to other databases.
 - **API access:** the web app and future clients reach the database only through the API ([ADR 0003](adr/0003-database-api-for-the-web-app.md)), which connects as `api_runner`. Its group role, added with the first published view, reads published views only, never base tables (see "Tables to come"). It will also get write access to the tables the web app owns, such as accounts and billing, when they are added.
@@ -238,4 +284,4 @@ Each agent's or feature's tables are added by their own migration when it's buil
 | Script Writer, Audio Producer and Audio QA | Scripts, audio file references and QA results |
 | Publisher | Published items. An API role that can read only published views, not the base tables, so unpublished content can't leak through a front-end bug. A periodic re-check of published articles for retractions. |
 | Web app | A random public ID on articles for URLs, so pages don't expose sequential IDs. Accounts and billing, with personal data limited to an email address and a Stripe customer reference |
-| All LLM, TTS and speech-to-text calls | Model, usage (tokens or audio length), cost and latency per call |
+| TTS and speech-to-text calls | Audio length per call, in `model_calls` or beside it, when those clients are built |

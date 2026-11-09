@@ -98,6 +98,14 @@ When funding or a conflict comes with a concrete risk, the grade drops one level
 
 Otherwise, a funding concern is listed under "Lowers certainty" without moving the grade. When the funder sells the product tested, the study page says so next to the grade, and the Writer mentions it in the summary. If only the abstract is available and it doesn't state funding, the study is recorded as "not stated in the abstract", never as unfunded.
 
+## Model client
+Every model call goes through `workers/src/pipeline/models/`, as [ADR 0005](adr/0005-model-client-prompts-and-evals.md) decides. Agents load a prompt with `load_prompt("<stage>/<name>")` and call `ModelClient.call` with the run, the article and the template's inputs. They get back a reply that matches the prompt's schema, and the ID of the `model_calls` row to reference from their outputs ([database](database.md#model_calls)).
+- **Failures:** `ModelCallError` means this call failed after its retries, so the item fails and the run carries on. `StopRun` (a spent budget, a rejected key or no credits) means the run stops as failed and sends an alert.
+- **Prompts:** each lives in `workers/src/pipeline/prompts/<stage>/` as a template (`<name>.md`) and settings (`<name>.json`). `workers/src/pipeline/models/prompts.py` describes the format. Reply schemas use a small strict subset of JSON Schema, checked when the prompt loads, so the client can validate every reply locally.
+- **Budgets:** each stage's budget per run is in US dollars, set by `MODEL_BUDGET_USD_<STAGE>` with a default in the agent's code. Before each attempt, the client refuses a call whose worst-case cost could take the run over it. The worst case prices the request body's UTF-8 length as tokens, plus a small allowance, at the prompt's price cap, and the full reply limit at the completion cap.
+- **Tests:** agent tests use `FakeModelClient` from `pipeline.models.fake`, which checks inputs and replies like the real client but never calls the network.
+- **Cost unit:** the client records OpenRouter's `usage.cost` as US dollars. That isn't confirmed yet: run `uv run python -m pipeline.models.check_cost` from `workers/` with `OPENROUTER_API_KEY` set. It makes one call costing a fraction of a cent and compares `usage.cost` with the generation endpoint's `total_cost`, which is documented in US dollars. Record the result here.
+
 ## Scout
 Scout runs daily and is the first agent built. The code is in `workers/src/pipeline/scout/`, the search terms are in `search_terms.toml` there, and settings come from environment variables listed in `.env.example`. The scheduler service runs it daily at 03:15 UTC, and `docs/operations.md` covers one-off runs.
 

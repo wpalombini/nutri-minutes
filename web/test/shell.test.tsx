@@ -18,7 +18,7 @@ function renderShell() {
   return render(
     <SiteShell
       header={
-        <SiteHeader>
+        <SiteHeader tagline="Nutrition science for a longer, stronger life.">
           <MainNav />
         </SiteHeader>
       }
@@ -64,6 +64,20 @@ describe('SiteShell', () => {
       ['Topics', '/topics'],
       ['How we grade', '/how-we-grade'],
     ])
+  })
+
+  it('shows the tagline in the header, outside the wordmark link', () => {
+    renderShell()
+    const banner = screen.getByRole('banner')
+    const tagline = within(banner).getByText('Nutrition science for a longer, stronger life.')
+    expect(tagline.tagName).toBe('P')
+    expect(tagline.closest('a')).toBeNull()
+    expect(within(banner).getByRole('link', { name: 'Nutri Minutes' })).toBeTruthy()
+  })
+
+  it('leaves out the tagline when none is given', () => {
+    render(<SiteHeader />)
+    expect(screen.queryByText('Nutrition science for a longer, stronger life.')).toBeNull()
   })
 
   it('marks the current page, and the current section', () => {

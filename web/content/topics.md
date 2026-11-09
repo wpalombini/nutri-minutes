@@ -12,5 +12,5 @@ One sentence per topic, shown on the topics list and at the top of each topic's 
 | Falls and independence | `falls-and-independence` | Research on balance, mobility and strength, and their links to falls and staying independent. |
 | Heart and metabolism | `heart-and-metabolism` | Research on diet and fitness, and their links to blood pressure, blood sugar, cholesterol and heart health. |
 | Brain health | `brain-health` | Research on diet, exercise and sleep, and their links to memory and cognitive decline. |
-| Longevity | `longevity` | What the evidence shows about diets, fasting and supplements for living longer and healthier. |
+| Longevity | `longevity` | Research on diet, fasting and supplements, and their links to lifespan and healthy ageing. |
 | Genes and diet | `genes-and-diet` | Research on how genes interact with diet and with ageing. |

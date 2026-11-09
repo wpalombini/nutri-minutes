@@ -7,14 +7,14 @@ Every study we summarise gets an evidence grade. The grade tells you how much th
 
 ## The four levels
 
-We use the four levels of GRADE, a method widely used in health research to rate evidence. GRADE was designed to rate a whole body of evidence; we apply its levels and reasons to one study at a time.
+We use the four levels of GRADE, a method widely used in health research to rate evidence. GRADE was designed to rate a whole body of evidence. We use its levels and starting points to rate one study at a time, and our own five factors, below, to move a grade up or down.
 
 - **High certainty:** the true effect is very likely close to this result.
 - **Moderate certainty:** the true effect is probably close to this result, but it could be substantially different.
 - **Low certainty:** the true effect may be substantially different from this result.
 - **Very low certainty:** the true effect is likely to be substantially different from this result.
 
-Each grade is shown as four squares, with one to four filled, and always in words. Colour is never the only signal.
+Each grade is shown in words and as four squares, with one to four filled.
 
 ## Where a study starts
 
@@ -22,8 +22,8 @@ The type of study sets the starting point:
 
 - **Randomised trials** start at high certainty, because chance decides who gets the treatment. They move down for problems.
 - **Reviews of studies** start from the certainty of the studies they combine, then move up or down.
-- **Observational studies** start at low certainty. They follow what people already do, so they can show a link but rarely cause and effect.
-- **Animal and lab studies** start at very low certainty, because they don't test people.
+- **Observational studies** start at low certainty. They follow what people already do, so they can show a link but usually can't show cause and effect.
+- **Animal and lab studies** start at very low certainty in our grading, because they don't test people.
 
 We always label observational, animal and lab studies, so you know what kind of evidence you are reading.
 

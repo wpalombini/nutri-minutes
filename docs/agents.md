@@ -86,15 +86,15 @@ flowchart TD
 ## Evidence Grader: funding and conflicts
 Funding alone never changes a grade, because a well-run industry trial is still a well-run trial. The Grader records, for every study:
 - **Funder** and its type: industry, government or public, charity, none, or not reported.
-- **Funder sells the product tested:** yes, no or unknown.
+- **Funder sells the product tested:** yes, no or unknown. Count a trade body for the product, such as a dairy council, as selling it.
 - **Sponsor's role:** whether the sponsor designed the study, ran the analysis or wrote the paper, when the study says so.
 - **Conflicts** the authors declared.
 
-When funding or a conflict comes with a concrete risk, the grade drops one level and the reason is stated. The risks are:
+When funding or a conflict comes with a concrete risk, the grade drops one level in total, however many of the risks below apply, and the reason is stated under Funding and conflicts. A problem already used to lower the grade under another factor isn't counted again here. A grade never goes below very low certainty. The risks are:
 - the funder sells the product tested, and the sponsor ran the analysis or wrote the paper
 - the main outcome was changed after the study started
 - a trial wasn't registered before it began
-- the result rests on a stand-in measure that favours the product
+- the result rests on a stand-in measure, such as a blood marker, rather than a health outcome people feel or that affects survival
 
 Otherwise, a funding concern is listed under "Lowers certainty" without moving the grade. When the funder sells the product tested, the study page says so next to the grade, and the Writer mentions it in the summary. If only the abstract is available and it doesn't state funding, the study is recorded as "not stated in the abstract", never as unfunded.
 

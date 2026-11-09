@@ -30,6 +30,8 @@ Let a reader understand in under a minute what the study found, how sure we can 
 | range includes no difference   |
 | [■][■][□][□] Low certainty,    |  grade (full)
 | 2 of 4  (Observational study)  |  + design label
+| Funded by the maker of the     |  funding line, if any
+| product tested.                |
 |                                |  space.40
 | Hip fracture risk              |  the interval, full width
 | Highest compared with lowest…  |
@@ -71,6 +73,7 @@ Let a reader understand in under a minute what the study found, how sure we can 
 | More dairy linked to slightly fewer hip fractures,                       |
 | but the range includes no difference              h1, headline-desktop   |
 | [■][■][□][□] Low certainty, 2 of 4   (Observational study)               |
+| Funded by the maker of the product tested.                               |
 |                                                                          |
 | Hip fracture risk                                                        |
 | Highest compared with lowest dairy intake                                |
@@ -102,6 +105,7 @@ Let a reader understand in under a minute what the study found, how sure we can 
 - Body prose `max-inline-size: measure.body` inside its column.
 
 ### Tokens and spacing
+- Funding line: its own `<p>` after the grade and design line, `margin-block-start: space.4`.
 - Topic: `type.meta`, a [text link](../components/links-and-buttons.md#text-link), in a `<p>` with hidden "Topic: " before it, `margin-block-end: space.8`.
 - `h1`: `type.headline-phone` below 720px, `type.headline-desktop` from 720px, `text.primary`, `text-wrap: balance`, `margin-block-end: space.16`. Letter spacing in `em` per the tokens README.
 - Grade and design line: flex, wrap, `column-gap: space.16`, `row-gap: space.4`.

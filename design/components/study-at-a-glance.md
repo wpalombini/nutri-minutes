@@ -76,7 +76,7 @@ Same panel at both widths; only its place on the page changes (see [study page](
 
 ## States
 - **Rendered with its page;** no loading state.
-- **Missing optional fields** (followed for, funding, journal): leave the row out. Licence always shows ("Not stated" when unknown), and so does Funding and conflicts. It shows "Not reported" when the study doesn't state its funding, or "Not stated in the abstract" when the summary was made from the abstract alone. It never shows "None" unless the study says so, because a missing funding statement is itself information.
+- **Missing optional fields** (followed for, journal): leave the row out. Licence always shows ("Not stated" when unknown), and so does Funding and conflicts. It shows "Not reported" when the study doesn't state its funding, or "Not stated in the abstract" when the summary was made from the abstract alone and the abstract doesn't state funding. It never shows "None" unless the study says so, because a missing funding statement is itself information.
 - **No DOI:** link the PubMed record from the PMID. With neither, the summary is invalid (see [conventions](../screens/README.md#content-rules-the-app-enforces)).
 
 ## Motion

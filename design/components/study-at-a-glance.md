@@ -59,7 +59,7 @@ Same panel at both widths; only its place on the page changes (see [study page](
 
 - An `<aside>` (complementary landmark) named "Study at a glance", so screen-reader users can jump straight to the facts and the source.
 - A description list, each pair wrapped in a `<div>` (valid in `<dl>`) for spacing.
-- The DOI link's text is the full DOI URL: descriptive, and what people copy. It opens in the same tab.
+- The source link's text is the full URL (the DOI URL, or the PubMed record's URL when there is no DOI): descriptive, and what people copy. It opens in the same tab.
 
 ## Tokens
 - Panel: `background: surface.raised`, `border-radius: radius.block`, `padding: space.24`. No border and no shadow: its edge against the page is low contrast by design and nothing relies on it (`surface.raised` description).
@@ -97,4 +97,5 @@ None.
 | `published_on`, `updated_on` | date, date or null |
 | `source_basis` | `abstract` or `full_text` |
 | `licence_code` | enum from `article_licences`, the current licence |
-| `doi` | string, canonical (lowercase, no prefix), shown as `https://doi.org/{doi}` |
+| `doi` | string or null, canonical (lowercase, no prefix), shown as `https://doi.org/{doi}` |
+| `pmid` | string (digits) or null, shown as `https://pubmed.ncbi.nlm.nih.gov/{pmid}/` when there is no DOI. At least one of `doi` and `pmid` is required |

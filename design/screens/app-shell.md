@@ -192,7 +192,7 @@ For "How we grade" and "How summaries are made", and later pages such as privacy
 - `h1` in `type.headline-phone` below 720px, `type.headline-desktop` from 720px, `text-wrap: balance`, colour `text.primary`, `margin-block-end: space.24`.
 - Body in `type.body`, `max-inline-size: measure.body`. `h2` in `type.section-heading` with `margin-block: space.56 space.16`; `h3` in `type.subheading` with `margin-block: space.40 space.8`. Paragraph spacing `space.16`. Lists with their bullets or numbers kept, `padding-inline-start: space.24`.
 - Links inside prose are [text links](../components/links-and-buttons.md#text-link).
-- Data: page title, body (structured blocks or Markdown rendered without raw HTML), last updated date. The content of both pages is drafted for the owner to approve.
+- Data: page title, body (structured blocks or Markdown rendered without raw HTML), last updated date. The content of both pages will be drafted for the owner to approve.
 
 ## Shared page states
 
@@ -241,7 +241,7 @@ For API failures, timeouts and invalid summaries (`error.tsx` on each segment, `
 - Prefer stale content to this page: cached pages keep serving if the API is down (ADR 0003), so this page should be rare.
 
 ### Invalid content
-A summary missing its grade, design category or DOI is not shown (see [conventions](README.md#content-rules-the-app-enforces)). On a study page that means the error page above, not a partial summary.
+A summary missing its grade, design category, or DOI or PMID is not shown (see [conventions](README.md#content-rules-the-app-enforces)). On a study page that means the error page above, not a partial summary.
 
 ## Data
 The shell itself needs no API data. The nav and footer links are fixed. If topic names later appear in the header, they come from the same topic list as [Topics](topics.md#data).

@@ -5,8 +5,10 @@ https://openrouter.ai/docs/api-reference/overview and
 https://openrouter.ai/docs/api_reference/errors-and-debugging.md
 """
 
+import email.utils
 import json
 import logging
+import math
 import os
 import random
 import time
@@ -48,6 +50,7 @@ MAX_ERROR_CHARS = 500
 class OpenRouterSettings:
     api_key: str = field(repr=False)
     timeout_seconds: float = 120.0
+    """Applies to each phase of a request (connect, write, each read), not the whole request."""
     max_attempts: int = 3
     backoff_base_seconds: float = 2.0
 
@@ -59,7 +62,7 @@ class OpenRouterSettings:
         return cls(
             api_key=key,
             timeout_seconds=float_env("MODEL_TIMEOUT_SECONDS", 120.0, 1.0),
-            max_attempts=int_env("MODEL_MAX_ATTEMPTS", 3, 1),
+            max_attempts=int_env("MODEL_MAX_ATTEMPTS", 3, 1, 6),
         )
 
 
@@ -161,6 +164,14 @@ def _retry_after(response: httpx.Response) -> float | None:
     try:
         seconds = float(value)
     except ValueError:
+        try:
+            when = email.utils.parsedate_to_datetime(value)
+        except TypeError, ValueError:
+            return None
+        if when.tzinfo is None:
+            return None
+        seconds = when.timestamp() - time.time()
+    if not math.isfinite(seconds):
         return None
     return min(max(seconds, 0.0), MAX_RETRY_AFTER_SECONDS)
 
@@ -286,10 +297,16 @@ class OpenRouterClient:
             try:
                 check_budget(self._log, self._budgets, request.run_id, stage, max_cost)
             except BudgetExceeded as exc:
-                self._log.record(
+                call_id = self._log.record(
                     replace(base, attempt=number, outcome=Outcome.REFUSED, error=str(exc))
                 )
-                logger.error("Model call refused: run=%d stage=%s: %s", request.run_id, stage, exc)
+                logger.error(
+                    "Model call %d refused: run=%d stage=%s: %s",
+                    call_id,
+                    request.run_id,
+                    stage,
+                    exc,
+                )
                 raise
 
             started = self._clock()
@@ -324,6 +341,14 @@ class OpenRouterClient:
                 row.cost_usd,
                 latency_ms,
             )
+            if row.cost_usd is not None and row.cost_usd > max_cost:
+                logger.warning(
+                    "Model call %d cost $%s, above its worst case of $%s: check the price caps "
+                    "and the cost unit",
+                    call_id,
+                    row.cost_usd,
+                    max_cost,
+                )
             if reading.reply is not None:
                 return CallResult(
                     reply=reading.reply,

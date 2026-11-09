@@ -27,11 +27,22 @@ def _generation_cost(api_key: str, generation_id: str) -> Decimal | None:
     """`total_cost` for the generation. Stats can take a moment to appear, so 404s are retried."""
     with httpx.Client(timeout=30.0, headers={"Authorization": f"Bearer {api_key}"}) as http:
         for attempt in range(1, LOOKUP_ATTEMPTS + 1):
-            response = http.get(GENERATION_URL, params={"id": generation_id})
+            try:
+                response = http.get(GENERATION_URL, params={"id": generation_id})
+            except httpx.TransportError as exc:
+                print(f"Generation lookup failed: {type(exc).__name__}")
+                return None
             if response.status_code == 200:
-                data = response.json().get("data", {})
+                try:
+                    body = response.json()
+                except ValueError:
+                    body = None
+                data = body.get("data") if isinstance(body, dict) else None
                 cost = data.get("total_cost") if isinstance(data, dict) else None
-                return Decimal(str(cost)) if isinstance(cost, int | float) else None
+                if isinstance(cost, bool) or not isinstance(cost, int | float):
+                    print("The generation had no total_cost")
+                    return None
+                return Decimal(str(cost))
             if response.status_code != 404 or attempt == LOOKUP_ATTEMPTS:
                 print(f"Generation lookup failed with HTTP {response.status_code}")
                 return None

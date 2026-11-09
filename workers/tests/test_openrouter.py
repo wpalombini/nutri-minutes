@@ -1,6 +1,9 @@
 """The OpenRouter client, against a mock transport. Nothing here touches the network."""
 
+import email.utils
 import json
+import logging
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -191,6 +194,42 @@ def test_invalid_replies_are_retried_then_fail(tmp_path: Path, content: str) -> 
     assert [a.outcome for a in h.log.attempts] == [Outcome.INVALID_REPLY] * 3
     assert all(a.raw_reply == content for a in h.log.attempts)
     assert h.sleeps == [1.0, 2.0]
+
+
+def test_content_filter_is_not_retried(tmp_path: Path) -> None:
+    h = Harness(tmp_path, [ok(content="", finish="content_filter")])
+    with pytest.raises(ModelCallError, match="content filter"):
+        h.call()
+    assert len(h.requests) == 1
+
+
+def test_top_level_error_with_choices_is_retried(tmp_path: Path) -> None:
+    errored = completion(extra={"error": {"code": 502, "message": "upstream reset"}})
+    h = Harness(tmp_path, [ok(errored), ok()])
+    assert h.call().reply == REPLY
+    assert h.log.attempts[0].error == "Error in a 200 response: upstream reset"
+
+
+def test_key_never_reaches_rows_or_logs(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    echo = {"error": {"code": 401, "message": "Bad key"}}
+    h = Harness(tmp_path, [httpx.ReadTimeout("slow"), httpx.Response(401, json=echo)])
+    with caplog.at_level(logging.DEBUG), pytest.raises(NotAuthorised):
+        h.call()
+    assert "sk-test-secret" not in caplog.text
+    assert all("sk-test-secret" not in repr(a) for a in h.log.attempts)
+
+
+def test_retry_after_as_a_date(tmp_path: Path) -> None:
+    when = email.utils.format_datetime(datetime.now(UTC) + timedelta(seconds=60), usegmt=True)
+    h = Harness(tmp_path, [httpx.Response(503, headers={"Retry-After": when}), ok()])
+    h.call()
+    assert 50 < h.sleeps[0] <= 60
+
+
+def test_cost_above_worst_case_is_logged(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    h = Harness(tmp_path, [ok(cost=5.0)])
+    h.call()
+    assert "above its worst case" in caplog.text
 
 
 def test_reply_cut_off_at_max_tokens_is_not_retried(tmp_path: Path) -> None:

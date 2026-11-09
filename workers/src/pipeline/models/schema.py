@@ -59,7 +59,12 @@ def check_schema(schema: Any, path: str = "$") -> None:
         if schema.get("additionalProperties") is not False:
             raise SchemaError(f"{path}: an object must set 'additionalProperties' to false")
         required = schema.get("required")
-        if not isinstance(required, list) or sorted(required) != sorted(properties):
+        if (
+            not isinstance(required, list)
+            or not all(isinstance(name, str) for name in required)
+            or len(required) != len(set(required))
+            or set(required) != set(properties)
+        ):
             raise SchemaError(f"{path}: 'required' must list every property")
         for name, child in properties.items():
             check_schema(child, f"{path}.{name}")
@@ -79,6 +84,13 @@ def check_schema(schema: Any, path: str = "$") -> None:
         value = schema.get(key)
         if value is not None and (isinstance(value, bool) or not isinstance(value, int | float)):
             raise SchemaError(f"{path}: '{key}' must be a number")
+    for low, high in (("minimum", "maximum"), ("minLength", "maxLength"), ("minItems", "maxItems")):
+        if low in schema and high in schema and schema[low] > schema[high]:
+            raise SchemaError(f"{path}: '{low}' is above '{high}'")
+    for option in schema.get("enum", []):
+        kind = _type_of(option)
+        if kind not in types and not (kind == "integer" and "number" in types):
+            raise SchemaError(f"{path}: enum value of type {kind} doesn't match 'type'")
 
 
 def _type_of(value: Any) -> str:

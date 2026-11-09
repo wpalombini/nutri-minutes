@@ -6,7 +6,8 @@ section followed by a `--- user ---` section, each on a line of its own. Placeho
 `{{ abstract }}`, and a call must supply exactly the placeholders the template uses.
 
 The settings file holds:
-- `model`: an explicit OpenRouter model ID, never a floating alias.
+- `model`: an explicit OpenRouter model ID, never a floating alias or a variant suffix such as
+  `:online`, which adds charges the price caps don't cover, or `:nitro`, which changes routing.
 - `max_tokens`: the reply limit, which must include any reasoning tokens.
 - `temperature`: optional.
 - `price_caps`: US dollars, as strings, with `prompt` and `completion` per million tokens and
@@ -34,7 +35,7 @@ from pipeline.models.schema import SchemaError, check_schema
 
 NAME_PATTERN = re.compile(r"[a-z][a-z0-9_]*/[a-z][a-z0-9_]*")
 PLACEHOLDER = re.compile(r"\{\{\s*([a-z_][a-z0-9_]*)\s*\}\}")
-MODEL_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._:-]*")
+MODEL_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*")
 SYSTEM_MARKER = "--- system ---"
 USER_MARKER = "--- user ---"
 SETTINGS_KEYS = frozenset(

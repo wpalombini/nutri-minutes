@@ -69,6 +69,7 @@ def test_bad_templates_are_rejected(tmp_path: Path, template: str) -> None:
         {"model": "openrouter/auto"},
         {"model": "example/model-latest"},
         {"model": "no-slash"},
+        {"model": "example/model-1.0:online"},
         {"max_tokens": 0},
         {"max_tokens": True},
         {"temperature": "0"},

@@ -22,7 +22,7 @@ export function SiteFooter() {
       <Container>
         <div className={styles.inner}>
           <p className={styles.disclosure}>{DISCLOSURE}</p>
-          <ul className={styles.links}>
+          <ul role="list" className={styles.links}>
             {footerLinks.map((link) => (
               <li key={link.href}>
                 <Link className={styles.link} href={link.href}>

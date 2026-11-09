@@ -26,3 +26,8 @@
   color: var(--text-primary);
   text-decoration-color: var(--text-link);
 }
+
+/* design/screens/topics.md: space.4 above the description on this page (the archive header uses space.8). */
+.row .description {
+  margin-block-start: var(--space-4);
+}

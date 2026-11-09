@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import NotFound from '@/app/not-found'
+import TopicsPage from '@/app/topics/page'
 import { ErrorMessage, errorDigest } from '@/components/ErrorMessage'
 import { currentState, MainNav } from '@/components/MainNav'
 import { SiteFooter } from '@/components/SiteFooter'
@@ -7,6 +9,11 @@ import { SiteHeader } from '@/components/SiteHeader'
 import { SiteShell } from '@/components/SiteShell'
 
 const pathname = vi.hoisted(() => ({ current: '/' }))
+vi.mock('@/lib/pages', () => ({
+  loadTopics: async () => [
+    { name: 'Bone health', slug: 'bone-health', description: 'Research on bones.' },
+  ],
+}))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 afterEach(() => {
@@ -55,6 +62,7 @@ describe('SiteShell', () => {
     expect(wordmark.textContent).toBe('Nutri Minutes')
     expect(wordmark.getAttribute('aria-current')).toBeNull()
     const nav = within(banner).getByRole('navigation', { name: 'Main' })
+    expect(nav.querySelector('ul')?.getAttribute('role')).toBe('list')
     expect(
       within(nav)
         .getAllByRole('link')
@@ -78,6 +86,7 @@ describe('SiteShell', () => {
   it('leaves out the tagline when none is given', () => {
     render(<SiteHeader />)
     expect(screen.queryByText('Nutrition science for a longer, stronger life.')).toBeNull()
+    expect(screen.getByRole('banner').querySelector('p')).toBeNull()
   })
 
   it('marks the current page, and the current section', () => {
@@ -123,6 +132,7 @@ describe('SiteFooter', () => {
       ['How we grade', '/how-we-grade'],
     ])
     expect(within(footer).queryByRole('navigation')).toBeNull()
+    expect(footer.querySelector('ul')?.getAttribute('role')).toBe('list')
   })
 })
 
@@ -146,5 +156,19 @@ describe('ErrorMessage', () => {
     expect(errorDigest('thrown string')).toBeUndefined()
     expect(errorDigest({ digest: '' })).toBeUndefined()
     expect(errorDigest({ digest: 'abc' })).toBe('abc')
+  })
+})
+
+describe('unstyled lists', () => {
+  it('keep list semantics for Safari with VoiceOver on the 404 page', () => {
+    render(<NotFound />)
+    expect(screen.getByRole('list').getAttribute('role')).toBe('list')
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('keep list semantics on the topics page', async () => {
+    render(await TopicsPage())
+    expect(screen.getByRole('list').getAttribute('role')).toBe('list')
+    expect(screen.getAllByRole('listitem').length).toBeGreaterThan(0)
   })
 })

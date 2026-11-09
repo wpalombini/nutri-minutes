@@ -14,7 +14,7 @@ export default function NotFound() {
       <PageHeading title="Page not found">
         <p>There’s no page at this address. The link may be wrong, or the page may have moved.</p>
       </PageHeading>
-      <ul className={styles.links}>
+      <ul role="list" className={styles.links}>
         <li>
           <Link className={styles.link} href="/">
             This week’s findings

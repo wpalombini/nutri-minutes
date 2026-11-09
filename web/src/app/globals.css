@@ -101,3 +101,16 @@ textarea:focus-visible,
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/*
+ * For inputs drawn by their label (the theme control's radios): the same declarations without
+ * the skip link's focus exemption, so the input never shows itself.
+ */
+.visually-hidden-always {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

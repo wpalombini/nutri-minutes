@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Container } from './Container'
 import styles from './SiteFooter.module.css'
+import { ThemeControl } from './ThemeControl'
 
 /** Exactly as design/screens/app-shell.md, "Footer", from PLAN principle 7. */
 export const DISCLOSURE =
@@ -31,6 +32,9 @@ export function SiteFooter() {
             ))}
           </ul>
           <p className={styles.note}>{NO_ADVERTISING}</p>
+          <div className={styles.theme}>
+            <ThemeControl />
+          </div>
         </div>
       </Container>
     </footer>

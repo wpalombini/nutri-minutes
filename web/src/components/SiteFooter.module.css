@@ -45,12 +45,13 @@
   }
 
   .disclosure,
-  .note {
+  .note,
+  .theme {
     grid-column: 1;
   }
 
   .links {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 3;
   }
 }

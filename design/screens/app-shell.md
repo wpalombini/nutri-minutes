@@ -59,6 +59,7 @@ Inside `main`, pages choose their own widths from these roles only:
 
 ### Content
 1. **Wordmark:** "Nutri Minutes" as text, a link to `/`. No logo or icon for now.
+   - **Tagline** under it: "Nutrition science for a longer, stronger life." Plain text in a `<p>`, outside the link, so the link name stays "Nutri Minutes".
 2. **Main navigation**, three links, in this order:
    - "This week" → `/`
    - "Topics" → `/topics`
@@ -71,6 +72,8 @@ Inside `main`, pages choose their own widths from these roles only:
 ```
 +--------------------------------+
 | Nutri Minutes                  |  wordmark, type.subheading
+| Nutrition science for a longer,|  tagline, type.meta, text.secondary
+| stronger life.                 |
 |                                |  space.8
 | This week  Topics  How we grade|  nav, type.interface, gap space.24
 +--------------------------------+  divider
@@ -81,6 +84,7 @@ Inside `main`, pages choose their own widths from these roles only:
 ```
 +--------------------------------------------------------------------------+
 | Nutri Minutes                          This week   Topics   How we grade |
+| Nutrition science for a longer, stronger life.                           |
 +--------------------------------------------------------------------------+
 ```
 
@@ -88,6 +92,7 @@ Inside `main`, pages choose their own widths from these roles only:
 - Header: `padding-block: space.16` below 720px, `space.24` from 720px. Bottom border `border.divider-width` solid `border.divider`, spanning the full viewport width (the border sits on the full-width `<header>`, the content on the container inside it).
 - Layout: flex, `flex-wrap: wrap`, `align-items: center`, `justify-content: space-between`, `row-gap: space.8`, `column-gap: space.32`. Below 720px the nav takes the full width on its own row (`flex-basis: 100%`).
 - Wordmark: `type.subheading` (Literata 600), colour `text.primary`, no underline at rest, `translate="no"`, non-breaking space between the words. It is a link, but not a heading, so the page's `h1` stays the page's own title. Hover: underline `link.underline-width` at `link.underline-offset`, colour `text.primary`. Minimum target height `target.primary`, with the text vertically centred (`display: inline-flex; align-items: center; min-block-size: target.primary`).
+- Tagline: `type.meta`, colour `text.secondary`, in a block with the wordmark (the wordmark and tagline stack; the pair is one flex item). `margin: 0`; the wordmark's minimum target height gives the spacing above it. It wraps freely at narrow widths and large text sizes. Not shown in `global-error.tsx`, whose header is the wordmark only.
 - Nav list: `<ul>` with `display: flex; flex-wrap: wrap; column-gap: space.24; row-gap: space.4`, no bullets, no padding. Each link `type.interface`, see [navigation link](../components/links-and-buttons.md#navigation-link): colour `text.link`, `min-block-size: target.primary`, inline-flex centred.
 
 ### Current page

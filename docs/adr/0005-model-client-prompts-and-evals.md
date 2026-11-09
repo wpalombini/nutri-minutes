@@ -4,7 +4,7 @@
 - **Date:** 2026-11-09
 
 ## Context
-Scout is plain code. Triage, the next agent, and most agents after it call language models. `CLAUDE.md` already sets the rules: models are reached through OpenRouter, every call goes through a single client that records model, usage, cost and latency, each run has a budget and fails closed when it's spent, each call is traced, and prompts and model choices are code that must pass an eval suite. This ADR decides how those rules are built, before the first agent depends on them. It covers text models. Text-to-speech and speech-to-text will go through the same client, and their providers get their own ADRs.
+Scout is plain code. Triage, the next agent, and most agents after it call language models. `CLAUDE.md` already sets the rules: models are reached through OpenRouter, every call goes through a single client that records model, usage, cost and latency, each run has a budget and fails closed when it's spent, each call is traced, and prompts and model choices are code that must pass an eval suite. This ADR decides how those rules are built, before the first agent depends on them. It covers text models. Text-to-speech and speech-to-text calls will go through the same interface with their own call shapes, and the choice of model and provider for each gets its own ADR.
 
 Facts about OpenRouter were checked against its documentation on 2026-11-09 (see References):
 - Chat Completions responses include `usage.cost` by default, along with token counts, cached tokens and reasoning tokens. The response schema calls the unit "credits", while the generation stats endpoint reports `total_cost` in US dollars.
@@ -25,12 +25,12 @@ Facts about OpenRouter were checked against its documentation on 2026-11-09 (see
 
 ### Budgets
 - **Per run, per stage.** Each stage has a budget in US dollars for one run, set by an environment variable with a default in code.
-- **Checked before each call.** Before sending, the client works out the call's worst-case cost from the prompt length, the reply's `max_tokens` and the `max_price` caps. If the run's recorded spend plus that worst case would exceed the budget, the call is refused and the run stops as failed. The worst case is an upper bound, so a run can't overspend even if the reported cost arrives late or not at all.
+- **Checked before each call.** Before sending, and again before every retry, the client works out the call's worst-case cost: the rendered prompt's character count, taken as its token count, priced at the prompt cap, plus the reply's `max_tokens` priced at the completion cap, plus any per-request cap in `max_price`. If the run's recorded spend plus that worst case would exceed the budget, the call is refused and the run stops as failed. The worst case is an upper bound, so a run can't overspend even if the reported cost arrives late or not at all.
 - **Recorded after each call.** The spend added to the run is the cost the response reports. The client treats it as US dollars; the first implementation confirms that against the generation stats endpoint and records the result in `docs/agents.md`.
 - **A backstop outside the code.** The production and CI API keys each have an OpenRouter credit limit, set by the repo owner.
 
 ### Tracing
-- **A row per call.** Each attempt is stored in a `model_calls` table with the run, stage and article, the prompt name and version, the model requested and the model and provider that answered, the OpenRouter generation ID, the token counts, the cost, the latency, the outcome and any error. The table is added in its own migration with the client, following ADR 0002.
+- **A row per call.** Each attempt is stored in a `model_calls` table with the run, stage and article, the prompt name and version, the input values, the raw reply, the model requested and the model and provider that answered, the OpenRouter generation ID, the token counts, the cost, the latency, the outcome and any error. The rendered prompt isn't stored, because the prompt version and input values rebuild it. The table is added in its own migration with the client, following ADR 0002, and that pull request updates `docs/database.md`.
 - **Outputs point to their call.** Each agent's output rows reference the call that produced them, which gives the model and prompt version that ADR 0002's traceability rule requires.
 - **Logs.** Calls also emit structured log lines keyed by run and call. Logs and the table never hold API keys. Prompts and replies may hold abstracts and metadata, which are public, but never reader data.
 
@@ -40,10 +40,10 @@ Facts about OpenRouter were checked against its documentation on 2026-11-09 (see
 - **No prompts elsewhere.** Agents load prompts by name. Prompt text in agent code fails review.
 
 ### Evals
-- **Where they live.** The eval suite is Python, in `workers/evals/`, with one suite per agent, each with a labelled dataset and metrics. Triage is scored on scope decisions and topic tags against labelled papers. The Evidence Grader is scored on agreement with hand-labelled grades. Later agents add the metrics `CLAUDE.md` lists: faithfulness, numeric accuracy, reading level and hype.
-- **Labels.** Datasets hold article identifiers, the abstract and metadata Scout stored, and the expected labels. Abstracts are reproduced only when the article's licence permits it; otherwise the dataset stores the identifier and the eval fetches the abstract from Europe PMC on first use and caches it outside the repo.
-- **When they run.** In CI, a pull request that changes a prompt, a model setting, the client or an eval runs the affected suites against the real models, with a CI-only OpenRouter key stored as a repository secret. Each suite has its own budget, and a run that hits it fails. Pull requests from forks don't get the secret and can't change prompts without a maintainer re-running the suite.
-- **Baselines.** Each suite's latest accepted scores are committed in the repo. A score below its baseline by more than the suite's set tolerance fails the check and blocks merge. A change that improves scores updates the baseline in the same pull request.
+- **Where they live.** The eval suite is Python, in `workers/evals/`, with one suite per agent, each with a labelled dataset and metrics. Triage is scored on its scope decisions against labelled papers. The Evidence Grader is scored on agreement with hand-labelled grades. Later agents add the metrics `CLAUDE.md` lists: faithfulness, numeric accuracy, reading level and hype.
+- **Labels.** Datasets hold article identifiers, metadata and the expected labels. An abstract is stored in the repo only when the article's licence is CC BY or more permissive, as `CLAUDE.md` requires. Otherwise the eval fetches it from Europe PMC with Scout's client, which brings its timeouts, retries and User-Agent, and caches it outside the repo. A failed fetch fails the eval run as an error, never as a lower score.
+- **When they run.** In CI, a pull request that changes a prompt, a model setting, the client or an eval runs the affected suites against the real models, with a CI-only OpenRouter key stored as a repository secret. Each suite has its own budget, and a run that hits it fails. Pull requests from forks don't get the secret, so their eval check fails. Code from a fork never runs with the secret: a maintainer reviews the change and pushes it to a branch in this repository, where the suite runs.
+- **Baselines.** Each suite's latest accepted scores are committed in the repo. A score below its baseline by more than the suite's set tolerance fails the check and blocks merge. A change that improves scores raises the baseline in the same pull request. Baselines only go down with the repo owner's agreement, so scores can't slide a little at a time.
 - **Model choice.** A stage changes model by changing its settings file, which runs its eval. The cheapest model that meets the baseline is preferred.
 
 ## Consequences
@@ -54,6 +54,7 @@ Facts about OpenRouter were checked against its documentation on 2026-11-09 (see
 - **No live calls in unit tests.** The fake client keeps `uv run pytest` free and offline. Live behaviour is covered by the evals.
 - **Stricter routing may fail requests.** `data_collection: "deny"`, `require_parameters` and price caps can leave no provider for a model. The call then fails with a clear error instead of silently running elsewhere.
 - **More storage.** One row per attempt in `model_calls`, kept with the outputs they trace.
+- **Commands to document.** When the first suite lands, its commands go in the Commands section of `CLAUDE.md`.
 
 ## Alternatives considered
 - **An SDK** (OpenAI's Python SDK pointed at OpenRouter, or a multi-provider library such as LiteLLM): less request code, but a new dependency whose retries, routing and cost handling would have to be overridden to meet the budget and tracing rules.

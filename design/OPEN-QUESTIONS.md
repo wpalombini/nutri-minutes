@@ -1,11 +1,11 @@
 # Open questions
 
-Questions raised by the [screen](screens/README.md) and [component](components/README.md) specs that the specs can't settle on their own. Each says who it's waiting on. Remove an item once it's decided, and update the spec it points to.
+Questions raised by the [screen](screens/README.md) and [component](components/README.md) specs that the specs can't settle on their own. Each says who it's waiting on. Once an item is decided, update the spec it points to and move the item to the decided list.
 
 ## Decided by the owner (2026-11-09)
 - The footer keeps the no-advertising line.
 - Retracted studies stay published, with the retraction notice before the headline.
-- The main session drafts "How we grade", "How summaries are made" and the topic descriptions, and the owner approves them in a PR.
+- We draft "How we grade", "How summaries are made" and the topic descriptions, and the owner approves them in a PR.
 - A source with a PMID but no DOI links to its PubMed record instead.
 - The plan changes are accepted: the extra at-a-glance rows and "Funding and conflicts", "Raises / Lowers certainty", and treating a trial or review with no limits as invalid.
 

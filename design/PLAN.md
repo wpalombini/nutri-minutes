@@ -298,7 +298,7 @@ Everything around it stays quiet: one accent colour used nowhere else except lin
 5. **One accent, one meaning.** Beetroot means a study number or a link. Nothing decorative uses it.
 6. **Comfortable by default.** 18px reading text, 16px minimum, 44px primary targets, reflow at 320px, 200% zoom without loss.
 7. **Calm disclosure.** The footer of every page says the summaries are written by artificial intelligence from each study and checked against it, that they are not medical advice, and links to "How summaries are made". It's secondary text at 16px, visible but not alarming. Reader-facing text spells out "artificial intelligence" and never uses "AI".
-8. **The source is one tap away.** Every summary shows the DOI as a link in the at-a-glance panel.
+8. **The source is one tap away.** Every summary shows the DOI as a link in the at-a-glance panel, or the PubMed record when there is no DOI.
 9. **Nothing to sell.** No ads, affiliate links, sponsored slots, pop-ups or dark patterns. Email sign-up (later) is one labelled field and one button.
 
 ## 9. Review against the brief

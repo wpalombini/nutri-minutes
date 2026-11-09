@@ -160,7 +160,7 @@ The interval grows once on load ([interval motion](../components/interval.md#mot
 - `<title>` and `og:title`: the headline + " – Nutri Minutes".
 - Description: `result_sentence`, which states the result plainly.
 - Canonical URL with the public ID.
-- Don't add structured data that claims medical authority (no `MedicalWebPage`); `Article` with `citation` to the DOI is fine.
+- Don't add structured data that claims medical authority (no `MedicalWebPage`); `Article` with `citation` to the DOI (or the PubMed record) is fine.
 
 ## Data (a "summary")
 Everything in the [summary list item](../components/finding-row.md#data-a-summary-list-item), plus:

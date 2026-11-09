@@ -107,4 +107,5 @@ None. No hover lift, no reveal on scroll.
 | `effect` | object or null | `measure`, `scale`, `estimate`, `ci_lower`, `ci_upper`, `ci_level`, `unit` and `outcome_label`: the [interval](interval.md#data) fields the glyph and its hidden sentence need |
 | `published_on` | date | When our summary was published |
 | `retracted` | boolean | From the article's relations (`retraction_in`) |
-| `doi` | string | Not shown in the row, but required: a row without one is invalid |
+| `doi` | string or null | Not shown in the row |
+| `pmid` | string (digits) or null | Not shown in the row. A row with neither `doi` nor `pmid` is invalid |

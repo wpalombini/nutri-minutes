@@ -183,7 +183,7 @@ Use the interval's no-range or no-effect state. The lead stays the lead; the Edi
 API failure: the [error page](app-shell.md#error-the-page-couldnt-load). If only the topic list fails but the edition loads, leave out "Browse by topic" and log it rather than failing the page; the nav still has "Topics".
 
 ### Invalid items
-A finding with no grade, design category or DOI is left out ([conventions](README.md#content-rules-the-app-enforces)). If that's the lead, the next valid finding becomes the lead.
+A finding with no grade, design category, or DOI or PMID is left out ([conventions](README.md#content-rules-the-app-enforces)). If that's the lead, the next valid finding becomes the lead.
 
 ## Keyboard and screen readers
 - Landmarks: banner, main, contentinfo. The two sections are named regions.

@@ -7,7 +7,7 @@ Nutri Minutes turns newly published nutrition research into short, plain-English
 
 ## Finding new studies
 
-Every day we collect newly indexed studies from Europe PMC, a public database of life-science research that includes PubMed. We then keep the studies in our scope: nutrition, and exercise where it affects health, such as bones, muscle, falls, heart and metabolism, the brain and longevity. We don't cover weight-loss transformations, sports performance or appearance.
+Every day we collect newly indexed studies from Europe PMC, a public database of life-science research that includes PubMed. We then keep only the studies in our scope: nutrition, and exercise only where it affects bones, muscle, falls, heart and metabolism, the brain or longevity. We also cover some research on how genes interact with diet and with ageing. We don't cover appearance, weight-loss transformations or sports performance.
 
 ## From study to summary
 
@@ -32,4 +32,4 @@ Journals sometimes correct or retract studies after publication. When a study we
 ## What we don't do
 
 - We don't give medical advice. Talk to a health professional before changing your diet, exercise or medicines.
-- We don't take advertising, sponsorship or affiliate money from anyone.
+- We don't carry advertising, sponsorship or affiliate links.

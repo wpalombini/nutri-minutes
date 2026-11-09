@@ -56,3 +56,20 @@ def test_manual_window_arguments() -> None:
 def test_invalid_window_arguments(argv: list[str]) -> None:
     with pytest.raises(SystemExit):
         _parse_args(argv, TODAY)
+
+
+@pytest.mark.parametrize("value", ["nan", "inf"])
+def test_float_settings_must_be_finite(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    from pipeline.env import float_env
+
+    monkeypatch.setenv("SOME_SECONDS", value)
+    with pytest.raises(RuntimeError, match="at least"):
+        float_env("SOME_SECONDS", 1.0, 0.0)
+
+
+def test_int_settings_respect_a_maximum(monkeypatch: pytest.MonkeyPatch) -> None:
+    from pipeline.env import int_env
+
+    monkeypatch.setenv("SOME_ATTEMPTS", "30")
+    with pytest.raises(RuntimeError, match="at most 6"):
+        int_env("SOME_ATTEMPTS", 3, 1, 6)

@@ -44,6 +44,21 @@ def test_supported_schema_loads() -> None:
         {"type": "string", "enum": []},
         {"type": "integer", "minimum": True},
         {"type": "object", "properties": {"a": {"$ref": "#/x"}}, "required": ["a"]},
+        {
+            "type": "object",
+            "properties": {"a": {"type": "string"}},
+            "required": [1, "a"],
+            "additionalProperties": False,
+        },
+        {
+            "type": "object",
+            "properties": {"a": {"type": "string"}},
+            "required": ["a", "a"],
+            "additionalProperties": False,
+        },
+        {"type": "string", "enum": ["a", 1]},
+        {"type": "integer", "minimum": 5, "maximum": 1},
+        {"type": "string", "minLength": 3, "maxLength": 2},
     ],
 )
 def test_unsupported_or_loose_schemas_are_rejected(schema: dict[str, Any]) -> None:

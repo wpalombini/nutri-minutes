@@ -46,7 +46,7 @@ run_roles "worker-ci-2" "api-ci-2"  # Idempotent, and updates passwords.
 [ "$(query "SELECT pg_has_role('pipeline_runner', 'pipeline_worker', 'MEMBER')")" = t ] || fail "pipeline_runner not in pipeline_worker"
 [ "$(query "SELECT pg_has_role('api_runner', 'pipeline_worker', 'MEMBER')")" = f ] || fail "api_runner must not be in pipeline_worker"
 [ "$(query "SELECT has_schema_privilege('api_runner', 'public', 'USAGE')")" = f ] || fail "api_runner can use schema public"
-for table in articles article_licences article_relations pipeline_runs pipeline_run_errors; do
+for table in articles article_licences article_relations pipeline_runs pipeline_run_errors model_calls; do
   [ "$(query "SELECT has_table_privilege('api_runner', 'public.$table', 'SELECT')")" = f ] || fail "api_runner can read $table"
 done
 

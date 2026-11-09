@@ -97,6 +97,9 @@ class CallAttempt:
 
 
 class CallLog(Protocol):
+    """Budgets assume one caller at a time per run and stage: the check and the record aren't
+    atomic, so parallel calls in one stage would need a reservation first."""
+
     def record(self, attempt: CallAttempt) -> int:
         """Store the attempt and return its ID. It must persist even if the caller rolls back."""
         ...

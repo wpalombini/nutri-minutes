@@ -7,7 +7,7 @@ Every study we summarise gets an evidence grade. The grade tells you how much th
 
 ## The four levels
 
-We use the four levels of GRADE, a method widely used in health research to rate evidence. GRADE was designed to rate a whole body of evidence. We use its levels and starting points to rate one study at a time, and our own five factors, below, to move a grade up or down.
+Our grades follow the four levels of GRADE, a method widely used in health research to rate evidence. GRADE was designed to rate a whole body of evidence. We use its levels and starting points to rate one study at a time, and our own five factors, below, to move a grade up or down.
 
 - **High certainty:** the true effect is very likely close to this result.
 - **Moderate certainty:** the true effect is probably close to this result, but it could be substantially different.

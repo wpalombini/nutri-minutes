@@ -1,0 +1,66 @@
+/* design/screens/topics.md, "/topics" and "/topics/[topic]". */
+.title {
+  margin-block-end: var(--space-32);
+  color: var(--text-primary);
+  font-family: var(--type-headline-phone-font-family);
+  font-size: var(--type-headline-phone-font-size);
+  font-weight: var(--type-headline-phone-font-weight);
+  letter-spacing: var(--type-headline-phone-letter-spacing);
+  line-height: var(--type-headline-phone-line-height);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* A route-change focus target, not a control, so no ring. */
+.title:focus {
+  outline: none;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-min);
+  margin-block-end: var(--space-8);
+  font-family: var(--type-meta-font-family);
+  font-size: var(--type-meta-font-size);
+  font-weight: var(--type-meta-font-weight);
+  letter-spacing: var(--type-meta-letter-spacing);
+  line-height: var(--type-meta-line-height);
+}
+
+.archiveTitle {
+  margin-block-end: 0;
+}
+
+.description {
+  max-inline-size: var(--measure-body);
+  margin-block-start: var(--space-8);
+  color: var(--text-secondary);
+  font-family: var(--type-interface-font-family);
+  font-size: var(--type-interface-font-size);
+  font-weight: var(--type-interface-font-weight);
+  letter-spacing: var(--type-interface-letter-spacing);
+  line-height: var(--type-interface-line-height);
+  overflow-wrap: break-word;
+}
+
+.count {
+  margin-block-start: var(--space-4);
+  color: var(--text-secondary);
+  font-family: var(--type-meta-font-family);
+  font-size: var(--type-meta-font-size);
+  font-weight: var(--type-meta-font-weight);
+  letter-spacing: var(--type-meta-letter-spacing);
+  line-height: var(--type-meta-line-height);
+  font-variant-numeric: var(--type-figures-font-variant-numeric);
+}
+
+@media (width >= 720px) {
+  .title {
+    font-family: var(--type-headline-desktop-font-family);
+    font-size: var(--type-headline-desktop-font-size);
+    font-weight: var(--type-headline-desktop-font-weight);
+    letter-spacing: var(--type-headline-desktop-letter-spacing);
+    line-height: var(--type-headline-desktop-line-height);
+  }
+}

@@ -1,0 +1,28 @@
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: var(--border-divider-width) solid var(--border-divider);
+}
+
+.row {
+  padding-block: var(--space-24);
+  border-block-end: var(--border-divider-width) solid var(--border-divider);
+}
+
+.name {
+  font-family: var(--type-finding-title-font-family);
+  font-size: var(--type-finding-title-font-size);
+  font-weight: var(--type-finding-title-font-weight);
+  letter-spacing: var(--type-finding-title-letter-spacing);
+  line-height: var(--type-finding-title-line-height);
+  overflow-wrap: break-word;
+}
+
+/* Headline link (design/components/links-and-buttons.md): ink text, accent underline. */
+.link,
+.link:visited,
+.link:hover {
+  color: var(--text-primary);
+  text-decoration-color: var(--text-link);
+}

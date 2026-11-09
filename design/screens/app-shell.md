@@ -15,7 +15,7 @@ The frame around every page: skip link, header, main and footer. It is built fir
     <a class="skip-link" href="#main">Skip to main content</a>
     <header>…wordmark, <nav aria-label="Main">…</nav></header>
     <main id="main" tabindex="-1">…page content…</main>
-    <footer>…disclosure, footer links…</footer>
+    <footer>…disclosure, footer links, theme control…</footer>
   </body>
 </html>
 ```
@@ -23,7 +23,8 @@ The frame around every page: skip link, header, main and footer. It is built fir
 - One `<header>` (banner landmark), one `<nav aria-label="Main">`, one `<main>`, one `<footer>` (contentinfo landmark). No other landmarks in the shell. Pages may add an `<aside>` (the study page does) and labelled `<section>`s.
 - `lang="en-AU"`.
 - `<meta name="viewport" content="width=device-width, initial-scale=1">`. Never `maximum-scale` or `user-scalable=no`.
-- `color-scheme: light dark` on `:root`, and `<meta name="theme-color">` twice, one per scheme, matching `surface.page`: `#EDF2EF` with `media="(prefers-color-scheme: light)"` and `#0E1C19` with `media="(prefers-color-scheme: dark)"`, through Next.js's `viewport` export (see [`icons/README.md`](../icons/README.md#using-it-in-the-web-app-nextjs-app-router)).
+- `color-scheme: light dark` on `:root`, and `<meta name="theme-color">` twice, one per scheme, matching `surface.page`: `#EDF2EF` with `media="(prefers-color-scheme: light)"` and `#0E1C19` with `media="(prefers-color-scheme: dark)"`, through Next.js's `viewport` export (see [`icons/README.md`](../icons/README.md#using-it-in-the-web-app-nextjs-app-router)). The [theme control](../components/theme-control.md) narrows both when the reader picks Light or Dark.
+- One tiny inline script in `<head>` applies a stored theme before first paint ([theme control](../components/theme-control.md#applied-before-first-paint)).
 - `body`: background `surface.page`, colour `text.primary`, `type.interface` as the default text style, `font-optical-sizing: auto` (Literata's optical size axis) and `-webkit-text-size-adjust: 100%`.
 - `<title>`: "{page title} – Nutri Minutes" with an en dash, for example "Page not found – Nutri Minutes". Each spec gives its page title. Every page has exactly one `h1`.
 
@@ -107,6 +108,7 @@ Inside `main`, pages choose their own widths from these roles only:
    - "How summaries are made" → `/how-summaries-are-made` (required by principle 7)
    - "How we grade" → `/how-we-grade`
 3. **No-advertising line,** a `<p>`: "No advertising, sponsorship or affiliate links." It states principle 9 where readers look for it, and costs one line.
+4. **[Theme control](../components/theme-control.md):** "Colour theme", System, Light or Dark. Last, because it's a preference rather than information, and because the footer is the calmest place for it: nothing is sticky, and the header stays at three links. Hidden without JavaScript.
 
 The footer is not a `<nav>`: two links don't need a landmark, and it keeps the landmark list short.
 
@@ -127,10 +129,15 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 |                                |  space.16
 | No advertising, sponsorship or |
 | affiliate links.               |
+|                                |  space.24
+| Colour theme                   |  legend, space.8
+| +--------+ +-------+ +------+  |  theme control, options
+| | System | | Light | | Dark |  |  target.primary tall
+| +--------+ +-------+ +------+  |
 +--------------------------------+
 ```
 
-1280px (from 720px): two columns, disclosure left, links right.
+1280px (from 720px): two columns, disclosure, no-advertising line and theme control left, links right.
 
 ```
 +--------------------------------------------------------------------------+
@@ -138,6 +145,11 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 | artificial intelligence from each study and      How we grade            |
 | checked against it. They are not medical advice.                         |
 | No advertising, sponsorship or affiliate links.                          |
+|                                                                          |
+| Colour theme                                                             |
+| +--------+ +-------+ +------+                                            |
+| | System | | Light | | Dark |                                            |
+| +--------+ +-------+ +------+                                            |
 +--------------------------------------------------------------------------+
 ```
 
@@ -147,6 +159,7 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 - All footer text `type.meta`, colour `text.secondary`. The disclosure and the no-advertising line `max-inline-size: measure.caption`.
 - Links: [text links](../components/links-and-buttons.md#text-link) (`text.link`, always underlined), `type.meta`. Each link `min-block-size: target.min` with `display: inline-flex; align-items: center`, stacked with `gap: space.4` (targets at least 24px tall and never overlapping).
 - From 720px: grid `grid-template-columns: minmax(0, 1fr) auto`, `column-gap: space.56`; the links sit in the second column, top-aligned, stacked. Below 720px everything stacks with `gap: space.16`.
+- Theme control: in the first column, after the no-advertising line, `margin-block-start: space.24` at every width. Its tokens and states are in [its spec](../components/theme-control.md#tokens-and-states).
 
 ## Focus
 
@@ -160,10 +173,10 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 
 ## Light and dark
 
-- Follows the system setting only (`prefers-color-scheme`). No theme switch in this version; the token build can add a `data-theme` override later.
-- Every colour comes from the colour roles; the dark values apply under `@media (prefers-color-scheme: dark)` from the generated stylesheet. Components never test the scheme themselves.
-- The shell uses only `surface.page`, `text.primary`, `text.secondary`, `text.link`, `border.divider` and `focus.ring`, all with recorded pairs in both themes.
-- Screenshots at 360px and 1280px, light and dark, for every page in this folder (ADR 0004).
+- Follows the system setting (`prefers-color-scheme`) by default. Readers can override it with the [theme control](../components/theme-control.md) in the footer, which sets `data-theme="light"` or `data-theme="dark"` on `<html>` and stores the choice on this device only.
+- Every colour comes from the colour roles; the dark values apply under `@media (prefers-color-scheme: dark)` unless `data-theme="light"` is set, and always under `data-theme="dark"` ([mapping](../components/theme-control.md#how-data-theme-maps-onto-the-tokens)). Components never test the scheme or the theme themselves.
+- The shell uses only `surface.page`, `text.primary`, `text.secondary`, `text.link`, `border.divider` and `focus.ring`, plus `border.control`, `border.control-hover`, `button.primary.bg` and `button.primary.text` in the theme control, all with recorded pairs in both themes.
+- Screenshots at 360px and 1280px, light and dark, for every page in this folder (ADR 0004). Light and dark by emulated scheme cover the overrides too, since they use the same roles.
 
 ## Motion
 - The shell has no animation. Link underlines change thickness on hover with no transition (thickness is not a compositor property; the change is instant and small).

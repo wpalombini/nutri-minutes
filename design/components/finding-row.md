@@ -88,7 +88,7 @@ One column, in DOM order: headline, topic, date, result, meta, each full width. 
 ## States
 - **Retracted study:** after the design label, add the word "Retracted" in `type.meta-strong`, `text.primary`, preceded by the notice icon (`aria-hidden`; see [study page](../screens/study.md#retraction-and-correction-notices)). The headline stays as published.
 - **No interval / no effect size:** the glyph column shows the text, as above.
-- **Invalid summary** (no grade, design category or DOI): the row is not rendered at all, and the list's count leaves it out.
+- **Invalid summary** (no grade, design category, or DOI or PMID): the row is not rendered at all, and the list's count leaves it out.
 - **Long content:** headlines and topic names of any length wrap.
 - Loading, empty and error belong to the list's page ([home](../screens/home.md#states), [topics](../screens/topics.md#states)).
 

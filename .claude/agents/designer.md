@@ -40,7 +40,7 @@ You only write in `design/`. You never edit app code (`web/`, `api/`, `workers/`
 - Plain language, clear headings and landmarks, and descriptive link text.
 
 ## Content rules that shape the design
-- Every summary shows its evidence grade and links to its source (DOI). Observational and animal studies are labelled as such.
+- Every summary shows its evidence grade and links to its source (the DOI, or the PubMed record when there is no DOI). Observational and animal studies are labelled as such.
 - Every page and episode discloses that the content is written by artificial intelligence and is not medical advice. On the web it sits in the footer of every page, in calm secondary text. Reader-facing text says "artificial intelligence" in full, never "AI".
 - No advertising, sponsorship or affiliate patterns.
 - Numbers and effect sizes are central: design clear, honest ways to show them, including what a study does not show.

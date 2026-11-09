@@ -124,7 +124,7 @@ Directly after the topic link and before the `h1`, so it's the first thing read.
 - A `<div role="note">` holding paragraphs, with no heading: a heading before the `h1` would break the heading order, and the notice is read first anyway because it comes first in the DOM. The first sentence is in `type.interface-strong`; the rest in `type.interface`, `text.primary`.
 - Notice icon: `viewBox="0 0 16 16"`, `fill="none"`, `stroke="currentColor"`, `stroke-width="2"`, `stroke-linecap="round"`: `<circle cx="8" cy="8" r="7"/><path d="M8 4.5v4.5M8 11.5v.01"/>`. `space.16` square, `icon.default`, `aria-hidden="true"`. The words carry the meaning.
 - Layout: `display: grid; grid-template-columns: space.16 minmax(0, 1fr); column-gap: space.12; margin-block-end: space.24; max-inline-size: measure.caption`. No border, no fill, no colour: text and the icon only (dashed is for limits; filled is for the panel).
-- **Retracted:** first line "This study was retracted", then "The journal retracted it on {date}. We keep this summary for the record, but don't rely on its findings." and a link "Read the retraction notice" (to the notice's DOI or PubMed record). Whether retracted summaries should stay published at all is in the [open questions](../OPEN-QUESTIONS.md).
+- **Retracted:** first line "This study was retracted", then "The journal retracted it on {date}. We keep this summary for the record, but don't rely on its findings." and a link "Read the retraction notice" (to the notice's DOI or PubMed record).
 - **Correction published:** first line "The journal published a correction on {date}.", then "This summary has been checked against it." or "This summary hasn't been checked against it yet.", and a link "Read the correction". Which one shows depends on whether the pipeline re-checks summaries after a correction.
 - **Summary updated:** no notice; the panel shows "Updated {date}". If the pipeline records what changed, add it there later.
 
@@ -137,7 +137,7 @@ Shell renders; main shows "Loading this summary…" ([shared loading state](app-
 Unknown or unpublished ID: the [404 page](app-shell.md#page-not-found-404). An unpublished summary must be indistinguishable from one that never existed (the API reads published views only).
 
 ### Error
-API failure or an invalid summary (no grade, design category or DOI): the [error page](app-shell.md#error-the-page-couldnt-load). Never a partial page.
+API failure or an invalid summary (no grade, design category, or DOI or PMID): the [error page](app-shell.md#error-the-page-couldnt-load). Never a partial page.
 
 ### Content variants
 - **No interval reported:** the interval's [no-range state](../components/interval.md#states): no drawing, numbers in words, "The abstract doesn't report a range."

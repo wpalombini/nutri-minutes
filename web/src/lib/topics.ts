@@ -7,6 +7,8 @@
  * API has a topics endpoint, the owner-approved file is the source.
  */
 
+import { isCalendarDate } from './dates'
+
 export type Topic = { name: string; slug: string; description: string }
 
 export type TopicList = { updated: string; topics: Topic[] }
@@ -38,11 +40,7 @@ export function parseTopics(source: string): TopicList {
     else updated = (field[2] ?? '').trim()
   }
   if (!hasTitle) throw new Error('Front matter needs a title')
-  if (
-    updated === undefined ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(updated) ||
-    Number.isNaN(Date.parse(updated))
-  ) {
+  if (updated === undefined || !isCalendarDate(updated)) {
     throw new Error('Front matter needs an updated date as YYYY-MM-DD')
   }
 
@@ -51,7 +49,7 @@ export function parseTopics(source: string): TopicList {
   if (start === -1) throw new Error('The topics file has no table')
   const rows = lines.slice(start)
   const end = rows.findIndex((line) => line.trim() === '')
-  const table = end === -1 ? rows : rows.slice(0, end)
+  const table = (end === -1 ? rows : rows.slice(0, end)).map((line) => line.trimEnd())
   if (rows.slice(table.length).some((line) => line.trim() !== '')) {
     throw new Error('Unexpected content after the topic table')
   }

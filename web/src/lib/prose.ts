@@ -5,6 +5,8 @@
  * subset throws, so an author finds out at build time instead of getting a silent misrender.
  */
 
+import { isCalendarDate } from './dates'
+
 export type Inline =
   | { type: 'text'; text: string }
   | { type: 'bold'; children: Inline[] }
@@ -17,7 +19,9 @@ export type Block =
 
 export type ProseDocument = { title: string; updated: string; blocks: Block[] }
 
-const UNSUPPORTED_BLOCK = /^(#(?!#{1,2} )|#{4,}|>|```|~~~|\||<|---|\*\*\*|!\[|\s{2,}\S)/
+// Indented lines (indented code, nested lists), setext underlines, `+` and `1)` lists, and the rest.
+const UNSUPPORTED_BLOCK =
+  /^(#(?!#{1,2} )|#{4,}|>|```|~~~|\||<|(?:-+|=+)\s*$|\*\*\*|!\[|\s+\S|\+ |\d+\) )/
 const BULLET = /^[-*] (.*)$/
 const NUMBERED = /^\d+\. (.*)$/
 const HEADING = /^(#{2,3}) (.+)$/
@@ -81,6 +85,7 @@ export function parseBlocks(markdown: string): Block[] {
   const lines = markdown.replaceAll('\r\n', '\n').split('\n')
   let paragraph: string[] = []
   let list: { ordered: boolean; items: string[] } | undefined
+  let seenH2 = false
 
   const endParagraph = () => {
     if (paragraph.length > 0) {
@@ -107,11 +112,15 @@ export function parseBlocks(markdown: string): Block[] {
       throw new Error(`Unsupported Markdown block: ${line}`)
     }
     if (heading) {
+      const level = heading[1]?.length === 3 ? 3 : 2
+      if (level === 3 && !seenH2)
+        throw new Error(`Unsupported Markdown block: h3 before any h2: ${line}`)
+      if (level === 2) seenH2 = true
       endParagraph()
       endList()
       blocks.push({
         type: 'heading',
-        level: heading[1]?.length === 3 ? 3 : 2,
+        level,
         children: parseInline(heading[2] ?? ''),
       })
     } else if (bullet || numbered) {
@@ -145,7 +154,7 @@ export function parseProsePage(source: string): ProseDocument {
   const title = fields.get('title')
   const updated = fields.get('updated')
   if (!title) throw new Error('Front matter needs a title')
-  if (!updated || !/^\d{4}-\d{2}-\d{2}$/.test(updated) || Number.isNaN(Date.parse(updated))) {
+  if (!updated || !isCalendarDate(updated)) {
     throw new Error('Front matter needs an updated date as YYYY-MM-DD')
   }
   return { title, updated, blocks: parseBlocks(match[2] ?? '') }

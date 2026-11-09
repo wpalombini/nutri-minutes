@@ -79,10 +79,24 @@ describe('parseBlocks', () => {
       '| a | b |',
       '---',
       '![i](/x.png)',
+      '    indented code',
+      '\tindented code',
+      'Title\n=====',
+      'Title\n-----',
+      '+ a',
+      '1) a',
+      '## H\n\n### Fine\n\n  indented',
     ]) {
-      expect(() => parseBlocks(bad), bad).toThrow('Unsupported')
+      expect(() => parseBlocks(bad), bad).toThrow('Unsupported Markdown block')
     }
-    expect(() => parseBlocks('- a\n  more')).toThrow()
+    expect(() => parseBlocks('- a\n  more')).toThrow('Unsupported Markdown block')
+    expect(() => parseBlocks('- a\nmore')).toThrow('Multi-line list items')
+  })
+
+  it('needs an h2 before an h3', () => {
+    expect(() => parseBlocks('### Sub\n\n## H')).toThrow('h3 before any h2')
+    expect(() => parseBlocks('Intro\n\n### Sub')).toThrow('h3 before any h2')
+    expect(parseBlocks('## H\n\n### Sub')).toHaveLength(2)
   })
 })
 
@@ -94,10 +108,13 @@ describe('parseProsePage', () => {
   })
 
   it('needs a title and a valid date', () => {
-    expect(() => parseProsePage('no front matter')).toThrow('front matter')
-    expect(() => parseProsePage('---\nupdated: 2026-11-09\n---\nx')).toThrow('title')
-    expect(() => parseProsePage('---\ntitle: T\nupdated: 9 Nov\n---\nx')).toThrow('updated')
-    expect(() => parseProsePage('---\ntitle: T\nupdated: 2026-13-45\n---\nx')).toThrow('updated')
+    expect(() => parseProsePage('no front matter')).toThrow('must start with front matter')
+    expect(() => parseProsePage('---\nupdated: 2026-11-09\n---\nx')).toThrow('needs a title')
+    for (const date of ['9 Nov', '2026-13-45', '2026-02-30']) {
+      expect(() => parseProsePage(`---\ntitle: T\nupdated: ${date}\n---\nx`)).toThrow(
+        'updated date as YYYY-MM-DD',
+      )
+    }
   })
 })
 
@@ -112,11 +129,15 @@ describe('the real pages', () => {
   const dir = new URL('../content/pages/', import.meta.url)
   for (const file of readdirSync(dir)) {
     it(`${file} parses and renders with an h2 outline, links and a date`, () => {
-      const page = parseProsePage(readFileSync(new URL(file, dir), 'utf8'))
+      const source = readFileSync(new URL(file, dir), 'utf8')
+      const updated = /^updated: (\d{4}-\d{2}-\d{2})$/m.exec(source)?.[1] ?? ''
+      const page = parseProsePage(source)
       const html = renderToStaticMarkup(<ProsePage page={page} />)
       expect(html.match(/<h1/g)).toHaveLength(1)
       expect(html).toContain('<h2>')
-      expect(html).toContain('Last updated <time dateTime="2026-11-09">9 November 2026</time>')
+      expect(html).toContain(
+        `Last updated <time dateTime="${updated}">${formatUpdated(updated)}</time>`,
+      )
       expect(html).not.toContain('&lt;')
     })
   }

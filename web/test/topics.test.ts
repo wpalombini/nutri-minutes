@@ -30,25 +30,50 @@ describe('parseTopics', () => {
     ])
   })
 
+  it('ignores trailing spaces on table rows', () => {
+    expect(
+      parseTopics(
+        make('| Topic | Slug | Description |  \n|---|---|---|\t\n' + row.trimEnd() + '   \n'),
+      ).topics,
+    ).toHaveLength(1)
+  })
+
   it.each([
-    ['no front matter', head + row],
-    ['no title', make(head + row, '---\nupdated: 2026-11-09\n---\n')],
-    ['a bad date', make(head + row, '---\ntitle: T\nupdated: 9/11/2026\n---\n')],
-    ['no table', make('Just text.\n')],
-    ['a wrong header', make('| Name | Slug | Description |\n|---|---|---|\n' + row)],
-    ['no divider', make('| Topic | Slug | Description |\n' + row)],
-    ['no rows', make(head)],
-    ['a missing cell', make(head + '| Bone health | `bone-health` |\n')],
-    ['an extra cell', make(head + '| Bone health | `bone-health` | x | y |\n')],
-    ['an unquoted slug', make(head + '| Bone health | bone-health | x |\n')],
-    ['an uppercase slug', make(head + '| Bone health | `Bone_Health` | x |\n')],
-    ['an empty description', make(head + '| Bone health | `bone-health` |  |\n')],
-    ['Markdown in a cell', make(head + '| Bone **health** | `bone-health` | x |\n')],
-    ['HTML in a cell', make(head + '| Bone health | `bone-health` | <b>x</b> |\n')],
-    ['a duplicate slug', make(head + row + row)],
-    ['content after the table', make(head + row + '\nMore text.\n')],
-  ])('throws for %s', (_name, source) => {
-    expect(() => parseTopics(source)).toThrow()
+    ['no front matter', head + row, 'must start with front matter'],
+    ['no title', make(head + row, '---\nupdated: 2026-11-09\n---\n'), 'needs a title'],
+    ['a bad date', make(head + row, '---\ntitle: T\nupdated: 9/11/2026\n---\n'), 'updated date'],
+    [
+      'an impossible date',
+      make(head + row, '---\ntitle: T\nupdated: 2026-02-30\n---\n'),
+      'updated date',
+    ],
+    ['no table', make('Just text.\n'), 'has no table'],
+    [
+      'a wrong header',
+      make('| Name | Slug | Description |\n|---|---|---|\n' + row),
+      'header must be',
+    ],
+    ['no divider', make('| Topic | Slug | Description |\n' + row), 'divider row'],
+    ['no rows', make(head), 'has no rows'],
+    ['a missing cell', make(head + '| Bone health | `bone-health` |\n'), 'needs 3 cells'],
+    ['an extra cell', make(head + '| Bone health | `bone-health` | x | y |\n'), 'needs 3 cells'],
+    ['an unquoted slug', make(head + '| Bone health | bone-health | x |\n'), 'slug must be'],
+    ['an uppercase slug', make(head + '| Bone health | `Bone_Health` | x |\n'), 'slug must be'],
+    ['an empty description', make(head + '| Bone health | `bone-health` |  |\n'), 'empty cell'],
+    [
+      'Markdown in a cell',
+      make(head + '| Bone **health** | `bone-health` | x |\n'),
+      'must be plain',
+    ],
+    [
+      'HTML in a cell',
+      make(head + '| Bone health | `bone-health` | <b>x</b> |\n'),
+      'must be plain',
+    ],
+    ['a duplicate slug', make(head + row + row), 'Duplicate topic slug'],
+    ['content after the table', make(head + row + '\nMore text.\n'), 'after the topic table'],
+  ])('throws for %s', (_name, source, message) => {
+    expect(() => parseTopics(source)).toThrow(message)
   })
 })
 

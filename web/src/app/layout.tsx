@@ -45,7 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <SiteShell
           header={
-            <SiteHeader>
+            <SiteHeader tagline="Nutrition science for a longer, stronger life.">
               <MainNav />
             </SiteHeader>
           }

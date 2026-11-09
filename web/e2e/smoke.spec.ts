@@ -128,6 +128,16 @@ for (const { name, path, status, heading, title } of pages) {
   }
 }
 
+test('the header shows the tagline and the wordmark link keeps its name', async ({ page }) => {
+  await page.goto('/')
+  const header = page.getByRole('banner')
+  await expect(header.getByText('Nutrition science for a longer, stronger life.')).toBeVisible()
+  await expect(header.getByRole('link', { name: 'Nutri Minutes', exact: true })).toHaveAttribute(
+    'href',
+    '/',
+  )
+})
+
 test('the skip link is the first tab stop and moves focus to main', async ({ page }) => {
   await page.goto('/')
   await page.keyboard.press('Tab')

@@ -57,7 +57,7 @@ Same shape at 360px and 1280px; it fills the reading column (`layout.study-colum
 
 ## States
 - **Rendered with its page;** no loading state.
-- **No limits from the pipeline:** for observational, animal and lab studies the fixed item still shows. For a randomised trial or review with no limits, the summary is incomplete: treat it as invalid, like a missing grade, and show the error page. (This is stricter than the content rules require; it's listed in the [open questions](../OPEN-QUESTIONS.md).)
+- **No limits from the pipeline:** for observational, animal and lab studies the fixed item still shows. For a randomised trial or review with no limits, the summary is incomplete: treat it as invalid, like a missing grade, and show the error page. (This is stricter than the content rules require; the owner accepted it.)
 - **Long items:** wrap; no truncation, no "show more".
 
 ## Keyboard and screen readers

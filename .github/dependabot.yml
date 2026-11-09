@@ -29,6 +29,12 @@ updates:
     ignore:
       - dependency-name: "@types/node"
         update-types: [version-update:semver-major]
+      # eslint-plugin-jsx-a11y supports ESLint up to 9, and typescript-eslint supports
+      # TypeScript below 6.1. Remove these once both support the new majors.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: uv
     directory: /workers

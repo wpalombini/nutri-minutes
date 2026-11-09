@@ -17,7 +17,7 @@ The scope in `CLAUDE.md`, as seven topics, in this order:
 | Longevity | `longevity` |
 | Genes and diet | `genes-and-diet` |
 
-The list comes from the API so it can change without a release, but the app expects names and slugs like these. Each topic also has a one-sentence description of what it covers. The descriptions in the wireframes are samples; who writes them, and where descriptions and counts come from, is in the [open questions](../OPEN-QUESTIONS.md). The seven topics don't cover every nutrition study in scope; that gap is listed there too.
+The list comes from the API so it can change without a release, but the app expects names and slugs like these. Each topic also has a one-sentence description of what it covers. The descriptions in the wireframes are samples; the real ones are drafted for the owner to approve. Where descriptions and counts come from is in the [open questions](../OPEN-QUESTIONS.md). The seven topics don't cover every nutrition study in scope; that gap is listed there too.
 
 ## `/topics`
 

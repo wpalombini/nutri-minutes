@@ -67,7 +67,7 @@ The web app lives in `web/` and uses npm. Run these from `web/`; `web/README.md`
 - Lint and format: `npm run lint` and `npm run format` (`npm run format:check` in CI)
 - Type check: `npm run typecheck`
 - Design tokens: `npm run tokens` regenerates the CSS variables after a change in `design/tokens/`; `npm run tokens:check` fails if they are stale
-- Client bundle secret check (after a build): `npm run check:bundle`
+- Client bundle secret check (after a build, with `API_BASE_URL`, `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` set; dummy values are fine): `npm run check:bundle`
 
 ## Engineering standards
 - **Reliability:** pipeline stages are idempotent and resumable; external calls have timeouts, retries with backoff and clear failure states. One bad paper must not fail a whole run.
@@ -87,7 +87,7 @@ The web app lives in `web/` and uses npm. Run these from `web/`; `web/README.md`
 ## Licensing and copyright
 - Store the licence for every article.
 - Reuse full text only when it's CC BY or more permissive. Anything else (including CC BY-NC and paywalled content) is summarised in our own words from abstracts/metadata; never reproduce it.
-- Attribute and link the DOI on every summary.
+- Attribute and link the DOI on every summary, or the PubMed record when a study has no DOI.
 
 ## Privacy
 - Collect only what's needed to run accounts and billing: email address and the Stripe customer reference.

@@ -106,7 +106,7 @@ Inside `main`, pages choose their own widths from these roles only:
 2. **Footer links,** a `<ul>`:
    - "How summaries are made" → `/how-summaries-are-made` (required by principle 7)
    - "How we grade" → `/how-we-grade`
-3. **No-advertising line,** a `<p>`: "No advertising, sponsorship or affiliate links." It states principle 9 where readers look for it, and costs one line. Whether to keep it is pending the owner ([open questions](../OPEN-QUESTIONS.md)).
+3. **No-advertising line,** a `<p>`: "No advertising, sponsorship or affiliate links." It states principle 9 where readers look for it, and costs one line.
 
 The footer is not a `<nav>`: two links don't need a landmark, and it keeps the landmark list short.
 
@@ -192,7 +192,7 @@ For "How we grade" and "How summaries are made", and later pages such as privacy
 - `h1` in `type.headline-phone` below 720px, `type.headline-desktop` from 720px, `text-wrap: balance`, colour `text.primary`, `margin-block-end: space.24`.
 - Body in `type.body`, `max-inline-size: measure.body`. `h2` in `type.section-heading` with `margin-block: space.56 space.16`; `h3` in `type.subheading` with `margin-block: space.40 space.8`. Paragraph spacing `space.16`. Lists with their bullets or numbers kept, `padding-inline-start: space.24`.
 - Links inside prose are [text links](../components/links-and-buttons.md#text-link).
-- Data: page title, body (structured blocks or Markdown rendered without raw HTML), last updated date. The content of both pages is still to be written ([open questions](../OPEN-QUESTIONS.md)).
+- Data: page title, body (structured blocks or Markdown rendered without raw HTML), last updated date. The content of both pages is drafted for the owner to approve.
 
 ## Shared page states
 

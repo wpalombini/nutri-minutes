@@ -2,15 +2,12 @@
 
 Questions raised by the [screen](screens/README.md) and [component](components/README.md) specs that the specs can't settle on their own. Each says who it's waiting on. Remove an item once it's decided, and update the spec it points to.
 
-## Pending the owner
-- **Footer no-advertising line.** The footer adds "No advertising, sponsorship or affiliate links." after the disclosure. Keep it or drop it? ([App shell](screens/app-shell.md#footer))
-- **Retracted studies.** The study page keeps a retracted study's summary published, with a notice before the headline, and rows show "Retracted". Should retracted summaries stay published like this, or be unpublished? ([Study page](screens/study.md#retraction-and-correction-notices))
-- **Who writes the page copy.** "How we grade", "How summaries are made" and the seven topic descriptions have no text yet. The descriptions in the wireframes are samples. ([App shell](screens/app-shell.md#prose-page-template), [Topics](screens/topics.md#topic-list))
-- **PMID without a DOI.** Every summary must show a DOI, and the app treats a summary without one as invalid. If a later source gives a PMID but no DOI, what should happen? ([Study at a glance](components/study-at-a-glance.md#states))
-- **Changes to the approved plan, to accept or trim:**
-  - The at-a-glance panel renames "Funding" to "Funding and conflicts" and adds Journal, Paper published, Summary published and Summarised from. ([Study at a glance](components/study-at-a-glance.md#content-in-order))
-  - "Why this grade" uses "Raises certainty" and "Lowers certainty" in place of "confidence". ([Why this grade](components/why-this-grade.md#content))
-  - A trial or review with no limits listed is treated as invalid, which is stricter than the content rules require. ([Limits block](components/limits-block.md#states))
+## Decided by the owner (2026-11-09)
+- The footer keeps the no-advertising line.
+- Retracted studies stay published, with the retraction notice before the headline.
+- The main session drafts "How we grade", "How summaries are made" and the topic descriptions, and the owner approves them in a PR.
+- A source with a PMID but no DOI links to its PubMed record instead.
+- The plan changes are accepted: the extra at-a-glance rows and "Funding and conflicts", "Raises / Lowers certainty", and treating a trial or review with no limits as invalid.
 
 ## For the Evidence Grader and the pipeline
 - **Starting points.** Do the fixed "Why this grade" sentences match the Evidence Grader's rules: trials start high, observational studies low, animal and lab studies very low, reviews from the studies they combine? ([Why this grade](components/why-this-grade.md#content))

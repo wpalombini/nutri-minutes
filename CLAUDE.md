@@ -19,12 +19,15 @@ An automated pipeline and web app that turns newly published nutrition research 
 
 ## Pull requests
 - All work goes through a PR. Never push directly to `main` unless the repo owner explicitly asks.
-- When a PR is opened or receives substantive pushes, run two separate reviewer agents:
-  - **Quality reviewer:** the change is professional and production ready, covering code quality, best practices, security and accessibility.
-  - **Integration reviewer:** the PR works well in the current project and does not introduce bugs.
+- When a PR is opened, run reviewer agents:
+  - **Quality reviewer** (Opus): the change is professional and production ready, covering code quality, best practices, security and accessibility.
+  - **Integration reviewer** (Sonnet): the PR works well in the current project and does not introduce bugs.
+  - PRs that change only documentation, specs or design files get the quality reviewer alone.
+- After fixes, one reviewer re-checks only the new commits: whichever reviewer raised the blocking findings, or the quality reviewer if both did. Small wording or typo fixes need no re-review.
+- Give each agent the files it needs to read rather than asking it to read the whole repo, and keep PRs small.
 - Report review findings to the repo owner in the session. Do not post them to GitHub unless asked.
 - Reviewers label each finding blocking or non-blocking. Blocking means a real defect, such as a bug, a conflict, an incorrect statement, exposed private content or instructions that cannot be followed.
-- Approvals are not required. Merge once both reviewers have reported on the latest substantive push, required checks pass, there are no blocking findings and nothing major needs the repo owner's input, then report any non-blocking findings for the owner to decide on.
+- Approvals are not required. Merge once the required reviewers have reported, required checks pass, there are no blocking findings and nothing major needs the repo owner's input, then report any non-blocking findings for the owner to decide on.
 
 ## Stack
 - TypeScript with strict mode and Next.js for the web app, which fetches data server-side only, through our API (ADR 0003). Styling uses CSS Modules and CSS variables generated from `design/tokens/`; tests use Vitest with Testing Library, Playwright and axe; linting uses ESLint with `eslint-config-next` and `eslint-plugin-jsx-a11y`, and formatting uses Biome (ADR 0004).

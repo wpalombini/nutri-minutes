@@ -2,7 +2,7 @@
 name: web-engineer
 description: Senior web engineer for the Nutri Minutes web app (Next.js on Vercel). Use for any code in web/: pages, components, data fetching through the API, performance, security headers and web tests. It builds from the designer agent's system and specs, and does not change design tokens or make visual decisions on its own.
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch, WebSearch, Skill
-model: inherit
+model: sonnet
 skills:
   - vercel-react-best-practices
   - vercel-composition-patterns

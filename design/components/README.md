@@ -12,5 +12,6 @@ Components used on more than one screen. The conventions for tokens, units, copy
 | ["Why this grade"](why-this-grade.md) | Study page |
 | [Study at a glance](study-at-a-glance.md) | Study page |
 | [Links and buttons](links-and-buttons.md) | Everywhere |
+| [Theme control](theme-control.md) | Footer, every page |
 
 Each spec lists the data fields it needs. The screen specs combine them into what each page needs from the API.

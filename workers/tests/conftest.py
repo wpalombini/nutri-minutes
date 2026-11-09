@@ -62,7 +62,9 @@ def conn(engine: Engine) -> Iterator[Connection]:
         transaction.rollback()
 
 
-SCOUT_TABLES = "pipeline_run_errors, pipeline_runs, article_relations, article_licences, articles"
+PIPELINE_TABLES = (
+    "model_calls, pipeline_run_errors, pipeline_runs, article_relations, article_licences, articles"
+)
 
 
 @pytest.fixture
@@ -70,4 +72,4 @@ def clean_engine(engine: Engine) -> Iterator[Engine]:
     """For tests that commit: the tables are emptied afterwards."""
     yield engine
     with engine.begin() as connection:
-        connection.execute(text(f"TRUNCATE {SCOUT_TABLES} RESTART IDENTITY CASCADE"))
+        connection.execute(text(f"TRUNCATE {PIPELINE_TABLES} RESTART IDENTITY CASCADE"))

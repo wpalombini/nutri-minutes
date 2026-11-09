@@ -50,6 +50,7 @@ Workers live in `workers/` and use `uv`. Run these from `workers/`, after loadin
 - Lint and format: `uv run ruff check .` and `uv run ruff format .`
 - Type check: `uv run mypy`
 - Scout: `uv run python -m pipeline.scout` for the next window, or add `--window-start YYYY-MM-DD --window-end YYYY-MM-DD` to re-run a past one
+- Check the model client's cost unit (one tiny live call, needs `OPENROUTER_API_KEY`): `uv run python -m pipeline.models.check_cost`
 - Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision --rev-id 0002 -m "<summary>"` with the next number, then edit it by hand
 <!-- Add eval commands once they exist. -->
 

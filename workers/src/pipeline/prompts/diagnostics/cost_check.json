@@ -1,0 +1,12 @@
+{
+  "model": "mistralai/mistral-nemo",
+  "max_tokens": 50,
+  "temperature": 0,
+  "price_caps": { "prompt": "0.20", "completion": "0.20", "request": "0" },
+  "reply_schema": {
+    "type": "object",
+    "properties": { "echo": { "type": "string", "maxLength": 50 } },
+    "required": ["echo"],
+    "additionalProperties": false
+  }
+}

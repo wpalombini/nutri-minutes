@@ -5,33 +5,8 @@ import tomllib
 from dataclasses import dataclass
 from importlib.resources import files
 
+from pipeline.env import float_env, int_env
 from pipeline.europe_pmc import ClientSettings
-
-
-def _int_env(name: str, default: int, minimum: int) -> int:
-    raw = os.environ.get(name)
-    if raw is None or not raw.strip():
-        return default
-    try:
-        value = int(raw)
-    except ValueError as exc:
-        raise RuntimeError(f"{name} must be a whole number") from exc
-    if value < minimum:
-        raise RuntimeError(f"{name} must be at least {minimum}")
-    return value
-
-
-def _float_env(name: str, default: float, minimum: float) -> float:
-    raw = os.environ.get(name)
-    if raw is None or not raw.strip():
-        return default
-    try:
-        value = float(raw)
-    except ValueError as exc:
-        raise RuntimeError(f"{name} must be a number") from exc
-    if value < minimum:
-        raise RuntimeError(f"{name} must be at least {minimum}")
-    return value
 
 
 def default_search_terms() -> str:
@@ -56,9 +31,9 @@ class ScoutSettings:
     def from_env(cls) -> ScoutSettings:
         return cls(
             search_terms=default_search_terms(),
-            initial_days=_int_env("SCOUT_INITIAL_DAYS", 30, 1),
-            overlap_days=_int_env("SCOUT_OVERLAP_DAYS", 2, 0),
-            max_resumes=_int_env("SCOUT_MAX_RESUMES", 3, 0),
+            initial_days=int_env("SCOUT_INITIAL_DAYS", 30, 1),
+            overlap_days=int_env("SCOUT_OVERLAP_DAYS", 2, 0),
+            max_resumes=int_env("SCOUT_MAX_RESUMES", 3, 0),
         )
 
 
@@ -68,5 +43,5 @@ def client_settings_from_env() -> ClientSettings:
         raise RuntimeError("EUROPE_PMC_CONTACT is not set")
     return ClientSettings(
         contact=contact,
-        request_delay_seconds=_float_env("EUROPE_PMC_REQUEST_DELAY_SECONDS", 1.0, 0.0),
+        request_delay_seconds=float_env("EUROPE_PMC_REQUEST_DELAY_SECONDS", 1.0, 0.0),
     )

@@ -20,7 +20,7 @@ export default async function TopicsPage() {
   return (
     <>
       <h1 className={header.title}>Topics</h1>
-      <ul className={styles.list}>
+      <ul role="list" className={styles.list}>
         {topics.map((topic) => (
           <li key={topic.slug} className={styles.row}>
             <h2 className={styles.name}>
@@ -28,7 +28,7 @@ export default async function TopicsPage() {
                 {topic.name}
               </Link>
             </h2>
-            <p className={header.description}>{topic.description}</p>
+            <p className={`${header.description} ${styles.description}`}>{topic.description}</p>
             <p className={header.count}>{summaryCount(0)}</p>
           </li>
         ))}

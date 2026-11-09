@@ -48,6 +48,7 @@
 
 @media (width >= 720px) {
   .inner {
+    align-items: flex-start;
     padding-block: var(--space-24);
   }
 }

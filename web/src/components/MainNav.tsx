@@ -25,7 +25,7 @@ export function MainNav() {
   const pathname = usePathname()
   return (
     <nav className={styles.nav} aria-label="Main">
-      <ul className={styles.list}>
+      <ul role="list" className={styles.list}>
         {navigation.map((item) => (
           <li key={item.href}>
             <Link

@@ -14,7 +14,12 @@ export default defineConfig([
   {
     name: 'jsx-a11y/recommended (rules)',
     files: ['**/*.{js,jsx,mjs,ts,tsx,mts,cts}'],
-    rules: jsxA11y.flatConfigs.recommended.rules,
+    rules: {
+      ...jsxA11y.flatConfigs.recommended.rules,
+      // Safari with VoiceOver drops list semantics from a list with `list-style: none`, so those
+      // lists say role="list" on purpose. Other redundant roles are still errors.
+      'jsx-a11y/no-redundant-roles': ['error', { ul: ['list'] }],
+    },
   },
   globalIgnores([
     '.next/**',

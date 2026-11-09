@@ -14,7 +14,7 @@ The radios are drawn as outlined options in the style of the [topic link](links-
 
 ```html
 <fieldset class="theme-control" data-ready="false">
-  <legend>Colour theme</legend>
+  <legend>Theme</legend>
   <div class="options">
     <label><input type="radio" name="theme" value="system"> <span>System</span></label>
     <label><input type="radio" name="theme" value="light"> <span>Light</span></label>
@@ -23,7 +23,7 @@ The radios are drawn as outlined options in the style of the [topic link](links-
 </fieldset>
 ```
 
-- **Group name:** the visible `<legend>` "Colour theme" names the group. No `aria-label` on top of it.
+- **Group name:** the visible `<legend>` "Theme" names the group. No `aria-label` on top of it.
 - **Labels:** exactly "System", "Light" and "Dark". No icons in this version. If icons are ever added, they sit before the word, are `aria-hidden="true"`, and never replace it.
 - Order is System, Light, Dark: the default first.
 - The whole label is the target, so a tap anywhere on the option selects it.
@@ -39,7 +39,7 @@ The legend sits on its own line above the options; the three options sit in one 
 | No advertising, sponsorship or |
 | affiliate links.               |
 |                                |  space.24
-| Colour theme                   |  legend, type.meta, text.secondary
+| Theme                          |  legend, type.meta, text.secondary
 |                                |  space.8
 | +--------+ +-------+ +------+  |  options, gap space.8,
 | | System | | Light | | Dark |  |  each target.primary tall
@@ -52,7 +52,7 @@ The legend sits on its own line above the options; the three options sit in one 
 ```
 | No advertising, sponsorship or affiliate links.                          |
 |                                                                          |
-| Colour theme                                                             |
+| Theme                                                                    |
 | +--------+ +-------+ +------+                                            |
 | | System | | Light | | Dark |  (System checked: filled)                  |
 | +--------+ +-------+ +------+                                            |
@@ -150,7 +150,7 @@ None. The control needs nothing from the API.
 - With storage set to `dark` and the device in light, the first paint is dark (throttle the network and reload; no flash).
 - System, then switch the device or Playwright's emulated scheme: the page follows without a reload.
 - Tab reaches the group once; arrow keys move between options and apply each one; the ring is visible in both themes.
-- A screen reader announces "Colour theme, group" and each option's name and state. Nothing else is announced on change.
+- A screen reader announces "Theme, group" and each option's name and state. Nothing else is announced on change.
 - With JavaScript disabled, the control is invisible, can't be reached by Tab or a screen reader, and the page follows the system setting.
 - On a short page, revealing the control causes no layout shift (CLS 0 for the footer).
 - Changing the theme in one tab updates another open tab without moving its focus.

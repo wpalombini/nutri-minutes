@@ -7,6 +7,8 @@ Questions raised by the [screen](screens/README.md) and [component](components/R
 - Retracted studies stay published, with the retraction notice before the headline.
 - We draft "How we grade", "How summaries are made" and the topic descriptions, and the owner approves them in a PR.
 - A source with a PMID but no DOI links to its PubMed record instead.
+- The theme control's legend is "Theme", and it stays in the footer for now. Later it should move to a settings page, where readers will also choose topics to follow.
+- The privacy page, when written, says the theme choice is stored on the reader's device only.
 - The plan changes are accepted: the extra at-a-glance rows and "Funding and conflicts", "Raises / Lowers certainty", and treating a trial or review with no limits as invalid.
 
 ## For the Evidence Grader and the pipeline

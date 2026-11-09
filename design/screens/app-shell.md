@@ -108,7 +108,7 @@ Inside `main`, pages choose their own widths from these roles only:
    - "How summaries are made" → `/how-summaries-are-made` (required by principle 7)
    - "How we grade" → `/how-we-grade`
 3. **No-advertising line,** a `<p>`: "No advertising, sponsorship or affiliate links." It states principle 9 where readers look for it, and costs one line.
-4. **[Theme control](../components/theme-control.md):** "Colour theme", System, Light or Dark. Last, because it's a preference rather than information, and because the footer is the calmest place for it: nothing is sticky, and the header stays at three links. Hidden without JavaScript.
+4. **[Theme control](../components/theme-control.md):** "Theme", System, Light or Dark. Last, because it's a preference rather than information, and because the footer is the calmest place for it: nothing is sticky, and the header stays at three links. Hidden without JavaScript.
 
 The footer is not a `<nav>`: two links don't need a landmark, and it keeps the landmark list short.
 
@@ -130,7 +130,7 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 | No advertising, sponsorship or |
 | affiliate links.               |
 |                                |  space.24
-| Colour theme                   |  legend, space.8
+| Theme                          |  legend, space.8
 | +--------+ +-------+ +------+  |  theme control, options
 | | System | | Light | | Dark |  |  target.primary tall
 | +--------+ +-------+ +------+  |
@@ -146,7 +146,7 @@ The footer is not a `<nav>`: two links don't need a landmark, and it keeps the l
 | checked against it. They are not medical advice.                         |
 | No advertising, sponsorship or affiliate links.                          |
 |                                                                          |
-| Colour theme                                                             |
+| Theme                                                                    |
 | +--------+ +-------+ +------+                                            |
 | | System | | Light | | Dark |                                            |
 | +--------+ +-------+ +------+                                            |

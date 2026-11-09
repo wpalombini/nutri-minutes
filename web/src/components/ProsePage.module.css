@@ -1,0 +1,85 @@
+/* design/screens/app-shell.md, "Prose page template". */
+.title {
+  margin-block-end: var(--space-24);
+  color: var(--text-primary);
+  font-family: var(--type-headline-phone-font-family);
+  font-size: var(--type-headline-phone-font-size);
+  font-weight: var(--type-headline-phone-font-weight);
+  letter-spacing: var(--type-headline-phone-letter-spacing);
+  line-height: var(--type-headline-phone-line-height);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* A route-change focus target, not a control, so no ring. */
+.title:focus {
+  outline: none;
+}
+
+.prose {
+  max-inline-size: var(--measure-body);
+  /* A long word ("Observational") must wrap at 320px and 200% text rather than scroll sideways. */
+  overflow-wrap: break-word;
+  font-family: var(--type-body-font-family);
+  font-size: var(--type-body-font-size);
+  font-weight: var(--type-body-font-weight);
+  letter-spacing: var(--type-body-letter-spacing);
+  line-height: var(--type-body-line-height);
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  margin-block: var(--space-16) 0;
+}
+
+.prose > :first-child {
+  margin-block-start: 0;
+}
+
+.prose li + li {
+  margin-block-start: var(--space-8);
+}
+
+.prose ul,
+.prose ol {
+  padding-inline-start: var(--space-24);
+}
+
+.prose h2 {
+  margin-block: var(--space-56) var(--space-16);
+  font-family: var(--type-section-heading-font-family);
+  font-size: var(--type-section-heading-font-size);
+  font-weight: var(--type-section-heading-font-weight);
+  letter-spacing: var(--type-section-heading-letter-spacing);
+  line-height: var(--type-section-heading-line-height);
+}
+
+.prose h3 {
+  margin-block: var(--space-40) var(--space-8);
+  font-family: var(--type-subheading-font-family);
+  font-size: var(--type-subheading-font-size);
+  font-weight: var(--type-subheading-font-weight);
+  letter-spacing: var(--type-subheading-letter-spacing);
+  line-height: var(--type-subheading-line-height);
+}
+
+.updated {
+  margin-block-start: var(--space-56);
+  color: var(--text-secondary);
+  font-family: var(--type-meta-font-family);
+  font-size: var(--type-meta-font-size);
+  font-weight: var(--type-meta-font-weight);
+  letter-spacing: var(--type-meta-letter-spacing);
+  line-height: var(--type-meta-line-height);
+}
+
+@media (width >= 720px) {
+  .title {
+    font-family: var(--type-headline-desktop-font-family);
+    font-size: var(--type-headline-desktop-font-size);
+    font-weight: var(--type-headline-desktop-font-weight);
+    letter-spacing: var(--type-headline-desktop-letter-spacing);
+    line-height: var(--type-headline-desktop-line-height);
+  }
+}

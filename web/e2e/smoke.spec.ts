@@ -17,6 +17,20 @@ const pages = [
     title: 'Nutri Minutes',
   },
   {
+    name: 'how-we-grade',
+    path: '/how-we-grade',
+    status: 200,
+    heading: 'How we grade',
+    title: 'How we grade – Nutri Minutes',
+  },
+  {
+    name: 'how-summaries-are-made',
+    path: '/how-summaries-are-made',
+    status: 200,
+    heading: 'How summaries are made',
+    title: 'How summaries are made – Nutri Minutes',
+  },
+  {
     name: 'not-found',
     path: '/no-such-page',
     status: 404,

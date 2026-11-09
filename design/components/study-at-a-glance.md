@@ -76,7 +76,7 @@ Same panel at both widths; only its place on the page changes (see [study page](
 
 ## States
 - **Rendered with its page;** no loading state.
-- **Missing optional fields** (followed for, funding, journal): leave the row out. Licence always shows ("Not stated" when unknown), and Funding and conflicts, which shows "Not reported" (a missing funding statement is itself information).
+- **Missing optional fields** (followed for, funding, journal): leave the row out. Licence always shows ("Not stated" when unknown), and so does Funding and conflicts. It shows "Not reported" when the study doesn't state its funding, or "Not stated in the abstract" when the summary was made from the abstract alone. It never shows "None" unless the study says so, because a missing funding statement is itself information.
 - **No DOI:** link the PubMed record from the PMID. With neither, the summary is invalid (see [conventions](../screens/README.md#content-rules-the-app-enforces)).
 
 ## Motion
@@ -92,6 +92,8 @@ None.
 | `follow_up` | string or null |
 | `effect` | the [interval fields](interval.md#data) |
 | `funding_and_conflicts` | string or null |
+| `funding_basis` | `stated`, `not_reported` or `not_in_abstract` |
+| `funder_sells_product` | boolean or null; when true, the study page shows the funding line next to the grade |
 | `journal` | string or null |
 | `paper_published_on` | date or null |
 | `published_on`, `updated_on` | date, date or null |

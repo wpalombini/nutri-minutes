@@ -83,6 +83,21 @@ flowchart TD
 - **Licence check:** only agents with a licence check may use full text, and only when the article's licence permits it. Otherwise they work from abstracts and metadata. `CLAUDE.md` has the full rule.
 - **Evaluated:** prompts and model choices are code, so changes must pass the eval suite.
 
+## Evidence Grader: funding and conflicts
+Funding alone never changes a grade, because a well-run industry trial is still a well-run trial. The Grader records, for every study:
+- **Funder** and its type: industry, government or public, charity, none, or not reported.
+- **Funder sells the product tested:** yes, no or unknown.
+- **Sponsor's role:** whether the sponsor designed the study, ran the analysis or wrote the paper, when the study says so.
+- **Conflicts** the authors declared.
+
+When funding or a conflict comes with a concrete risk, the grade drops one level and the reason is stated. The risks are:
+- the funder sells the product tested, and the sponsor ran the analysis or wrote the paper
+- the main outcome was changed after the study started
+- a trial wasn't registered before it began
+- the result rests on a stand-in measure that favours the product
+
+Otherwise, a funding concern is listed under "Lowers certainty" without moving the grade. When the funder sells the product tested, the study page says so next to the grade, and the Writer mentions it in the summary. If only the abstract is available and it doesn't state funding, the study is recorded as "not stated in the abstract", never as unfunded.
+
 ## Scout
 Scout runs daily and is the first agent built. The code is in `workers/src/pipeline/scout/`, the search terms are in `search_terms.toml` there, and settings come from environment variables listed in `.env.example`. The scheduler service runs it daily at 03:15 UTC, and `docs/operations.md` covers one-off runs.
 

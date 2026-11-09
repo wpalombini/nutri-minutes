@@ -25,10 +25,12 @@ const LINK = /^\[([^\]]+)\]\(([^)\s]+)\)/
 
 /** Where a link may go: this site, or http(s). Anything else (such as `javascript:`) is refused. */
 export function isSafeHref(href: string): boolean {
+  // Browsers strip whitespace and control characters from URLs, which could turn `/\t/x` into `//x`.
+  if (/[\s\u0000-\u001f\u007f]/.test(href)) return false
   if (href.startsWith('/')) return !href.startsWith('//') && !href.includes('\\')
   try {
     const { protocol } = new URL(href)
-    return protocol === 'https:' || protocol === 'http:'
+    return protocol === 'https:'
   } catch {
     return false
   }

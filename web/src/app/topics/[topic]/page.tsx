@@ -6,8 +6,6 @@ import { summaryCount } from '@/lib/topics'
 import header from '@/components/TopicHeader.module.css'
 import styles from './page.module.css'
 
-type Props = { params: Promise<{ topic: string }> }
-
 export async function generateStaticParams() {
   return (await loadTopics()).map(({ slug }) => ({ topic: slug }))
 }
@@ -18,7 +16,9 @@ async function findTopic(slug: string) {
   return topic
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<'/topics/[topic]'>): Promise<Metadata> {
   const topic = await findTopic((await params).topic)
   return {
     title: topic.name,
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * spec: the topic comes from `content/topics.md` until the API has a topics endpoint. Finding
  * rows and pagination come with the API, so `?page=` is not read and the page stays static.
  */
-export default async function TopicPage({ params }: Props) {
+export default async function TopicPage({ params }: PageProps<'/topics/[topic]'>) {
   const topic = await findTopic((await params).topic)
   return (
     <>

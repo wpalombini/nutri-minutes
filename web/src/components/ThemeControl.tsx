@@ -18,12 +18,6 @@ let memoryChoice: ThemeChoice = 'system'
 /** Set when a write fails (for example a full quota), so stale stored values don't win. */
 let preferMemory = false
 
-/** Test only: forgets the choice made in this page view, between unit tests. */
-export function resetThemeMemoryForTests(): void {
-  memoryChoice = 'system'
-  preferMemory = false
-}
-
 function subscribe(onChange: () => void): () => void {
   listeners.add(onChange)
   const onStorage = (event: StorageEvent) => {

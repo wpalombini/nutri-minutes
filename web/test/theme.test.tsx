@@ -1,6 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ThemeControl, resetThemeMemoryForTests } from '@/components/ThemeControl'
 import {
   applyTheme,
   parseTheme,
@@ -11,8 +10,12 @@ import {
   writeStoredTheme,
 } from '@/lib/theme'
 
-beforeEach(() => {
-  resetThemeMemoryForTests()
+let ThemeControl: typeof import('@/components/ThemeControl').ThemeControl
+
+beforeEach(async () => {
+  // A fresh module forgets the choice made in this page view by an earlier test.
+  vi.resetModules()
+  ;({ ThemeControl } = await import('@/components/ThemeControl'))
   window.localStorage.clear()
   delete document.documentElement.dataset.theme
 })

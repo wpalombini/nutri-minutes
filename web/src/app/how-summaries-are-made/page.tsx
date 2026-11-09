@@ -7,7 +7,7 @@ const page = await loadProsePage('how-summaries-are-made')
 export const metadata: Metadata = {
   title: page.title,
   description:
-    'How Nutri Minutes finds new nutrition studies, writes plain-English summaries with AI, and checks each one against the study before publishing.',
+    'How Nutri Minutes finds new nutrition studies, writes plain-English summaries with artificial intelligence, and checks each one against the study before publishing.',
   alternates: { canonical: '/how-summaries-are-made' },
 }
 

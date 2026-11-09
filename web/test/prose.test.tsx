@@ -47,6 +47,10 @@ describe('isSafeHref', () => {
     expect(isSafeHref('mailto:a@b.test')).toBe(false)
     expect(isSafeHref('/\\evil.test')).toBe(false)
     expect(isSafeHref('relative')).toBe(false)
+    expect(isSafeHref('/\t/evil.test')).toBe(false)
+    expect(isSafeHref('/\u0000x')).toBe(false)
+    expect(isSafeHref('JAVASCRIPT:alert(1)')).toBe(false)
+    expect(isSafeHref('http://example.test/a')).toBe(false)
   })
 })
 

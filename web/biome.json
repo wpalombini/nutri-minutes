@@ -11,7 +11,8 @@
       "!e2e-screenshots",
       "!next-env.d.ts",
       "!src/styles/tokens.css",
-      "!src/generated"
+      "!src/generated",
+      "!content"
     ]
   },
   "formatter": {

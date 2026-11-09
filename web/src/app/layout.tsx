@@ -9,6 +9,7 @@ import { SiteHeader } from '@/components/SiteHeader'
 import { SiteShell } from '@/components/SiteShell'
 import { pageColour } from '@/generated/theme'
 import { allowIndexing, siteDescription, siteName, siteUrl } from '@/lib/site'
+import { themeInitScript } from '@/lib/theme'
 import { atkinson, literata } from './fonts'
 
 const indexable = allowIndexing()
@@ -32,7 +33,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-AU" className={`${literata.variable} ${atkinson.variable}`}>
+    // suppressHydrationWarning: the head script sets data-theme before React hydrates.
+    <html
+      lang="en-AU"
+      className={`${literata.variable} ${atkinson.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <SiteShell
           header={

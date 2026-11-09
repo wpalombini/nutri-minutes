@@ -4,8 +4,10 @@
  * happens in scripts/tokens.ts.
  *
  * - Each token path becomes a variable: `text.link-visited` becomes `--text-link-visited`.
- * - Base, role and light colour tokens go on `:root`; dark colour tokens are redefined under
- *   `prefers-color-scheme: dark`. Each block sets the matching `color-scheme`.
+ * - Base, role and light colour tokens go on `:root`. Dark colour tokens are emitted twice, for
+ *   the theme control (design/components/theme-control.md): under `prefers-color-scheme: dark`
+ *   on `:root:not([data-theme="light"])`, and on `:root[data-theme="dark"]`. Each block sets
+ *   the matching `color-scheme`.
  * - Aliases (`{group.token}`) become `var()` references, so the role layer stays visible.
  * - Composite tokens (typography, transition) become one variable per field.
  * - Under `prefers-reduced-motion: reduce` every transition duration becomes 0s.
@@ -322,7 +324,8 @@ export function buildTokenCss(sources: TokenSources, options: ConvertOptions): s
   const sections = [
     `/* ${options.header} */`,
     block(':root', root),
-    `@media (prefers-color-scheme: dark) {\n${block(':root', darkLines, '  ')}\n}`,
+    `@media (prefers-color-scheme: dark) {\n${block(':root:not([data-theme="light"])', darkLines, '  ')}\n}`,
+    block(':root[data-theme="dark"]', darkLines),
   ]
   if (reducedMotion.length > 0) {
     sections.push(

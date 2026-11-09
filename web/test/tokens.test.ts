@@ -121,12 +121,25 @@ describe('buildTokenCss', () => {
     expect(css).toContain('  --surface-page: var(--palette-paper-light);\n')
   })
 
-  it('redefines theme colours under prefers-color-scheme: dark', () => {
+  it('redefines theme colours for a dark device unless the reader chose light', () => {
     const dark = css.slice(css.indexOf('@media (prefers-color-scheme: dark)'))
     expect(dark).toContain(
-      '    color-scheme: dark;\n    --surface-page: var(--palette-paper-dark);\n',
+      '  :root:not([data-theme="light"]) {\n    color-scheme: dark;\n    --surface-page: var(--palette-paper-dark);\n',
     )
     expect(dark.split('@media (prefers-reduced-motion')[0]).not.toContain('--space-16')
+  })
+
+  it('emits the same dark colours again for data-theme="dark", with its own color-scheme', () => {
+    const media =
+      /@media \(prefers-color-scheme: dark\) \{\n {2}:root:not\(\[data-theme="light"\]\) \{\n([\s\S]*?)\n {2}\}\n\}/.exec(
+        css,
+      )
+    const explicit = /\n:root\[data-theme="dark"\] \{\n([\s\S]*?)\n\}/.exec(css)
+    expect(media).not.toBeNull()
+    expect(explicit).not.toBeNull()
+    const lines = (body: string | undefined) => (body ?? '').split('\n').map((line) => line.trim())
+    expect(lines(explicit?.[1])).toEqual(lines(media?.[1]))
+    expect(explicit?.[1]).toContain('  color-scheme: dark;')
   })
 
   it('turns aliases into var() references', () => {

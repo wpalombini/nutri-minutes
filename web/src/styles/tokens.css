@@ -205,7 +205,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
     --surface-page: var(--palette-assay-paper-dark);
     --surface-raised: var(--palette-bright-paper-dark);
@@ -229,6 +229,31 @@
     --data-estimate-fill: var(--palette-assay-paper-dark);
     --data-estimate-outline: var(--palette-spruce-ink-dark);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-page: var(--palette-assay-paper-dark);
+  --surface-raised: var(--palette-bright-paper-dark);
+  --text-primary: var(--palette-spruce-ink-dark);
+  --text-secondary: var(--palette-lichen-dark);
+  --text-link: var(--palette-beetroot-dark);
+  --text-link-hover: var(--palette-beetroot-dark);
+  --text-link-visited: var(--palette-beetroot-dark);
+  --icon-default: var(--palette-spruce-ink-dark);
+  --button-primary-bg: var(--palette-spruce-ink-dark);
+  --button-primary-text: var(--palette-assay-paper-dark);
+  --border-control: var(--palette-lichen-dark);
+  --border-control-hover: var(--palette-spruce-ink-dark);
+  --border-limits: var(--palette-lichen-dark);
+  --border-divider: rgb(162 182 175 / 0.3);
+  --focus-ring: var(--palette-cobalt-dark);
+  --grade-mark: var(--palette-spruce-ink-dark);
+  --data-interval: var(--palette-beetroot-dark);
+  --data-axis: var(--palette-lichen-dark);
+  --data-null: var(--palette-lichen-dark);
+  --data-estimate-fill: var(--palette-assay-paper-dark);
+  --data-estimate-outline: var(--palette-spruce-ink-dark);
 }
 
 @media (prefers-reduced-motion: reduce) {

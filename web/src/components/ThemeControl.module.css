@@ -1,0 +1,76 @@
+/* design/components/theme-control.md. */
+.control {
+  min-inline-size: 0;
+  margin: 0;
+  margin-block-start: var(--space-8);
+  padding: 0;
+  border: 0;
+}
+
+/* Keeps its space but leaves the tab order and accessibility tree until the client is ready. */
+.control[data-ready="false"] {
+  visibility: hidden;
+}
+
+.legend {
+  margin-block-end: var(--space-8);
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.option {
+  display: inline-flex;
+}
+
+.box {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-primary);
+  padding-inline: var(--space-16);
+  border: var(--border-control-width) var(--border-control-style) var(--border-control);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.input:not(:checked) + .box:hover {
+  border-color: var(--border-control-hover);
+  box-shadow: inset 0 0 0 calc(var(--border-control-hover-width) - var(--border-control-width))
+    var(--border-control-hover);
+}
+
+.input:checked + .box {
+  border-color: var(--button-primary-bg);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+}
+
+.input:checked + .box:hover {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--link-underline-width);
+  text-underline-offset: var(--link-underline-offset);
+}
+
+.input:focus-visible + .box {
+  outline: var(--focus-ring-width) var(--focus-ring-style) var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+@media (forced-colors: active) {
+  .input:checked + .box {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .input:checked:focus-visible + .box {
+    outline-color: CanvasText;
+  }
+}

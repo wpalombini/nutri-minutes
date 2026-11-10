@@ -283,17 +283,17 @@ Triage's scope decisions. A re-run adds a row and never changes an old one, so e
 | `article_id` | `bigint` | No | References `articles` |
 | `run_id` | `bigint` | No | References `pipeline_runs` |
 | `decided_by` | `text` | No | `rule` (a rule applied before the model) or `model` |
-| `rule` | `text` | Yes | The rule that dropped the article, such as `no_abstract`. Set exactly when `decided_by` is `rule`. |
+| `rule` | `text` | Yes | The rule that dropped the article: `retracted`, `not_research`, `no_abstract` or `not_english`. Set exactly when `decided_by` is `rule`. The run's `parameters.rules_version` identifies the rules' code. |
 | `model_call_id` | `bigint` | Yes | References `model_calls`: the call that decided, which gives the model and prompt version. Set exactly when `decided_by` is `model`. |
 | `in_scope` | `boolean` | No | Rules only ever drop articles, so a `rule` decision is always out of scope. |
 | `relevance` | `integer` | Yes | 1 to 5, from the model. Null for `rule` decisions. |
 | `topics` | `text[]` | No | Reader-facing topic slugs from `web/content/topics.md`, primary topic first. Empty when out of scope. Defaults to empty. |
-| `primary_topic` | `text` | Yes | One of `topics`. Set exactly when in scope. |
+| `primary_topic` | `text` | Yes | One of `topics`. Set exactly when in scope, because a paper is in scope only if it fits a topic. |
 | `reason` | `text` | No | Why, in a sentence |
 | `created_at` | `timestamptz` | No | |
 
 **Constraints and indexes:**
-- Check constraints enforce the pairings above, relevance from 1 to 5, and topics from the list of 7. A new topic needs a migration, and `tests/test_topics.py` fails if the list and `web/content/topics.md` differ.
+- Check constraints enforce the pairings above, the rule names, relevance from 1 to 5, and topics from the list of 7. A new topic needs a migration, and `tests/test_topics.py` fails if the list and `web/content/topics.md` differ.
 - An index on `(article_id, id)` finds an article's current decision, one on `model_call_id` finds a call's decision, and a GIN index on `topics` finds a topic's articles.
 
 ## How Scout writes to these tables

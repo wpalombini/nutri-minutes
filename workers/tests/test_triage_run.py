@@ -12,7 +12,7 @@ from pipeline.models.prompts import Prompt
 from pipeline.notify import Severity
 from pipeline.runs import agent_lock, start_run
 from pipeline.triage.run import AGENT, TriageSettings, run_triage, select_articles
-from tests.test_scout_run import FakeNotifier
+from tests.fakes import FakeNotifier
 from tests.triage_helpers import LoggedFakeClient, in_scope, insert_article, out_of_scope
 
 SETTINGS = TriageSettings(max_articles=100)

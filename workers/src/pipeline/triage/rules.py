@@ -3,8 +3,10 @@
 Each rule only ever drops an article. Anything the rules don't catch goes to the model.
 """
 
+import hashlib
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -61,12 +63,17 @@ RESEARCH_TYPES = frozenset(
         "meta-analysis",
         "systematic review",
         "systematic-review",
+        "review",
+        "review-article",
         "observational study",
         "research-article",
     }
 )
 """Types that mark a research report. An article with one is never dropped as not research,
 so a research letter with a trial in it still reaches the model."""
+
+RULES_VERSION = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
+"""A hash of this file, stored with each run, so decisions trace to the rules behind them."""
 
 RETRACTED_TYPES = frozenset({"retracted publication"})
 ENGLISH = "eng"

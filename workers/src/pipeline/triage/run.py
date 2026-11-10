@@ -9,7 +9,6 @@ The rules every agent follows are in docs/agents.md.
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
-from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import Connection, Engine, text
@@ -29,7 +28,13 @@ from pipeline.runs import (
     save_progress,
     start_run,
 )
-from pipeline.triage.rules import RuleDecision, TriageArticle, apply_rules, is_retracted_type
+from pipeline.triage.rules import (
+    RULES_VERSION,
+    RuleDecision,
+    TriageArticle,
+    apply_rules,
+    is_retracted_type,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +42,6 @@ AGENT = "triage"
 STAGE = "triage"
 """The model client's budget stage. Its budget comes from `MODEL_BUDGET_USD_TRIAGE`."""
 PROMPT_NAME = "triage/scope"
-DEFAULT_BUDGET_USD = Decimal("1.00")
-NO_TOPIC = "none"
-"""What the model gives as the primary topic of an out-of-scope article."""
 COUNT_KEYS = ("selected", "rule_out", "in_scope", "out_of_scope", "failed")
 MAX_ERROR_LENGTH = 500
 
@@ -370,6 +372,7 @@ def run_triage(
             "prompt": prompt.name,
             "prompt_version": prompt.version,
             "model": prompt.model,
+            "rules_version": RULES_VERSION,
             "max_articles": settings.max_articles,
             "article_ids": sorted(article_ids) if article_ids is not None else None,
         }

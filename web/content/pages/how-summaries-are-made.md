@@ -1,13 +1,13 @@
 ---
 title: How summaries are made
-updated: 2026-11-09
+updated: 2026-11-10
 ---
 
 Nutri Minutes turns newly published nutrition research into short, plain-English summaries. The summaries are written by artificial intelligence and checked against each study before anything is published. They are not medical advice.
 
 ## Finding new studies
 
-Every day we collect newly indexed studies from Europe PMC, a public database of life-science research that includes PubMed. We then keep only the studies in our scope: nutrition, and exercise only where it affects bones, muscle, falls, heart and metabolism, the brain or longevity. We also cover some research on how genes interact with diet and with ageing. We don't cover appearance, weight-loss transformations or sports performance.
+Every day we collect newly indexed studies from Europe PMC, a public database of life-science research that includes PubMed. We then keep only nutrition and exercise studies that fit one of [our topics](/topics): bone health, muscle and strength with age, falls and independence, heart and metabolism, brain health, and longevity. We also cover some research on how genes interact with diet and with ageing. We don't cover appearance, weight-loss transformations or sports performance.
 
 ## From study to summary
 

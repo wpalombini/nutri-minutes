@@ -48,7 +48,7 @@ flowchart TD
 | Agent | Role | Input | Output | Tools | Status |
 |---|---|---|---|---|---|
 | **Scout** | Finds new papers and records their licences | Search terms, date window | Deduplicated articles with licences and bibliographic relations | Europe PMC API, Postgres. PubMed E-utilities later. No LLM. | Built |
-| **Triage** | Drops out-of-scope and low-value papers | New articles | Scope decision and relevance score, with reasons | Model client, Postgres | Planned |
+| **Triage** | Drops out-of-scope and low-value papers | New articles | Scope decision, relevance score and topics, with reasons | Rules, model client, Postgres | In progress |
 | **Evidence Grader** | Rates the strength of the evidence from design, size, duration, population, funding and conflicts | Articles that passed triage | Grade with reasons | Rules, model client, Postgres | Planned |
 | **Extractor** | Pulls out structured facts: population, intervention, comparator, outcomes, effect sizes and limitations | Graded articles and permitted source text | Structured facts linked to the source | Model client, licence check, Postgres | Planned |
 | **Writer** | Writes the plain-English summary, including what the study does not show | Extracted facts, grade, permitted source text | Summary | Model client, licence check, reading-level check, Postgres | Planned |
@@ -118,6 +118,24 @@ Scout runs daily and is the first agent built. The code is in `workers/src/pipel
 **Beyond limiting results to PubMed-indexed records, Scout does not filter by licence, open access or publication type.** Papers without a reusable licence can still be summarised from their abstract and metadata, so they are kept and the licence check happens where text is used. Scope and quality filtering, including publication type, belong to Triage. Missing licences are common, and the share of records with one varied widely by query in samples taken on 2026-11-07.
 
 **Handling Europe PMC:** the search service can return temporary `503` errors, so requests use timeouts and retries with backoff. In testing on 2026-11-07, `cursorMark` requests sorted by `FIRST_IDATE` returned `503` on every attempt, while the same kind of request filtered by a `FIRST_IDATE` range succeeded. Scout therefore pages through date ranges without sorting. Scout also waits between requests, 1 second by default, and sends a `User-Agent` naming the client and a project contact address set by an environment variable, so EBI can get in touch before blocking it.
+
+## Triage
+Triage decides, one article at a time, whether articles Scout stored are in scope. The code is in `workers/src/pipeline/triage/`, and decisions go to `triage_decisions` ([database](database.md#triage_decisions)). The prompt, its eval and the schedule come in later pull requests, so it doesn't run yet.
+
+1. **Take the next articles:** those with no `article_stages` row for Triage, oldest first, up to `TRIAGE_MAX_ARTICLES` (2,000 by default). A person can instead re-run chosen articles, including failed ones. Their new decisions sit beside the old.
+2. **Apply the rules,** in this order. Each one only drops an article, recorded as a `rule` decision with its reason, and costs no model call:
+   - **Retracted:** a retraction notice points at the article, or its publication types include "Retracted Publication".
+   - **Not research:** its publication types include an editorial, letter, comment, erratum, correction, retraction notice or similar, and none of a trial, review, meta-analysis, observational study or research article. A research letter reporting a trial still goes to the model.
+   - **No abstract:** there's nothing to work from.
+   - **Not English:** the record's language is set and isn't English. A missing language goes to the model.
+3. **Ask the model** about the rest, with the title, abstract and publication types. Its reply gives in or out of scope, relevance from 1 to 5, the topics with a primary topic, and a reason. Scope follows `CLAUDE.md`'s content rules. An in-scope reply whose primary topic is missing from its topics gets it added rather than failing the article. A reply that still makes no sense, such as in scope with no topic, fails the article.
+4. **Store** the decision and the article's `done` status in one transaction. A failed call marks the article `failed`, and the run continues and ends `partial`. A spent budget or rejected key stops the run as `failed`, leaving the remaining articles for the next run.
+
+Missing an in-scope paper is the costlier mistake, because nothing later finds it again. A weak or off-topic paper that passes is still filtered by the Evidence Grader and the Editor. The rules only drop clear cases for that reason, and the eval weighs missed papers most.
+
+A decision isn't revisited when Scout later updates the article, for example when an abstract arrives after a `no_abstract` decision. A person can re-run those articles. Retractions issued after publication are caught by the planned periodic re-check.
+
+**Interrupted runs:** a run left `running` by a dead worker has nothing to resume, because each finished article is already stored and the rest have no stage row. The next run marks it `failed`, sends a warning and takes its articles.
 
 ## Build agents
 Build agents help develop the product. They never run in production. They are Claude Code subagents defined in `.claude/agents/`, and a development session calls them only when its work touches their area. Everything else, such as the workers, the API, infrastructure and docs, is done directly in the session.

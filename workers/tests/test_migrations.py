@@ -11,6 +11,8 @@ EXPECTED_TABLES = {
     "pipeline_runs",
     "pipeline_run_errors",
     "model_calls",
+    "article_stages",
+    "triage_decisions",
 }
 
 

@@ -15,6 +15,13 @@ from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
 
+def error_text(exc: BaseException) -> str:
+    """A short error for runs and alerts. Database errors never include record content."""
+    if isinstance(exc, DBAPIError):
+        return f"Database error: {type(exc.orig).__name__}"
+    return f"{type(exc).__name__}: {exc}"[:300]
+
+
 class LockLost(RuntimeError):
     """The connection holding the agent's lock dropped, so another worker may take over."""
 

@@ -64,10 +64,31 @@ RUN_STATUSES: tuple[str, ...] = ("running", "succeeded", "partial", "failed")
 
 MODEL_CALL_OUTCOMES: tuple[str, ...] = ("succeeded", "invalid_reply", "error", "refused")
 
+STAGE_STATUSES: tuple[str, ...] = ("done", "failed")
+"""An article's status for one agent. Articles with no row haven't been processed yet."""
+
+TOPIC_SLUGS: tuple[str, ...] = (
+    "bone-health",
+    "muscle-and-strength",
+    "falls-and-independence",
+    "heart-and-metabolism",
+    "brain-health",
+    "longevity",
+    "genes-and-diet",
+)
+"""The reader-facing topics, matching `web/content/topics.md`."""
+
+TRIAGE_DECIDERS: tuple[str, ...] = ("rule", "model")
+
 
 def _in_list(column: str, values: tuple[str, ...]) -> str:
     quoted = ", ".join(f"'{value}'" for value in values)
     return f"{column} IN ({quoted})"
+
+
+def _text_array(values: tuple[str, ...]) -> str:
+    quoted = ", ".join(f"'{value}'" for value in values)
+    return f"ARRAY[{quoted}]::text[]"
 
 
 NAMING_CONVENTION = {
@@ -256,4 +277,64 @@ class ModelCall(Base):
         ),
         Index(None, "run_id", "stage"),
         Index(None, "article_id"),
+    )
+
+
+class ArticleStage(Base):
+    """Each article's status per agent, from Triage onwards. A `failed` row is skipped by later
+    runs until a person re-runs that article."""
+
+    __tablename__ = "article_stages"
+
+    article_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("articles.id"), primary_key=True)
+    agent: Mapped[str] = mapped_column(Text, primary_key=True)
+    status: Mapped[str] = mapped_column(Text)
+    run_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("pipeline_runs.id"))
+    error: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(_in_list("status", STAGE_STATUSES), name="status"),
+        CheckConstraint("(status = 'failed') = (error IS NOT NULL)", name="failed_has_error"),
+        Index(None, "agent", "status"),
+    )
+
+
+class TriageDecision(Base):
+    """A scope decision for an article. New decisions are added, never written over."""
+
+    __tablename__ = "triage_decisions"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    article_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("articles.id"))
+    run_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("pipeline_runs.id"))
+    decided_by: Mapped[str] = mapped_column(Text)
+    rule: Mapped[str | None] = mapped_column(Text)
+    model_call_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("model_calls.id"))
+    in_scope: Mapped[bool] = mapped_column(Boolean)
+    relevance: Mapped[int | None] = mapped_column(Integer)
+    topics: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'::text[]"))
+    primary_topic: Mapped[str | None] = mapped_column(Text)
+    reason: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(_in_list("decided_by", TRIAGE_DECIDERS), name="decided_by"),
+        CheckConstraint(
+            "(decided_by = 'rule' AND rule IS NOT NULL AND model_call_id IS NULL "
+            "AND relevance IS NULL AND NOT in_scope) OR "
+            "(decided_by = 'model' AND rule IS NULL AND model_call_id IS NOT NULL "
+            "AND relevance IS NOT NULL)",
+            name="decider_fields",
+        ),
+        CheckConstraint("relevance BETWEEN 1 AND 5", name="relevance"),
+        CheckConstraint(f"topics <@ {_text_array(TOPIC_SLUGS)}", name="topics"),
+        CheckConstraint(
+            "(in_scope AND primary_topic IS NOT NULL AND primary_topic = ANY(topics)) OR "
+            "(NOT in_scope AND primary_topic IS NULL AND cardinality(topics) = 0)",
+            name="primary_topic",
+        ),
+        Index(None, "article_id", "id"),
+        Index(None, "model_call_id"),
+        Index(None, "topics", postgresql_using="gin"),
     )

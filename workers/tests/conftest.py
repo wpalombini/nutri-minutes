@@ -63,7 +63,8 @@ def conn(engine: Engine) -> Iterator[Connection]:
 
 
 PIPELINE_TABLES = (
-    "model_calls, pipeline_run_errors, pipeline_runs, article_relations, article_licences, articles"
+    "triage_decisions, article_stages, model_calls, pipeline_run_errors, pipeline_runs, "
+    "article_relations, article_licences, articles"
 )
 
 

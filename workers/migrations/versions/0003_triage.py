@@ -93,6 +93,10 @@ def upgrade() -> None:
             "decided_by IN ('rule', 'model')", name="ck_triage_decisions_decided_by"
         ),
         sa.CheckConstraint(
+            "rule IN ('retracted', 'not_research', 'no_abstract', 'not_english')",
+            name="ck_triage_decisions_rule",
+        ),
+        sa.CheckConstraint(
             "(decided_by = 'rule' AND rule IS NOT NULL AND model_call_id IS NULL "
             "AND relevance IS NULL AND NOT in_scope) OR "
             "(decided_by = 'model' AND rule IS NULL AND model_call_id IS NOT NULL "

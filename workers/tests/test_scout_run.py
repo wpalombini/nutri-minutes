@@ -8,10 +8,11 @@ import pytest
 from sqlalchemy import Engine, text
 
 from pipeline.europe_pmc import FIRST_CURSOR, EuropePmcError, SearchPage
-from pipeline.notify import Alert, Severity
+from pipeline.notify import Severity
 from pipeline.runs import LockLost, agent_lock, lock_key, record_error, start_run
 from pipeline.scout.run import AGENT, Window, next_window, run_scout
 from pipeline.scout.settings import ScoutSettings
+from tests.fakes import FakeNotifier
 from tests.records import record
 
 TODAY = date(2026, 11, 7)
@@ -31,14 +32,6 @@ class FakeClient:
         if cursor in self.fail_on:
             raise EuropePmcError("Search request failed after 5 attempts: HTTP 503")
         return self.pages[cursor]
-
-
-@dataclass
-class FakeNotifier:
-    alerts: list[Alert] = field(default_factory=list)
-
-    def send(self, alert: Alert) -> None:
-        self.alerts.append(alert)
 
 
 def _records(*ids: int) -> list[dict[str, Any]]:

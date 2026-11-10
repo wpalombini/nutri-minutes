@@ -80,6 +80,9 @@ TOPIC_SLUGS: tuple[str, ...] = (
 
 TRIAGE_DECIDERS: tuple[str, ...] = ("rule", "model")
 
+TRIAGE_RULES: tuple[str, ...] = ("retracted", "not_research", "no_abstract", "not_english")
+"""The rules in `pipeline.triage.rules`. A new rule needs a migration."""
+
 
 def _in_list(column: str, values: tuple[str, ...]) -> str:
     quoted = ", ".join(f"'{value}'" for value in values)
@@ -320,6 +323,7 @@ class TriageDecision(Base):
 
     __table_args__ = (
         CheckConstraint(_in_list("decided_by", TRIAGE_DECIDERS), name="decided_by"),
+        CheckConstraint(_in_list("rule", TRIAGE_RULES), name="rule"),
         CheckConstraint(
             "(decided_by = 'rule' AND rule IS NOT NULL AND model_call_id IS NULL "
             "AND relevance IS NULL AND NOT in_scope) OR "

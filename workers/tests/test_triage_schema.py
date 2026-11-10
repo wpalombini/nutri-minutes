@@ -86,6 +86,7 @@ def test_valid_decisions(conn: Connection) -> None:
         ("model", {"primary_topic": None}),
         ("model", {"in_scope": False}),
         ("rule", {"rule": None}),
+        ("rule", {"rule": "too_long"}),
         ("rule", {"in_scope": True, "topics": ["bone-health"], "primary_topic": "bone-health"}),
         ("rule", {"relevance": 2}),
     ],

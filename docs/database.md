@@ -2,7 +2,7 @@
 
 The Postgres schema: what each table holds and why. Change this document in the same PR as any migration. [ADR 0002](adr/0002-database-migrations-and-schema-growth.md) covers migration tooling and how the schema grows.
 
-**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, and `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
+**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), and `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
 
 ## Overview
 
@@ -13,6 +13,9 @@ erDiagram
     pipeline_runs ||--o{ pipeline_run_errors : "records"
     pipeline_runs ||--o{ model_calls : "makes"
     articles ||--o{ model_calls : "is the subject of"
+    articles ||--o{ article_stages : "has"
+    articles ||--o{ triage_decisions : "has"
+    model_calls |o--o{ triage_decisions : "produced"
 
     articles {
         bigint id PK
@@ -48,6 +51,18 @@ erDiagram
         bigint article_id FK
         text prompt_version
         numeric cost_usd
+    }
+    article_stages {
+        bigint article_id PK
+        text agent PK
+        text status
+    }
+    triage_decisions {
+        bigint id PK
+        bigint article_id FK
+        bigint model_call_id FK
+        boolean in_scope
+        text primary_topic
     }
 ```
 
@@ -241,6 +256,46 @@ One row per attempt by the model client, including attempts the budget check ref
 
 **Contents:** inputs and replies hold abstracts and metadata, which are public, never reader data. Rows are kept with the outputs they trace.
 
+### `article_stages`
+Each article's status for each agent, from Triage onwards. An article with no row for an agent hasn't been handled by it yet, so that agent's next run takes it. This is how runs resume: there's no checkpoint to replay.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `article_id` | `bigint` | No | References `articles`. Part of the primary key. |
+| `agent` | `text` | No | Such as `triage`. Part of the primary key. |
+| `status` | `text` | No | `done` or `failed` |
+| `run_id` | `bigint` | No | References `pipeline_runs`: the run that last set the status |
+| `error` | `text` | Yes | Why the article failed. Set exactly when `status` is `failed`. Must not contain secrets. |
+| `updated_at` | `timestamptz` | No | |
+
+**Failed articles:** later runs skip a `failed` row, so a broken article isn't retried every day. A person fixes the cause and re-runs that article, which sets the row again.
+
+**Constraints and indexes:**
+- Check constraints limit `status` to the values above and tie `error` to `failed`.
+- An index on `(agent, status)` finds an agent's failed articles.
+
+### `triage_decisions`
+Triage's scope decisions. A re-run adds a row and never changes an old one, so earlier decisions stay inspectable. An article's current decision is its row with the highest `id`.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | `bigint` identity | No | Primary key |
+| `article_id` | `bigint` | No | References `articles` |
+| `run_id` | `bigint` | No | References `pipeline_runs` |
+| `decided_by` | `text` | No | `rule` (a rule applied before the model) or `model` |
+| `rule` | `text` | Yes | The rule that dropped the article, such as `no_abstract`. Set exactly when `decided_by` is `rule`. |
+| `model_call_id` | `bigint` | Yes | References `model_calls`: the call that decided, which gives the model and prompt version. Set exactly when `decided_by` is `model`. |
+| `in_scope` | `boolean` | No | Rules only ever drop articles, so a `rule` decision is always out of scope. |
+| `relevance` | `integer` | Yes | 1 to 5, from the model. Null for `rule` decisions. |
+| `topics` | `text[]` | No | Reader-facing topic slugs from `web/content/topics.md`, primary topic first. Empty when out of scope. Defaults to empty. |
+| `primary_topic` | `text` | Yes | One of `topics`. Set exactly when in scope. |
+| `reason` | `text` | No | Why, in a sentence |
+| `created_at` | `timestamptz` | No | |
+
+**Constraints and indexes:**
+- Check constraints enforce the pairings above, relevance from 1 to 5, and topics from the list of 7. A new topic needs a migration, and `tests/test_topics.py` fails if the list and `web/content/topics.md` differ.
+- An index on `(article_id, id)` finds an article's current decision, one on `model_call_id` finds a call's decision, and a GIN index on `topics` finds a topic's articles.
+
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.
 - **No match:** insert a new article.
@@ -251,7 +306,7 @@ One row per attempt by the model client, including attempts the budget check ref
 
 ## Roles and access
 Migrations run as the role that owns the schema. Migration `0001` also creates a `pipeline_worker` group role, which can't log in, so the migrating role needs `CREATEROLE` unless the group role already exists. On managed Postgres without it, create the role first. The migration lock covers one database only, so don't run the first migration on two databases on the same server at the same time.
-- **`pipeline_worker`:** can select, insert and update the Scout tables, and select and insert into `pipeline_run_errors` and `model_calls`. It can't delete rows, edit logged errors or model calls, or change the schema.
+- **`pipeline_worker`:** can select, insert and update the Scout tables and `article_stages`, and select and insert into `pipeline_run_errors`, `model_calls` and `triage_decisions`. It can't delete rows, edit logged errors, model calls or decisions, or change the schema.
 - **Login roles:** created outside migrations, with their passwords kept out of the repo, then granted a group role. Both are kept up to date by `infra/postgres/login-roles.sql` (see `docs/operations.md`). The workers' login role is `pipeline_runner`, granted `pipeline_worker`. The API's is `api_runner`, limited to 10 connections, which has no group role and no access to any table until the published views and its group role are added.
 - **Server-wide roles:** roles belong to the whole Postgres server, not one database. A downgrade revokes the role's access but doesn't drop it, because it may have access to other databases.
 - **API access:** the web app and future clients reach the database only through the API ([ADR 0003](adr/0003-database-api-for-the-web-app.md)), which connects as `api_runner`. Its group role, added with the first published view, reads published views only, never base tables (see "Tables to come"). It will also get write access to the tables the web app owns, such as accounts and billing, when they are added.
@@ -273,8 +328,6 @@ Each agent's or feature's tables are added by their own migration when it's buil
 
 | Agent or area | Will store |
 |---|---|
-| Triage and later agents | Each article's status per agent, including a failed state that later runs skip |
-| Triage | Scope decisions and relevance scores, and possibly topic tags with a GIN index |
 | Evidence Grader | Evidence grades and their reasons |
 | Extractor | Structured facts |
 | Writer | Summary versions |

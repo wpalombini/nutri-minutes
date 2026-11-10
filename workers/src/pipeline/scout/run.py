@@ -18,6 +18,7 @@ from pipeline.runs import (
     LockLost,
     Run,
     agent_lock,
+    error_text,
     find_running,
     finish_run,
     mark_resumed,
@@ -70,13 +71,6 @@ def next_window(engine: Engine, settings: ScoutSettings, today: date) -> Window:
     else:
         start = min(latest - timedelta(days=settings.overlap_days), today)
     return Window(start=start, end=today)
-
-
-def _error_text(exc: BaseException) -> str:
-    """A short error for runs and alerts. Database errors never include record content."""
-    if isinstance(exc, DBAPIError):
-        return f"Database error: {type(exc.orig).__name__}"
-    return f"{type(exc).__name__}: {exc}"[:300]
 
 
 def _record_failure(exc: Exception) -> str:
@@ -157,9 +151,9 @@ def _execute(
     except Exception as exc:
         logger.exception("Scout run %d failed", run.id)
         # Alert first, so the alert still goes out if the database is the problem.
-        notifier.send(Alert(Severity.ERROR, f"Scout run {run.id} failed", _error_text(exc)))
+        notifier.send(Alert(Severity.ERROR, f"Scout run {run.id} failed", error_text(exc)))
         with engine.begin() as conn:
-            finish_run(conn, run, "failed", _error_text(exc))
+            finish_run(conn, run, "failed", error_text(exc))
         return "failed"
 
     status = "partial" if run.counts["failed"] else "succeeded"

@@ -9,12 +9,14 @@ The settings file holds:
 - `model`: an explicit OpenRouter model ID, never a floating alias or a variant suffix such as
   `:online`, which adds charges the price caps don't cover, or `:nitro`, which changes routing.
 - `max_tokens`: the reply limit, which must include any reasoning tokens.
-- `temperature`: optional.
+- `temperature`: optional. Leave it out for models that don't accept it: requests require every
+  parameter they send, so no provider would match.
 - `price_caps`: US dollars, as strings, with `prompt` and `completion` per million tokens and
   `request` per request. Providers that charge more aren't used.
 - `reasoning`: optional, with `effort` or `max_tokens`, and `exclude`. For a model whose reasoning
   tokens don't count within `max_tokens`, set `max_tokens` here and `counted_separately: true`,
-  so the budget check adds them.
+  so the budget check adds them. For a model that reasons by default, `effort: "none"` keeps
+  reasoning from using up `max_tokens`.
 - `reply_schema`: the JSON Schema every reply must match (see `schema.py`).
 
 The version is a hash of the template and the settings, so any change gives a new version.

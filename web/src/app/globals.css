@@ -12,7 +12,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  /* Mobile browsers paint a blue box on tapped links and buttons; our own :active states give press feedback. */
+  /* Remove the blue box mobile browsers paint on tapped elements; pressed states come from our own styles. */
   -webkit-tap-highlight-color: transparent;
   background: var(--surface-page);
 }

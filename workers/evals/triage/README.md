@@ -11,11 +11,11 @@
 - `label`: `suggested` until the repo owner has reviewed the row, then `approved`. Only approved rows count towards scores.
 - `unsure`: true when the call is close enough that the owner should look at it first.
 - `note`: why the label was chosen, in a few words. Required when `unsure` is true.
-- `abstract` (optional): stored only when the licence is `cc-by` or `cc0`. Other abstracts are fetched from Europe PMC when the eval runs and cached outside the repo.
+- `abstract` (optional): may be stored only when the licence is `cc-by` or `cc0`. None are stored yet. Other abstracts will be fetched from Europe PMC by PMID when the eval runs, and cached outside the repo.
 
 ## How the papers were chosen
 From the 2,566 papers Scout had stored by 2026-11-11 that pass Triage's rules (not retracted, research, with an abstract, in English), chosen in two ways:
 - **60 at random.** They show the real mix, which is mostly out of scope: 5 of the 60 are suggested as in scope.
 - **80 picked by hand.** Title searches found likely in-scope papers for each topic, then borderline papers: diet or exercise research outside the topics (athletes, pregnancy, children, cancer, animal feed), topic outcomes without a diet or exercise exposure (lab nutrition scores, drugs, herbal formulas), and papers that use a diet only to set up an animal model.
 
-Missing an in-scope paper is the costlier mistake, so the eval weighs missed in-scope papers most.
+Missing an in-scope paper is the costlier mistake, so the eval will weigh missed in-scope papers most.

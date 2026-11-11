@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from pipeline.db.models import TOPIC_SLUGS
+from pipeline.db.models import LICENCE_CODES, REUSABLE_LICENCE_CODES, TOPIC_SLUGS
 
 DATASET = Path(__file__).resolve().parents[1] / "evals" / "triage" / "dataset.jsonl"
 REQUIRED = {
@@ -24,8 +24,6 @@ REQUIRED = {
     "note",
 }
 OPTIONAL = {"abstract"}
-ABSTRACT_LICENCES = {"cc-by", "cc0"}
-"""Licences whose abstracts may be stored in the repo."""
 
 
 def _rows() -> list[dict[str, Any]]:
@@ -60,7 +58,7 @@ def test_row_fields(row: dict[str, Any]) -> None:
     assert isinstance(row["title"], str) and row["title"].strip()
     types = row["publication_types"]
     assert isinstance(types, list) and all(isinstance(t, str) for t in types)
-    assert isinstance(row["licence"], str) and row["licence"]
+    assert row["licence"] in LICENCE_CODES
     assert row["sample"] in {"random", "picked"}
     assert row["label"] in {"suggested", "approved"}
     assert isinstance(row["unsure"], bool)
@@ -89,5 +87,5 @@ def test_expected_decision_is_consistent(row: dict[str, Any]) -> None:
 def test_abstracts_only_for_open_licences() -> None:
     for row in ROWS:
         if "abstract" in row:
-            assert row["licence"] in ABSTRACT_LICENCES, _id(row)
+            assert row["licence"] in REUSABLE_LICENCE_CODES, _id(row)
             assert isinstance(row["abstract"], str) and row["abstract"].strip(), _id(row)

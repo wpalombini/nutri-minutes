@@ -9,10 +9,9 @@ import logging
 import sys
 from datetime import UTC, date, datetime
 
-from sqlalchemy import create_engine
 from sqlalchemy.exc import DBAPIError
 
-from pipeline.db import database_url
+from pipeline.db import worker_engine
 from pipeline.europe_pmc import EuropePmcClient
 from pipeline.notify import Alert, LoggingNotifier, Severity
 from pipeline.runs import LockLost
@@ -64,20 +63,7 @@ def main(argv: list[str] | None = None) -> int:
 def _run(notifier: LoggingNotifier, today: date, window: Window | None) -> list[RunResult] | None:
     settings = ScoutSettings.from_env()
     client_settings = client_settings_from_env()
-    engine = create_engine(
-        database_url(),
-        pool_pre_ping=True,
-        # Keep record content out of error messages, logs and alerts.
-        hide_parameters=True,
-        # Notice a dead connection, such as the lock connection, instead of hanging.
-        connect_args={
-            "connect_timeout": 10,
-            "keepalives": 1,
-            "keepalives_idle": 30,
-            "keepalives_interval": 10,
-            "keepalives_count": 3,
-        },
-    )
+    engine = worker_engine()
     try:
         with EuropePmcClient(client_settings) as client:
             return run_scout(engine, client, notifier, settings, today, window)

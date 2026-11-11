@@ -9,6 +9,7 @@ The rules every agent follows are in docs/agents.md.
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import Connection, Engine, text
@@ -42,6 +43,9 @@ AGENT = "triage"
 STAGE = "triage"
 """The model client's budget stage. Its budget comes from `MODEL_BUDGET_USD_TRIAGE`."""
 PROMPT_NAME = "triage/scope"
+DEFAULT_BUDGET_USD = Decimal("1.00")
+"""Per run, unless `MODEL_BUDGET_USD_TRIAGE` sets another. Sized for a full run of 2,000 articles
+on a cheap model. A spent budget stops the run, and the rest wait for the next."""
 COUNT_KEYS = ("selected", "rule_out", "in_scope", "out_of_scope", "failed")
 MAX_ERROR_LENGTH = 500
 

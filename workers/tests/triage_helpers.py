@@ -7,11 +7,11 @@ from typing import Any
 
 from sqlalchemy import Connection, Engine, text
 
-from pipeline.db.models import TOPIC_SLUGS
 from pipeline.models.calls import PostgresCallLog
 from pipeline.models.client import CallAttempt, CallRequest, CallResult, Outcome
 from pipeline.models.fake import FakeModelClient
-from pipeline.models.prompts import Prompt
+from pipeline.models.prompts import Prompt, load_prompt
+from pipeline.triage.run import PROMPT_NAME
 from tests.prompt_files import settings, write_prompt
 
 TEMPLATE = """--- system ---
@@ -23,22 +23,8 @@ Types: {{ publication_types }}
 Abstract: {{ abstract }}
 """
 
-REPLY_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "in_scope": {"type": "boolean"},
-        "relevance": {"type": "integer", "minimum": 1, "maximum": 5},
-        "topics": {
-            "type": "array",
-            "items": {"type": "string", "enum": list(TOPIC_SLUGS)},
-            "maxItems": len(TOPIC_SLUGS),
-        },
-        "primary_topic": {"type": "string", "enum": [*TOPIC_SLUGS, "none"]},
-        "reason": {"type": "string", "maxLength": 400},
-    },
-    "required": ["in_scope", "relevance", "topics", "primary_topic", "reason"],
-    "additionalProperties": False,
-}
+REPLY_SCHEMA: dict[str, Any] = load_prompt(PROMPT_NAME).reply_schema
+"""The shipped prompt's schema, so tests run against the replies production accepts."""
 
 
 def triage_prompt(root: Path) -> Prompt:

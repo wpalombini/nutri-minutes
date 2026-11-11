@@ -1,0 +1,45 @@
+{
+  "model": "anthropic/claude-haiku-5.5",
+  "max_tokens": 300,
+  "reasoning": { "effort": "none" },
+  "price_caps": { "prompt": "0.12", "completion": "0.60", "request": "0" },
+  "reply_schema": {
+    "type": "object",
+    "properties": {
+      "reason": { "type": "string", "maxLength": 400 },
+      "in_scope": { "type": "boolean" },
+      "relevance": { "type": "integer", "minimum": 1, "maximum": 5 },
+      "topics": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "bone-health",
+            "muscle-and-strength",
+            "falls-and-independence",
+            "heart-and-metabolism",
+            "brain-health",
+            "longevity",
+            "genes-and-diet"
+          ]
+        },
+        "maxItems": 7
+      },
+      "primary_topic": {
+        "type": "string",
+        "enum": [
+          "bone-health",
+          "muscle-and-strength",
+          "falls-and-independence",
+          "heart-and-metabolism",
+          "brain-health",
+          "longevity",
+          "genes-and-diet",
+          "none"
+        ]
+      }
+    },
+    "required": ["reason", "in_scope", "relevance", "topics", "primary_topic"],
+    "additionalProperties": false
+  }
+}

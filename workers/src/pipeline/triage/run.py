@@ -48,6 +48,9 @@ DEFAULT_BUDGET_USD = Decimal("1.00")
 on a cheap model. A spent budget stops the run, and the rest wait for the next."""
 COUNT_KEYS = ("selected", "rule_out", "in_scope", "out_of_scope", "failed")
 MAX_ERROR_LENGTH = 500
+REPLY_ATTEMPTS = 3
+"""Calls per article when replies match the schema but make no sense, such as an in-scope reply
+with no topic. The client retries other failures itself."""
 
 
 class ReplyError(ModelCallError):
@@ -91,8 +94,9 @@ def prompt_inputs(article: TriageArticle) -> dict[str, str]:
 def parse_reply(reply: dict[str, Any]) -> ModelDecision:
     """Read the model's reply. The schema is checked by the client; this checks the meaning.
 
-    An in-scope reply whose primary topic is missing from its topics gets it added, rather
-    than losing the article over a slip. Out-of-scope decisions keep no topics.
+    An in-scope reply whose primary topic is missing from its topics gets it added, and one with
+    primary topic "none" takes its first topic, rather than losing the article over a slip.
+    Out-of-scope decisions keep no topics.
     """
     in_scope, relevance, reason = reply.get("in_scope"), reply.get("relevance"), reply.get("reason")
     topics, primary = reply.get("topics"), reply.get("primary_topic")
@@ -111,6 +115,8 @@ def parse_reply(reply: dict[str, Any]) -> ModelDecision:
     unknown = sorted(set(topics) - set(TOPIC_SLUGS))
     if unknown:
         raise ReplyError(f"Reply has unknown topics: {', '.join(unknown)}")
+    if primary == "none" and topics:
+        primary = topics[0]
     if primary not in TOPIC_SLUGS:
         raise ReplyError("An in-scope reply needs a primary topic from the topic list")
     ordered = tuple(dict.fromkeys([primary, *topics]))
@@ -222,6 +228,29 @@ def _store_model(
     _set_stage(conn, run, article.id, None)
 
 
+def ask_model(
+    client: ModelClient, prompt: Prompt, run_id: int, article: TriageArticle
+) -> tuple[ModelDecision, int]:
+    """Ask the model, calling again when a reply makes no sense. Returns the decision and the
+    call it came from. Used by runs and the eval alike."""
+    request = CallRequest(run_id, prompt, prompt_inputs(article), article.id or None)
+    for attempt in range(1, REPLY_ATTEMPTS + 1):
+        result = client.call(request)
+        try:
+            return parse_reply(result.reply), result.call_id
+        except ReplyError as exc:
+            if attempt == REPLY_ATTEMPTS:
+                raise
+            logger.info(
+                "Triage run %d: article %d: asking again after call %d: %s",
+                run_id,
+                article.id,
+                result.call_id,
+                exc,
+            )
+    raise AssertionError("unreachable")
+
+
 def _triage_one(
     engine: Engine,
     lock: AgentLock,
@@ -240,9 +269,7 @@ def _triage_one(
     failure: str | None = None
     if rule is None:
         try:
-            result = client.call(CallRequest(run.id, prompt, prompt_inputs(article), article.id))
-            model = parse_reply(result.reply)
-            call_id = result.call_id
+            model, call_id = ask_model(client, prompt, run.id, article)
         except ModelCallError as exc:
             failure = str(exc)[:MAX_ERROR_LENGTH] or type(exc).__name__
             logger.warning("Triage run %d: article %d failed: %s", run.id, article.id, failure)

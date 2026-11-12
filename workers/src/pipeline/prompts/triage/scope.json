@@ -6,7 +6,7 @@
   "reply_schema": {
     "type": "object",
     "properties": {
-      "reason": { "type": "string", "maxLength": 400 },
+      "reason": { "type": "string", "maxLength": 600 },
       "in_scope": { "type": "boolean" },
       "relevance": { "type": "integer", "minimum": 1, "maximum": 5 },
       "topics": {

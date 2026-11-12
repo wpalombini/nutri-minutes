@@ -157,7 +157,7 @@ def test_a_failed_call_fails_only_that_article(clean_engine: Engine, prompt: Pro
         insert_article(conn, 1)
         insert_article(conn, 2)
         insert_article(conn, 3)
-    bad_reply = {**in_scope(), "primary_topic": "none"}
+    bad_reply = {**in_scope(), "topics": [], "primary_topic": "none"}
     client = LoggedFakeClient(
         clean_engine,
         _by_title(
@@ -173,10 +173,25 @@ def test_a_failed_call_fails_only_that_article(clean_engine: Engine, prompt: Pro
     assert stages["Study 2"][0] == "failed" and "primary topic" in (stages["Study 2"][1] or "")
     assert stages["Study 3"] == ("done", None)
     assert [a.severity for a in notifier.alerts] == [Severity.WARNING]
+    titles = [r.inputs["title"] for r in client.requests]
+    assert titles.count("Study 2") == 3  # Asked again twice, then failed.
 
     # Failed articles are skipped by later runs.
     again = run_triage(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
     assert again is not None and _run_row(clean_engine, again.run_id).counts["selected"] == 0
+
+
+def test_a_reply_that_makes_no_sense_is_asked_again(clean_engine: Engine, prompt: Prompt) -> None:
+    with clean_engine.begin() as conn:
+        insert_article(conn, 1)
+    replies = iter([{**in_scope(), "topics": [], "primary_topic": "none"}, in_scope("longevity")])
+    client = LoggedFakeClient(clean_engine, lambda request: next(replies))
+    result = run_triage(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
+
+    assert result is not None and result.status == "succeeded"
+    [decision] = _decisions(clean_engine)
+    assert (decision.primary_topic, decision.model_call_id) == ("longevity", 2)
+    assert _stages(clean_engine)["Study 1"] == ("done", None)
 
 
 def test_every_article_failing_is_an_error_alert(clean_engine: Engine, prompt: Prompt) -> None:

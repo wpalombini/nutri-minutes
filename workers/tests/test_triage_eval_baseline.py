@@ -69,11 +69,12 @@ def test_a_dataset_change_makes_the_baseline_stale() -> None:
 def test_baseline_round_trips_without_reasons(tmp_path: Path) -> None:
     prompt = triage_prompt(tmp_path)
     result = PaperResult("1", True, ("bone-health",), in_scope=True, reason="quotes the abstract")
-    data = baseline_data(prompt, score([result]), Decimal("0.0461"))
+    other = PaperResult("2", False, (), in_scope=False, reason="also quotes it")
+    data = baseline_data(prompt, score([result, other]), Decimal("0.0461"))
     path = tmp_path / "out" / "baseline.json"
     write_baseline(path, data)
     assert read_baseline(path) == json.loads(json.dumps(data))
-    assert "quotes the abstract" not in path.read_text(encoding="utf-8")
+    assert "quotes" not in path.read_text(encoding="utf-8")
     assert data["prompt_version"] == prompt.version
 
 

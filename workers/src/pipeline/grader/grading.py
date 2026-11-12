@@ -45,13 +45,15 @@ MODEL_FUNDING_SOURCES = ("abstract", "grant_metadata", "not_stated")
 """Sources the model can cite while it reads only abstracts and grant data."""
 
 
+_ADJECTIVES = r"(?:(?:competing|financial|relevant|potential) ){0,2}"
+_CONFLICT = rf"{_ADJECTIVES}(?:interests?|conflicts?(?: of interests?)?)"
 NO_CONFLICTS = re.compile(
     r"\s*(?:"
     r"none(?: declared| reported| stated)?|nil|no|n/?a|not applicable"
     r"|nothing to (?:declare|disclose)"
-    r"|(?:the )?authors? (?:declare|declared|declares|have|has|report|reported) no "
-    r"(?:competing|financial)? ?(?:interests?|conflicts?(?: of interest)?)"
-    r"|no (?:competing|financial)? ?(?:interests?|conflicts?(?: of interest)?)"
+    r"|(?:the )?authors? (?:declare|declared|declares|have|has|report|reported) "
+    rf"(?:that they have )?no {_CONFLICT}"
+    rf"|(?:there (?:are|were|is|was) )?no {_CONFLICT}"
     r"(?: (?:were |was )?(?:declared|reported|to declare))?"
     r")\.?\s*",
     re.IGNORECASE,

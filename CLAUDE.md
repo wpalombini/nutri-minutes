@@ -82,7 +82,7 @@ The web app lives in `web/` and uses npm. Run these from `web/`; `web/README.md`
 ## Content rules (enforce in code, prompts and evals)
 - Every published claim must be traceable to a specific source (DOI/PMID) and supported by its text. The fact-check and hype-detection stages are hard gates: nothing publishes with unresolved flags.
 - Every study carries an evidence grade (design, size, duration, population, funding/conflicts). Observational and animal studies are labelled as such.
-- Scope: nutrition and exercise research on health outcomes that fits one of the topics in `web/content/topics.md`: bone health, muscle and strength with age, falls and independence, heart and metabolism, brain health, longevity, and occasional genetics limited to gene–diet and gene–ageing research. A paper that fits none of them is out of scope. No aesthetics, weight-loss transformations or sports-performance content.
+- Scope: nutrition and exercise research that bears on health and fits one of the topics in `web/content/topics.md`: bone health, muscle and strength with age, falls and independence, heart and metabolism, brain health, longevity, and occasional genetics limited to gene–diet and gene–ageing research. A paper that fits none of them is out of scope. A measured health outcome isn't required, and Triage keeps a paper when unsure, because a missed paper is never found again. No aesthetics, weight-loss transformations or sports-performance content.
 - No medical advice. Every page and episode discloses that the content is written by artificial intelligence and is not medical advice. Reader-facing text says "artificial intelligence" in full, never "AI".
 - No sponsorship, affiliate links or advertising from supplement or food companies.
 

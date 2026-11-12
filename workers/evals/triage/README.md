@@ -26,3 +26,18 @@ From the 2,566 papers Scout had stored by 2026-11-11 that pass Triage's rules (n
 - **80 picked by hand.** Title searches found likely in-scope papers for each topic, then borderline papers: diet or exercise research outside the topics (athletes, pregnancy, children, cancer, animal feed), topic outcomes without a diet or exercise exposure (lab nutrition scores, drugs, herbal formulas), and papers that use a diet only to set up an animal model.
 
 Missing an in-scope paper is the costlier mistake, so the eval will weigh missed in-scope papers most.
+
+## Running the eval
+`uv run python -m evals.triage` from `workers/` sends every approved paper to the shipped prompt through the production model client and prints the scores (`CLAUDE.md` has the options). The score that matters most is the share of in-scope papers kept. A failed call counts against its paper: a missed paper if it was in scope, a wrong keep if not.
+
+## Model comparison (2026-11-12)
+Four candidates ran the prompt as of #58 on all 140 approved papers (69 in scope). Haiku and DeepSeek ran twice, because single runs vary by a paper or two.
+
+| Model | In-scope kept | Out-of-scope dropped | Failed calls | Cost per run |
+|---|---|---|---|---|
+| `anthropic/claude-haiku-5.5` | 98.6%, 100% | 66.2%, 66.2% | 1, 1 | $0.046, $0.047 |
+| `deepseek/deepseek-v4-flash` | 97.1%, 95.7% | 81.7%, 84.5% | 0, 0 | $0.013, $0.008 |
+| `qwen/qwen3.8-flash` | 94.2% | 91.5% | 1 | $0.019 |
+| `openai/gpt-6-luna` | 85.5% | 85.9% | 5 | $0.081 |
+
+Haiku stays: it misses the fewest in-scope papers, which is the costlier mistake. DeepSeek missed the papers the repo owner's rules keep on purpose, such as exercise physiology and a map of exercise research. GPT-6 Luna's failures were a new-account rate limit, but it also missed eight papers it answered. Haiku's one failure per run was an in-scope reply without a topic, which Triage rejects.

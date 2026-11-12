@@ -23,9 +23,11 @@ x-worker-env: &worker-env
   SCOUT_INITIAL_DAYS: ${SCOUT_INITIAL_DAYS:-}
   SCOUT_OVERLAP_DAYS: ${SCOUT_OVERLAP_DAYS:-}
   SCOUT_MAX_RESUMES: ${SCOUT_MAX_RESUMES:-}
+  TRIAGE_MAX_ARTICLES: ${TRIAGE_MAX_ARTICLES:-}
   OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
   MODEL_TIMEOUT_SECONDS: ${MODEL_TIMEOUT_SECONDS:-}
   MODEL_MAX_ATTEMPTS: ${MODEL_MAX_ATTEMPTS:-}
+  MODEL_BUDGET_USD_TRIAGE: ${MODEL_BUDGET_USD_TRIAGE:-}
   TZ: UTC
 
 services:
@@ -90,7 +92,8 @@ services:
     <<: *workers
     command: ["supercronic", "-passthrough-logs", "/app/crontab"]
     restart: unless-stopped
-    # Give a running job time to finish its current page on deploy. Scout resumes if cut off.
+    # Give a running job time to finish its current page or article on deploy. Scout resumes if
+    # cut off, and the next Triage run picks up the articles it didn't reach.
     stop_grace_period: 60s
     environment: *worker-env
     depends_on:
@@ -102,6 +105,17 @@ services:
     <<: *workers
     profiles: ["manual"]
     entrypoint: ["python", "-m", "pipeline.scout"]
+    command: []
+    environment: *worker-env
+    depends_on:
+      db-roles:
+        condition: service_completed_successfully
+
+  # One-off Triage runs: docker compose run --rm triage [--article-id ID ...]
+  triage:
+    <<: *workers
+    profiles: ["manual"]
+    entrypoint: ["python", "-m", "pipeline.triage"]
     command: []
     environment: *worker-env
     depends_on:

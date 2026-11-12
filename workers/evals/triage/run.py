@@ -14,9 +14,9 @@ from decimal import Decimal
 from typing import Any
 
 from evals.abstracts import Row
-from pipeline.models import ModelCallError, ModelClient, Prompt
+from pipeline.models import CallRequest, ModelCallError, ModelClient, Prompt
 from pipeline.triage.rules import TriageArticle
-from pipeline.triage.run import MAX_ERROR_LENGTH, STAGE, ask_model
+from pipeline.triage.run import MAX_ERROR_LENGTH, STAGE, ask_model, prompt_inputs
 
 EVAL_RUN_ID = 0
 """Eval calls belong to no pipeline run. The in-memory call log keys the budget on this."""
@@ -127,7 +127,8 @@ def decide(client: ModelClient, prompt: Prompt, row: Row, abstract: str) -> Pape
         expected_topics=tuple(expected["topics"]),
     )
     try:
-        decision, _ = ask_model(client, prompt, EVAL_RUN_ID, article(row, abstract))
+        request = CallRequest(EVAL_RUN_ID, prompt, prompt_inputs(article(row, abstract)))
+        decision, _ = ask_model(client, request)
     except ModelCallError as exc:
         return replace(base, error=str(exc)[:MAX_ERROR_LENGTH] or type(exc).__name__)
     return replace(

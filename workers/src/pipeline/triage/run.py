@@ -228,27 +228,19 @@ def _store_model(
     _set_stage(conn, run, article.id, None)
 
 
-def ask_model(
-    client: ModelClient, prompt: Prompt, run_id: int, article: TriageArticle
-) -> tuple[ModelDecision, int]:
+def ask_model(client: ModelClient, request: CallRequest) -> tuple[ModelDecision, int]:
     """Ask the model, calling again when a reply makes no sense. Returns the decision and the
     call it came from. Used by runs and the eval alike."""
-    request = CallRequest(run_id, prompt, prompt_inputs(article), article.id or None)
-    for attempt in range(1, REPLY_ATTEMPTS + 1):
+    for _ in range(REPLY_ATTEMPTS - 1):
         result = client.call(request)
         try:
             return parse_reply(result.reply), result.call_id
         except ReplyError as exc:
-            if attempt == REPLY_ATTEMPTS:
-                raise
             logger.info(
-                "Triage run %d: article %d: asking again after call %d: %s",
-                run_id,
-                article.id,
-                result.call_id,
-                exc,
+                "Triage run %d: asking again after call %d: %s", request.run_id, result.call_id, exc
             )
-    raise AssertionError("unreachable")
+    result = client.call(request)
+    return parse_reply(result.reply), result.call_id
 
 
 def _triage_one(
@@ -269,7 +261,9 @@ def _triage_one(
     failure: str | None = None
     if rule is None:
         try:
-            model, call_id = ask_model(client, prompt, run.id, article)
+            model, call_id = ask_model(
+                client, CallRequest(run.id, prompt, prompt_inputs(article), article.id)
+            )
         except ModelCallError as exc:
             failure = str(exc)[:MAX_ERROR_LENGTH] or type(exc).__name__
             logger.warning("Triage run %d: article %d failed: %s", run.id, article.id, failure)

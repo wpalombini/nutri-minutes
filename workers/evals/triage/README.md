@@ -30,6 +30,13 @@ Missing an in-scope paper is the costlier mistake, so the eval's main score is t
 ## Running the eval
 `uv run python -m evals.triage` from `workers/` sends every approved paper to the shipped prompt through the production model client and prints the scores (`CLAUDE.md` has the options). Keep `--report` files outside the repo: the model's reasons may quote abstracts. The score that matters most is the share of in-scope papers kept. A failed call counts against its paper: a missed paper if it was in scope, a wrong keep if not.
 
+## In CI
+The `triage-eval` workflow runs the eval with `--check` on pull requests that change the Triage prompt, the model client, Triage itself or the evals, for about $0.05 a run. It compares the scores with `baseline.json`, which holds the scores only, never the model's reasons. It blocks the pull request when:
+- more than 2 in-scope papers are missed (below 97.1% of 69). Runs of the same prompt vary by a paper, so a single extra miss isn't a regression;
+- or the share of out-of-scope papers dropped falls more than 10 points below the baseline.
+
+A pull request that changes the dataset must refresh the baseline with `--write-baseline`, or the check fails. Refresh it too after a change that improves the scores, so later changes are held to them.
+
 ## Model comparison (2026-11-12)
 Four candidates ran the prompt as of #58 (version `faf6b399d4b9369f` with Haiku's settings) on all 140 approved papers (69 in scope). Haiku and DeepSeek ran twice, because single runs vary by a paper or two.
 

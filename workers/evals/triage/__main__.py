@@ -3,8 +3,10 @@
 Needs `OPENROUTER_API_KEY`, and `EUROPE_PMC_CONTACT` when an abstract isn't stored or cached yet.
 Prints the scores. `--report PATH` also writes every paper's decision as JSON, and
 `--prompt-root DIR` runs a candidate prompt from `DIR/triage/scope.{md,json}` instead of the
-shipped one, to compare models without editing it. Exits 1 if the eval couldn't finish, such as
-when it hits its budget or an abstract can't be found.
+shipped one, to compare models without editing it. `--check` compares the scores with the
+committed baseline and `--write-baseline` replaces it (`baseline.py` has the rules). Exits 1 if
+the eval couldn't finish, such as when it hits its budget or an abstract can't be found, and 2 if
+`--check` finds a regression.
 """
 
 import argparse
@@ -16,6 +18,7 @@ from pathlib import Path
 
 from evals.abstracts import AbstractCache, AbstractError, default_cache_dir, read_dataset
 from evals.abstracts import resolve_abstracts as resolve
+from evals.triage.baseline import BASELINE, baseline_data, check, read_baseline, write_baseline
 from evals.triage.run import EVAL_RUN_ID, Scores, approved_rows, report, run_eval, score
 from pipeline.models import PromptError, StopRun, load_prompt
 from pipeline.models.calls import MemoryCallLog
@@ -72,13 +75,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--budget", type=_budget, default=DEFAULT_BUDGET_USD, help="US dollars")
     parser.add_argument("--limit", type=_limit, help="score only the first N approved papers")
     parser.add_argument("--report", type=Path, help="write every decision to this JSON file")
+    parser.add_argument("--baseline", type=Path, default=BASELINE, help=argparse.SUPPRESS)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="fail on a regression from the baseline")
+    mode.add_argument("--write-baseline", action="store_true", help="replace the baseline")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
+    if (args.check or args.write_baseline) and args.limit is not None:
+        parser.error("--check and --write-baseline need every approved paper, not --limit")
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s %(message)s")
 
     try:
         prompt = load_prompt(PROMPT_NAME, args.prompt_root)
         settings = OpenRouterSettings.from_env()
-    except (PromptError, RuntimeError) as exc:
+        baseline = read_baseline(args.baseline) if args.check else None
+    except (PromptError, RuntimeError, OSError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
     rows = approved_rows(read_dataset(args.dataset))[: args.limit]
@@ -109,6 +119,17 @@ def main(argv: list[str] | None = None) -> int:
         text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
         args.report.write_text(text, encoding="utf-8")
     print(summary(prompt.model, scores, cost))
+    if args.write_baseline:
+        write_baseline(args.baseline, baseline_data(prompt, scores, cost))
+        print(f"Baseline written to {args.baseline}")
+    if baseline is not None:
+        problems = check(scores, baseline)
+        if problems:
+            print("\nRegression from the baseline:", file=sys.stderr)
+            for problem in problems:
+                print(f"- {problem}", file=sys.stderr)
+            return 2
+        print("No regression from the baseline")
     return 0
 
 

@@ -1,0 +1,58 @@
+name: triage-eval
+
+# Runs the Triage eval against the committed baseline (workers/evals/triage/baseline.py) on pull
+# requests that could change Triage's decisions. About $0.05 per run on the CI OpenRouter key.
+on:
+  pull_request:
+    paths:
+      - "workers/src/pipeline/prompts/triage/**"
+      - "workers/src/pipeline/models/**"
+      - "workers/src/pipeline/triage/**"
+      - "workers/evals/**"
+      - ".github/workflows/triage-eval.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: triage-eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    # Pull requests from forks and Dependabot get no repository secrets.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: workers
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      EUROPE_PMC_CONTACT: contact@nutriminutes.com
+      EVAL_BUDGET_USD: "0.25"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.13.5"
+          working-directory: workers
+      - name: Install
+        run: uv sync --locked
+      # Abstracts that can't be stored in the repo are fetched once and cached between runs.
+      - name: Restore abstracts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/eval-abstracts
+          key: eval-abstracts-${{ hashFiles('workers/evals/triage/dataset.jsonl') }}
+          restore-keys: eval-abstracts-
+      - name: Triage eval
+        env:
+          EVAL_CACHE_DIR: ${{ runner.temp }}/eval-abstracts
+        run: uv run python -m evals.triage --check --budget "$EVAL_BUDGET_USD"

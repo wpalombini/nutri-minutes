@@ -17,7 +17,7 @@ from pathlib import Path
 from evals.abstracts import AbstractCache, AbstractError, default_cache_dir, read_dataset
 from evals.abstracts import resolve_abstracts as resolve
 from evals.triage.run import EVAL_RUN_ID, Scores, approved_rows, report, run_eval, score
-from pipeline.models import StopRun, load_prompt
+from pipeline.models import PromptError, StopRun, load_prompt
 from pipeline.models.calls import MemoryCallLog
 from pipeline.models.openrouter import OpenRouterClient, OpenRouterSettings
 from pipeline.triage.run import PROMPT_NAME, STAGE
@@ -75,7 +75,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s %(message)s")
 
-    prompt = load_prompt(PROMPT_NAME, args.prompt_root)
+    try:
+        prompt = load_prompt(PROMPT_NAME, args.prompt_root)
+        settings = OpenRouterSettings.from_env()
+    except (PromptError, RuntimeError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
     rows = approved_rows(read_dataset(args.dataset))[: args.limit]
     try:
         abstracts = resolve(rows, AbstractCache(default_cache_dir()))
@@ -83,29 +88,27 @@ def main(argv: list[str] | None = None) -> int:
         print(exc, file=sys.stderr)
         return 1
 
+    def progress(done: int, total: int) -> None:
+        if sys.stderr.isatty():
+            print(f"\r{done}/{total}", end="" if done < total else "\n", file=sys.stderr)
+
     log = MemoryCallLog()
-    with OpenRouterClient(
-        OpenRouterSettings.from_env(), log=log, budgets={STAGE: args.budget}
-    ) as client:
+    with OpenRouterClient(settings, log=log, budgets={STAGE: args.budget}) as client:
         try:
-            results = run_eval(
-                client,
-                prompt,
-                rows,
-                abstracts,
-                lambda done, total: print(f"\r{done}/{total}", end="", file=sys.stderr),
-            )
+            results = run_eval(client, prompt, rows, abstracts, progress)
         except StopRun as exc:
-            print(f"\nThe eval stopped: {exc}", file=sys.stderr)
+            spent = log.spent_usd(EVAL_RUN_ID, STAGE)
+            print(f"\nThe eval stopped after spending ${spent:.4f}: {exc}", file=sys.stderr)
             return 1
-    print(file=sys.stderr)
 
     cost = log.spent_usd(EVAL_RUN_ID, STAGE)
     scores = score(results)
-    print(summary(prompt.model, scores, cost))
     if args.report is not None:
         data = report(prompt, scores, results, cost)
-        args.report.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+        args.report.write_text(text, encoding="utf-8")
+    print(summary(prompt.model, scores, cost))
     return 0
 
 

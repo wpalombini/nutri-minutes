@@ -16,7 +16,7 @@ from typing import Any
 from evals.abstracts import Row
 from pipeline.models import CallRequest, ModelCallError, ModelClient, Prompt
 from pipeline.triage.rules import TriageArticle
-from pipeline.triage.run import STAGE, parse_reply, prompt_inputs
+from pipeline.triage.run import MAX_ERROR_LENGTH, STAGE, parse_reply, prompt_inputs
 
 EVAL_RUN_ID = 0
 """Eval calls belong to no pipeline run. The in-memory call log keys the budget on this."""
@@ -130,7 +130,7 @@ def decide(client: ModelClient, prompt: Prompt, row: Row, abstract: str) -> Pape
         reply = client.call(CallRequest(EVAL_RUN_ID, prompt, prompt_inputs(article(row, abstract))))
         decision = parse_reply(reply.reply)
     except ModelCallError as exc:
-        return replace(base, error=str(exc) or type(exc).__name__)
+        return replace(base, error=str(exc)[:MAX_ERROR_LENGTH] or type(exc).__name__)
     return replace(
         base,
         in_scope=decision.in_scope,
@@ -162,7 +162,8 @@ def run_eval(
 def report(
     prompt: Prompt, scores: Scores, results: Sequence[PaperResult], cost_usd: Decimal
 ) -> dict[str, Any]:
-    """The run as JSON. It holds no abstracts, which may not be reusable."""
+    """The run as JSON. It leaves out abstracts, which may not be reusable, but keeps the model's
+    reasons, which may quote them: keep reports outside the repo."""
     return {
         "prompt": prompt.name,
         "prompt_version": prompt.version,

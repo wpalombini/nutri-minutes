@@ -25,13 +25,13 @@ From the 2,566 papers Scout had stored by 2026-11-11 that pass Triage's rules (n
 - **60 at random.** They show the real mix, which is mostly out of scope: 10 of the 60 are in scope.
 - **80 picked by hand.** Title searches found likely in-scope papers for each topic, then borderline papers: diet or exercise research outside the topics (athletes, pregnancy, children, cancer, animal feed), topic outcomes without a diet or exercise exposure (lab nutrition scores, drugs, herbal formulas), and papers that use a diet only to set up an animal model.
 
-Missing an in-scope paper is the costlier mistake, so the eval will weigh missed in-scope papers most.
+Missing an in-scope paper is the costlier mistake, so the eval's main score is the share of in-scope papers kept (`kept_in_scope`).
 
 ## Running the eval
-`uv run python -m evals.triage` from `workers/` sends every approved paper to the shipped prompt through the production model client and prints the scores (`CLAUDE.md` has the options). The score that matters most is the share of in-scope papers kept. A failed call counts against its paper: a missed paper if it was in scope, a wrong keep if not.
+`uv run python -m evals.triage` from `workers/` sends every approved paper to the shipped prompt through the production model client and prints the scores (`CLAUDE.md` has the options). Keep `--report` files outside the repo: the model's reasons may quote abstracts. The score that matters most is the share of in-scope papers kept. A failed call counts against its paper: a missed paper if it was in scope, a wrong keep if not.
 
 ## Model comparison (2026-11-12)
-Four candidates ran the prompt as of #58 on all 140 approved papers (69 in scope). Haiku and DeepSeek ran twice, because single runs vary by a paper or two.
+Four candidates ran the prompt as of #58 (version `faf6b399d4b9369f` with Haiku's settings) on all 140 approved papers (69 in scope). Haiku and DeepSeek ran twice, because single runs vary by a paper or two.
 
 | Model | In-scope kept | Out-of-scope dropped | Failed calls | Cost per run |
 |---|---|---|---|---|

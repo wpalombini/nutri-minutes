@@ -4,12 +4,19 @@ name: triage-eval
 # requests that could change Triage's decisions. About $0.05 per run on the CI OpenRouter key.
 on:
   pull_request:
-    paths:
+    paths: &paths
       - "workers/src/pipeline/prompts/triage/**"
       - "workers/src/pipeline/models/**"
       - "workers/src/pipeline/triage/**"
+      - "workers/src/pipeline/db/models.py"
       - "workers/evals/**"
+      - "workers/pyproject.toml"
+      - "workers/uv.lock"
       - ".github/workflows/triage-eval.yml"
+  # Runs on main too, so the abstracts cache is saved where every pull request can restore it.
+  push:
+    branches: [main]
+    paths: *paths
   workflow_dispatch:
 
 permissions:
@@ -17,22 +24,21 @@ permissions:
 
 concurrency:
   group: triage-eval-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   eval:
     # Pull requests from forks and Dependabot get no repository secrets.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
-       github.actor != 'dependabot[bot]')
+       github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
       run:
         working-directory: workers
     env:
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       EUROPE_PMC_CONTACT: contact@nutriminutes.com
       EVAL_BUDGET_USD: "0.25"
     steps:
@@ -54,5 +60,6 @@ jobs:
           restore-keys: eval-abstracts-
       - name: Triage eval
         env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           EVAL_CACHE_DIR: ${{ runner.temp }}/eval-abstracts
         run: uv run python -m evals.triage --check --budget "$EVAL_BUDGET_USD"

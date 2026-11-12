@@ -12,7 +12,7 @@
 - `reviewed_by`: how an approved label was settled. `owner`: the repo owner reviewed the paper. `owner-rule`: a rule the owner set for a kind of paper decided it. `agreement`: the suggested label and an independent blind labelling of the paper agreed. Absent while the label is `suggested`.
 - `unsure`: true when the call is close enough that the owner should look at it first.
 - `note`: why the label was chosen, in a few words. Required when `unsure` is true.
-- `abstract` (optional): may be stored only when the licence is `cc-by` or `cc0`. None are stored yet. Other abstracts will be fetched from Europe PMC by PMID when the eval runs, and cached outside the repo.
+- `abstract` (optional): stored only when both the row and Europe PMC give the licence as `cc-by` or `cc0`, which is 55 rows. Every other abstract is fetched from Europe PMC by PMID and cached outside the repo (`evals/abstracts.py`).
 
 ## How the labels were settled
 Labels were first suggested with a note on each close call. A second labeller then labelled every paper blind, from the scope rules alone, without seeing the suggestions. The two agreed on 131 of 140 papers. The repo owner reviewed 26 papers directly and settled the 9 disagreements, directly or with rules. Because Triage should keep a paper whenever it is unsure, the owner chose rules that only ever keep papers. 20 of the reviewed papers are recorded as `owner`; 10 papers that the rules settled or changed (6 reviewed, 4 others) are recorded as `owner-rule`:

@@ -313,7 +313,7 @@ Triage's scope decisions. A re-run adds a row and never changes an old one, so e
 - An index on `(article_id, id)` finds an article's current decision, one on `model_call_id` finds a call's decision, and a GIN index on `topics` finds a topic's articles.
 
 ### `evidence_grades`
-The Evidence Grader's grades, one per article for its main outcome. Levels are GRADE's four, stored as numbers: 1 very low, 2 low, 3 moderate and 4 high certainty, as `/how-we-grade` describes. A re-run adds a row and never changes an old one. An article's current grade is its row with the highest `id`.
+The Evidence Grader's grades, one per article for its main outcome. Levels are GRADE's four, stored as numbers: 1 very low, 2 low, 3 moderate and 4 high certainty, following `/how-we-grade`; the page doesn't yet describe the non-randomised trial label or the rules for reviews and caps below. A re-run adds a row and never changes an old one. An article's current grade is its row with the highest `id`.
 
 | Column | Type | Null | Notes |
 |---|---|---|---|
@@ -326,7 +326,7 @@ The Evidence Grader's grades, one per article for its main outcome. Levels are G
 | `design_category` | `text` | Yes | `randomised_trial`, `non_randomised_trial`, `observational`, `review`, `animal` or `lab`. Mendelian randomisation studies are `observational`. The web app owns the reader-facing label. |
 | `review_includes` | `text` | Yes | What a review combines: `randomised_trials`, `observational`, `mixed` or `animal_or_lab`. Set exactly when the design is `review`. |
 | `review_reported_level` | `smallint` | Yes | The certainty a review reports for its main outcome, 1 to 4, when it reports one. Only for reviews. |
-| `starting_level` | `smallint` | Yes | Set by the design: trials 4, non-randomised trials and observational studies 2, animal and lab studies 1. A review starts at the level it reports, or else from what it combines: trials 4, observational studies or a mix 2, animal or lab studies 1. |
+| `starting_level` | `smallint` | Yes | Set by the design: randomised trials 4, non-randomised trials and observational studies 2, animal and lab studies 1. A review starts at the level it reports, or else from what it combines: randomised trials 4, observational studies or a mix 2, animal or lab studies 1. |
 | `level` | `smallint` | Yes | The grade, 1 to 4. At most one above the starting level, and never above it for animal and lab studies or reviews of them. |
 | `main_outcome` | `text` | Yes | The outcome the grade is for |
 | `participants` | `integer` | Yes | How many took part, when stated. Above zero. |
@@ -334,21 +334,21 @@ The Evidence Grader's grades, one per article for its main outcome. Levels are G
 | `population` | `text` | Yes | Who was studied |
 | `funder` | `text` | Yes | Who paid, as stated |
 | `funder_type` | `text` | Yes | `industry`, `public`, `charity`, `none` or `not_stated` |
-| `funding_source` | `text` | Yes | Where the funding facts came from: `abstract`, `grant_metadata` (Europe PMC's grant list), `full_text` or `not_stated`. `not_stated` exactly when `funder_type` is `not_stated`, which reads as "not stated in the abstract", never as unfunded. |
+| `funding_source` | `text` | Yes | Where the funding facts came from: `abstract`, `grant_metadata` (Europe PMC's grant list), `full_text` or `not_stated`. `not_stated` exactly when `funder_type` is `not_stated`, meaning no source checked says, never that the study was unfunded. While only abstracts and grant data are checked, readers see "not stated in the abstract". |
 | `funder_sells_product` | `text` | Yes | `yes`, `no` or `unknown`. A trade body for the product counts as selling it. |
 | `sponsor_roles` | `text[]` | No | What the sponsor did, when the study says: `design`, `analysis`, `writing`. Defaults to empty. |
 | `conflicts` | `text` | Yes | Conflicts the authors declared |
 | `registered` | `text` | Yes | Whether the study was registered before it began: `yes`, `no` or `unknown` |
 | `outcome_switched` | `text` | Yes | Whether the main outcome changed after the study started: `yes`, `no` or `unknown` |
 | `surrogate_outcome` | `boolean` | Yes | Whether the result rests on a stand-in measure, such as a blood marker |
-| `funding_lowered` | `boolean` | Yes | Whether funding and conflicts lowered the grade, by one level at most ([rule](agents.md#evidence-grader-funding-and-conflicts)) |
+| `funding_lowered` | `boolean` | Yes | Whether funding and conflicts lowered the grade, by one level at most ([rule](agents.md#evidence-grader-funding-and-conflicts)). Only true when a concrete risk is recorded: the funder sells the product and the sponsor ran the analysis or wrote the paper, the outcome was switched, the study wasn't registered, or the result rests on a stand-in measure. |
 | `reason` | `text` | No | A one-sentence summary for people inspecting grades, not shown to readers |
 | `created_at` | `timestamptz` | No | |
 
-Columns from `design_category` to `funding_lowered` are set exactly when the paper is graded (except `participants`, `duration`, `population`, `funder`, `conflicts` and the review columns, which may be null), and are all null or empty when it isn't.
+Columns from `design_category` to `funding_lowered` are set exactly when the paper is graded (except `participants`, `duration`, `population`, `funder`, `conflicts` and the review columns, which may be null). When it isn't, they are all null, and `sponsor_roles` is empty.
 
 **Constraints and indexes:**
-- Check constraints enforce the pairings above, the allowed values, the starting levels and the caps on `level`. That `level` equals the starting level plus the reasons' moves spans two tables, so the Grader's code computes and tests it.
+- Check constraints enforce the pairings above, the allowed values, the starting levels, the caps on `level`, the risks behind `funding_lowered`, and a non-empty `main_outcome` and `reason`. That `level` equals the starting level plus the reasons' moves spans two tables, so the Grader's code computes and tests it.
 - An index on `(article_id, id)` finds an article's current grade, and one on `model_call_id` finds a call's grade.
 
 ### `evidence_grade_reasons`
@@ -362,6 +362,8 @@ What raised or lowered a grade, in the order the study page lists them under "Wh
 | `direction` | `text` | No | `raises` or `lowers` |
 | `levels` | `smallint` | No | How many levels it moved the grade, 0 to 2. 0 lists a concern, such as a funding concern without a concrete risk, without moving the grade. |
 | `reason` | `text` | No | Reader-facing sentence on what was found, checked before it publishes. Not empty. |
+
+A `funding_and_conflicts` reason always lowers, by one level at most, and a unique index allows only one such reason that moves the grade.
 
 The `pipeline_worker` role can add rows to both tables but not change or delete them.
 

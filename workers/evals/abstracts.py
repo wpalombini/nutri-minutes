@@ -47,7 +47,7 @@ type SearcherFactory = Callable[[], AbstractContextManager[Searcher]]
 
 
 def default_cache_dir() -> Path:
-    """`EVAL_CACHE_DIR`, or the user's cache directory. Never inside the repo."""
+    """`EVAL_CACHE_DIR`, or the user's cache directory. Keep it outside the repo."""
     configured = os.environ.get(CACHE_DIR_ENV, "").strip()
     if configured:
         return Path(configured).expanduser()
@@ -55,8 +55,8 @@ def default_cache_dir() -> Path:
     return Path(base).expanduser() / "research-pipeline" / "abstracts"
 
 
-def _checked_pmid(pmid: str) -> str:
-    if not _PMID.fullmatch(pmid):
+def _checked_pmid(pmid: object) -> str:
+    if not isinstance(pmid, str) or not _PMID.fullmatch(pmid):
         raise ValueError(f"Invalid PMID: {pmid!r}")
     return pmid
 
@@ -78,14 +78,22 @@ class AbstractCache:
         return text if text.strip() else None
 
     def put(self, pmid: str, abstract: str) -> None:
-        path = self._path(pmid)
         self.directory.mkdir(parents=True, exist_ok=True)
-        # Write then rename, so an interrupted write never leaves half an abstract.
-        with tempfile.NamedTemporaryFile(
-            "w", encoding="utf-8", dir=self.directory, suffix=".tmp", delete=False
-        ) as tmp:
-            tmp.write(abstract)
-        Path(tmp.name).replace(path)
+        _write_atomically(self._path(pmid), abstract)
+
+
+def _write_atomically(path: Path, text: str) -> None:
+    """Write then rename, so an interrupted write never leaves half a file."""
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+    ) as tmp:
+        try:
+            tmp.write(text)
+        except BaseException:
+            tmp.close()
+            Path(tmp.name).unlink(missing_ok=True)
+            raise
+    Path(tmp.name).replace(path)
 
 
 def _batches(items: Sequence[str], size: int) -> Iterator[Sequence[str]]:
@@ -135,6 +143,8 @@ def resolve_abstracts(
     for row in rows:
         pmid = _checked_pmid(row["pmid"])
         stored = row.get("abstract")
+        if stored is not None and row.get("licence") not in REUSABLE_LICENCE_CODES:
+            raise AbstractError(f"PMID {pmid} stores an abstract but isn't CC BY or CC0")
         if isinstance(stored, str) and stored.strip():
             abstracts[pmid] = stored
         elif (cached := cache.get(pmid)) is not None:
@@ -161,9 +171,7 @@ def read_dataset(path: Path) -> list[Row]:
 
 
 def write_dataset(path: Path, rows: Sequence[Row]) -> None:
-    path.write_text(
-        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8"
-    )
+    _write_atomically(path, "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
 
 
 def store_open_abstracts(rows: Sequence[Row], searcher: Searcher) -> tuple[list[Row], list[str]]:

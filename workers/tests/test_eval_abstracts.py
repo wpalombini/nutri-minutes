@@ -73,6 +73,8 @@ def test_cache_round_trip_and_rejects_bad_pmids(tmp_path: Path) -> None:
     assert sorted(p.name for p in (tmp_path / "cache").iterdir()) == ["123.txt"]
     with pytest.raises(ValueError, match="Invalid PMID"):
         cache.put("../x", "Text.")
+    with pytest.raises(ValueError, match="Invalid PMID"):
+        cache.get(123)  # type: ignore[arg-type]
 
 
 def test_fetch_records_batches_and_pages() -> None:
@@ -103,6 +105,12 @@ def test_resolve_does_not_search_when_nothing_is_missing(tmp_path: Path) -> None
 
     rows = [_row("1", "cc-by", abstract="Stored.")]
     assert resolve_abstracts(rows, AbstractCache(tmp_path), fail) == {"1": "Stored."}
+
+
+def test_resolve_rejects_a_stored_abstract_without_an_open_licence(tmp_path: Path) -> None:
+    rows = [_row("1", "cc-by-nc", abstract="Should not be here.")]
+    with pytest.raises(AbstractError, match="isn't CC BY or CC0"):
+        resolve_abstracts(rows, AbstractCache(tmp_path), _factory(FakeSearcher([])))
 
 
 def test_resolve_fails_when_an_abstract_is_missing(tmp_path: Path) -> None:

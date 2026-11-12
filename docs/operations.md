@@ -9,8 +9,9 @@ How the pipeline runs in production with Docker Compose. The same setup also run
 | `db` | Postgres 18, with data in the `db-data-pg18` volume. Published on `127.0.0.1` only. | Always |
 | `migrate` | Applies Alembic migrations as the schema owner, then exits | On every `up`, before the workers |
 | `db-roles` | Creates or updates the `pipeline_runner` and `api_runner` login roles from `infra/postgres/login-roles.sql`, then exits. Both passwords are required by Compose. Run outside Compose, the script skips `api_runner` when its password is empty. | After `migrate` |
-| `scheduler` | Runs `workers/crontab` with [supercronic](https://github.com/aptible/supercronic). Scout runs daily at 03:15 UTC. | Always |
+| `scheduler` | Runs `workers/crontab` with [supercronic](https://github.com/aptible/supercronic). Scout runs daily at 03:15 UTC, then Triage, which runs even if Scout fails. | Always |
 | `scout` | One-off Scout runs. It's in the `manual` profile, so `up` doesn't start it. | On demand |
+| `triage` | One-off Triage runs, also in the `manual` profile. Needs `OPENROUTER_API_KEY`. | On demand |
 | `api` | The HTTP API for the web app ([ADR 0003](adr/0003-database-api-for-the-web-app.md)). It publishes no ports, runs with a read-only filesystem and no Linux capabilities, and checks a Cloudflare Access token on every `/v1` request. It also limits each client to `API_RATE_LIMIT_PER_MINUTE` requests (600 by default). | Always |
 | `cloudflared` | Opens an outbound [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) and forwards `api.nutriminutes.com` to `api`. The route is configured on the `nutri-minutes-api` tunnel in Cloudflare; `CLOUDFLARE_TUNNEL_TOKEN` only identifies this connector. | Always, after `api` is healthy |
 
@@ -24,9 +25,10 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 
 ## Everyday tasks
 - **Deploy a change:** `git pull`, then `docker compose up -d --build`. Migrations run before the scheduler restarts. If `.env.example` gained a required setting, add it to `.env` first: every Compose command, including Scout runs, fails while one is missing.
-- **Logs:** `docker compose logs -f scheduler`. Scout's alerts are log lines starting with `ALERT`. Logs rotate at 5 files of 10 MB per service.
+- **Logs:** `docker compose logs -f scheduler`. Scout's and Triage's alerts are log lines starting with `ALERT`. Logs rotate at 5 files of 10 MB per service.
 - **Run Scout now:** `docker compose run --rm scout`.
 - **Re-run a past window:** `docker compose run --rm scout --window-start YYYY-MM-DD --window-end YYYY-MM-DD`.
+- **Run Triage now:** `docker compose run --rm triage`, or add `--article-id ID` (repeatable) to decide chosen articles again. Each run handles at most `TRIAGE_MAX_ARTICLES` (2,000) and spends at most `MODEL_BUDGET_USD_TRIAGE` ($1); the rest wait for the next run.
 - **API checks:** `docker compose exec api node -e "fetch('http://127.0.0.1:3000/readyz').then(async (r) => console.log(r.status, await r.text()))"`. `/healthz` reports the process is up and `/readyz` that the database answers. Neither needs a token, and both return 404 to requests from Cloudflare.
 - **Database shell:** `docker compose exec db psql -U pipeline pipeline`.
 - **Dependency updates:** Dependabot opens weekly PRs for npm and uv packages, base images and pinned actions, 14 days after each release. They go through the normal review. Major versions of Postgres, Node and `@types/node` are ignored: upgrade them by hand, Postgres with the runbook below, and Node only to an even-numbered LTS line, with `@types/node` on the same major. Five pins must be updated by hand: the Postgres service image in `.github/workflows/workers.yml`, to match `compose.yaml`; the `setup-uv` `version` there and `required-version` in `workers/pyproject.toml`, to match the uv image in `workers/Dockerfile`; `node-version` in `.github/workflows/api.yml`, to match the Node image in `api/Dockerfile`; and `node-version` in `.github/workflows/web.yml`, on the same major as `engines.node` in `web/package.json`, which sets the Node version on Vercel.
@@ -37,7 +39,7 @@ The workers connect as `pipeline_runner`, which is a member of `pipeline_worker`
 ## Upgrade Postgres to a new major version
 Postgres can't read another major version's data files, so a major upgrade means a dump, a restore into a new volume and a redeploy. Each major version gets its own volume, and the old one is left untouched for rollback. The steps below are for 17 to 18 (`db-data` to `db-data-pg18`). For a later version, change the image and volume names to match. Plan for a few minutes of API downtime.
 
-1. **Stop writers:** avoid the daily Scout run at 03:15 UTC, and check `docker compose logs --since 30m scheduler` and `docker compose ps` to make sure no Scout run is in progress. Then run `docker compose stop scheduler api`. Scout resumes if it's cut off.
+1. **Stop writers:** avoid the daily Scout run at 03:15 UTC, and check `docker compose logs --since 30m scheduler` and `docker compose ps` to make sure no Scout or Triage run is in progress. Then run `docker compose stop scheduler api`. Scout resumes if it's cut off.
 2. **Record row counts:** `docker compose exec -T db psql -U pipeline -d pipeline -XAt -c "select 'articles', count(*) from articles union all select 'article_licences', count(*) from article_licences union all select 'article_relations', count(*) from article_relations union all select 'pipeline_runs', count(*) from pipeline_runs union all select 'pipeline_run_errors', count(*) from pipeline_run_errors union all select 'model_calls', count(*) from model_calls union all select 'alembic_version ' || version_num, 1 from alembic_version"`.
 3. **Dump:** run `mkdir -p -m 700 ~/backups`, then `DUMP=~/backups/nutri-minutes-pg17-$(date -u +%Y%m%dT%H%M%SZ).dump`, then `(umask 077; docker compose exec -T db pg_dump -U pipeline -d pipeline -Fc > "$DUMP") && echo dump ok`. Check that the whole archive reads back: `docker compose exec -T db pg_restore -f /dev/null < "$DUMP" && echo readable`. Use the same shell for the remaining steps, so `$DUMP` stays set.
 4. **Stop the old server:** `docker compose stop db`. Don't use `down -v`.

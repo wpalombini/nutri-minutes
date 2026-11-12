@@ -42,8 +42,9 @@ An automated pipeline and web app that turns newly published nutrition research 
 The full stack runs with Docker Compose; `docs/operations.md` covers deploying and running it. Copy `.env.example` to `.env` first.
 - Stack: `docker compose up -d --build` (database, migrations, login roles, the daily schedule, the API and its Cloudflare tunnel)
 - One-off Scout run: `docker compose run --rm scout`
+- One-off Triage run: `docker compose run --rm triage`
 
-Workers live in `workers/` and use `uv`. Run these from `workers/`, after loading `.env` into your shell with `set -a; . ../.env; set +a`. Host-side runs connect as the schema owner, so use the compose `scout` service to test as the workers' role.
+Workers live in `workers/` and use `uv`. Run these from `workers/`, after loading `.env` into your shell with `set -a; . ../.env; set +a`. Host-side runs connect as the schema owner, so use the compose `scout` and `triage` services to test as the workers' role.
 - Local database only: `docker compose up -d --wait db` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
 - Install: `uv sync`
 - Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)

@@ -89,10 +89,17 @@ def test_parse_out_of_scope_reply_keeps_no_topics() -> None:
     assert (decision.in_scope, decision.topics, decision.primary_topic) == (False, (), None)
 
 
+def test_parse_in_scope_reply_with_no_primary_topic_takes_the_first_topic() -> None:
+    reply = {**in_scope("brain-health", "longevity"), "primary_topic": "none"}
+    decision = parse_reply(reply)
+    assert decision.primary_topic == "brain-health"
+    assert decision.topics == ("brain-health", "longevity")
+
+
 @pytest.mark.parametrize(
     "change",
     [
-        {"primary_topic": "none"},
+        {"primary_topic": "none", "topics": []},
         {"topics": ["bone-health", "sport"]},
         {"relevance": 0},
         {"relevance": True},

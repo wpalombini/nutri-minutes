@@ -100,10 +100,12 @@ def test_run_eval_sends_production_inputs_and_reads_replies(tmp_path: Path) -> N
     assert scores.primary_topic_listed == 1.0
 
 
-def test_an_unknown_topic_counts_as_a_failed_call(tmp_path: Path) -> None:
+def test_an_in_scope_reply_with_no_topic_counts_as_a_failed_call(tmp_path: Path) -> None:
     prompt = triage_prompt(tmp_path)
-    reply = {**in_scope(), "primary_topic": "none"}
-    results = run_eval(FakeModelClient(lambda _: reply), prompt, [row("1")], {"1": "A."})
+    reply = {**in_scope(), "topics": [], "primary_topic": "none"}
+    client = FakeModelClient(lambda _: reply)
+    results = run_eval(client, prompt, [row("1")], {"1": "A."})
+    assert len(client.requests) == 3
     assert results[0].failed
     assert results[0].error is not None and "primary topic" in results[0].error
 

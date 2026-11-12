@@ -24,7 +24,7 @@ Animal and observational studies can be in scope; later stages label them. Study
 Missing an in-scope paper is the costlier mistake, because nothing later finds it again, while a weak paper that passes is filtered later. When a paper plausibly fits a topic and you are unsure, mark it in scope with a low relevance.
 
 Reply with:
-- reason: one or two sentences on why, naming the exposure and the outcome. Under 400 characters.
+- reason: one or two sentences on why, naming the exposure and the outcome. Under 300 characters.
 - in_scope: true or false.
 - relevance: 1 to 5. 5 means a clear, direct fit for a reader interested in healthy ageing; 3 a fit worth a look; 1 a marginal fit or an out-of-scope paper.
 - topics: every topic the paper fits, most relevant first. Empty when out of scope.

@@ -79,10 +79,10 @@ class AbstractCache:
 
     def put(self, pmid: str, abstract: str) -> None:
         self.directory.mkdir(parents=True, exist_ok=True)
-        _write_atomically(self._path(pmid), abstract)
+        write_text_atomically(self._path(pmid), abstract)
 
 
-def _write_atomically(path: Path, text: str) -> None:
+def write_text_atomically(path: Path, text: str) -> None:
     """Write then rename, so an interrupted write never leaves half a file."""
     with tempfile.NamedTemporaryFile(
         "w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
@@ -171,7 +171,7 @@ def read_dataset(path: Path) -> list[Row]:
 
 
 def write_dataset(path: Path, rows: Sequence[Row]) -> None:
-    _write_atomically(path, "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
+    write_text_atomically(path, "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
 
 
 def store_open_abstracts(rows: Sequence[Row], searcher: Searcher) -> tuple[list[Row], list[str]]:

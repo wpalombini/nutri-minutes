@@ -77,9 +77,17 @@ def test_baseline_round_trips_without_reasons(tmp_path: Path) -> None:
     assert data["prompt_version"] == prompt.version
 
 
-def test_read_baseline_rejects_other_json(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"papers": []},
+        {"scores": {"in_scope": 69, "out_of_scope": 71}},
+        {"scores": {"in_scope": 69, "out_of_scope": 71, "dropped_out_of_scope": None}},
+    ],
+)
+def test_read_baseline_rejects_other_json(tmp_path: Path, data: dict[str, object]) -> None:
     path = tmp_path / "baseline.json"
-    path.write_text(json.dumps({"papers": []}), encoding="utf-8")
+    path.write_text(json.dumps(data), encoding="utf-8")
     with pytest.raises(ValueError, match="not a Triage eval baseline"):
         read_baseline(path)
 

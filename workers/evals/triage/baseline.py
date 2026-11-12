@@ -6,6 +6,7 @@ reasons, which may quote abstracts that can't be reused.
 
 - More than `MAX_MISSED` in-scope papers missed. Missing an in-scope paper is the costlier
   mistake. Haiku misses 0 or 1 between runs of the same prompt, so 2 leaves a margin for that.
+  A failed call counts as a miss, so an outage that fails more than 2 in-scope calls blocks too.
 - The share of out-of-scope papers dropped falls more than `MAX_DROPPED_FALL` below the
   baseline, so a change can't quietly start keeping almost everything.
 
@@ -47,7 +48,15 @@ def write_baseline(path: Path, data: dict[str, Any]) -> None:
 
 def read_baseline(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict) or not isinstance(data.get("scores"), dict):
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} is not a Triage eval baseline")
+    scores = data.get("scores")
+    if (
+        not isinstance(scores, dict)
+        or not all(isinstance(scores.get(key), int) for key in ("in_scope", "out_of_scope"))
+        or not isinstance(scores.get("dropped_out_of_scope"), float | int)
+    ):
+        # A baseline missing a score would silently switch its rule off.
         raise ValueError(f"{path} is not a Triage eval baseline")
     return data
 
@@ -67,12 +76,8 @@ def check(scores: Scores, baseline: dict[str, Any]) -> list[str]:
             f"{scores.missed} in-scope papers missed, more than the {MAX_MISSED} allowed: "
             f"{', '.join(scores.missed_pmids)}"
         )
-    dropped, base_dropped = scores.dropped_out_of_scope, base.get("dropped_out_of_scope")
-    if (
-        dropped is not None
-        and isinstance(base_dropped, float | int)
-        and dropped < base_dropped - MAX_DROPPED_FALL - _EPSILON
-    ):
+    dropped, base_dropped = scores.dropped_out_of_scope, base["dropped_out_of_scope"]
+    if dropped is not None and dropped < base_dropped - MAX_DROPPED_FALL - _EPSILON:
         problems.append(
             f"Out-of-scope papers dropped fell to {dropped:.1%}, more than "
             f"{MAX_DROPPED_FALL:.0%} below the baseline's {base_dropped:.1%}"

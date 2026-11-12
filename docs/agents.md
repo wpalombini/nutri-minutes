@@ -98,6 +98,21 @@ When funding or a conflict comes with a concrete risk, the grade drops one level
 
 Otherwise, a funding concern is listed under "Lowers certainty" without moving the grade. When the funder sells the product tested, the study page says so next to the grade, and the Writer mentions it in the summary. If only the abstract is available and it doesn't state funding, the study is recorded as "not stated in the abstract", never as unfunded.
 
+## Evidence Grader
+The Evidence Grader grades, one article at a time, the articles Triage kept. The code is in `workers/src/pipeline/grader/`, and grades go to `evidence_grades` and `evidence_grade_reasons` ([database](database.md#evidence_grades)). The prompt is `workers/src/pipeline/prompts/grader/grade.md`, with its model and settings beside it in `grade.json`. A person can run it with `python -m pipeline.grader` (see `CLAUDE.md`). Its budget per run is US$5 unless `MODEL_BUDGET_USD_GRADER` sets another, and a run takes at most `GRADER_MAX_ARTICLES` articles (300 by default). It isn't scheduled yet, and its eval isn't built yet.
+
+1. **Take the next articles:** those whose latest Triage decision is in scope and that have no `article_stages` row for the Grader, oldest first. A person can instead re-run chosen articles, including failed ones; chosen articles that aren't in scope are skipped. New grades sit beside the old.
+2. **Apply the rules,** which cost no model call: a paper whose publication types say case report or study protocol, and none of trial, observational study or systematic review, isn't graded.
+3. **Ask the model** about the rest, with the title, abstract, publication types and the funders in Europe PMC's grant list. It reports whether the paper is a study we grade (narrative reviews, case reports, protocols and other papers without study results aren't, and get no summary), the design, what a review combines and any certainty the review reports, the main outcome, size, duration and population, the funding facts, and how design, size, duration and population should move the grade, each with a sentence for readers.
+4. **Compute the grade in code,** so it follows `/how-we-grade` whatever the model says:
+   - **Starting point** by design: randomised trials start high (4); non-randomised trials and observational studies, including Mendelian randomisation, low (2); animal and lab studies very low (1). A review starts at the certainty it reports, or else from what it combines: randomised trials 4, observational studies or a mix 2, animal or lab studies 1.
+   - **Moves up** total one level at most, never take a grade above high, and never apply to animal and lab studies or reviews of them. A raise the caps don't allow is kept as a reason with 0 levels.
+   - **Funding and conflicts** follows the rule below: code decides from the recorded facts, one level at most.
+   - The **level** is the starting point plus the moves, kept between very low (1) and high (4).
+5. **Check and store.** A design that contradicts the publication types, such as an animal design for a paper indexed as a randomised controlled trial, or a reply that makes no other sense, makes the Grader ask again, up to three calls, and then fails the article. The grade, its reasons and the article's `done` status are stored in one transaction. Failures, budgets and interrupted runs work as for Triage.
+
+The model reads only abstracts for now, so most funding is recorded as "not stated in the abstract". Reading the funding and conflicts sections of open-licence full texts is planned.
+
 ## Model client
 Every model call goes through `workers/src/pipeline/models/`, as [ADR 0005](adr/0005-model-client-prompts-and-evals.md) decides. Agents load a prompt with `load_prompt("<stage>/<name>")` and call `ModelClient.call` with the run, the article and the template's inputs. They get back a reply that matches the prompt's schema, and the ID of the `model_calls` row to reference from their outputs ([database](database.md#model_calls)).
 - **Failures:** `ModelCallError` means this call failed after its retries, so the item fails and the run carries on. `StopRun` (a spent budget, a rejected key or no credits) means the run stops as failed and sends an alert.

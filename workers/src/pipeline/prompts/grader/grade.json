@@ -1,0 +1,236 @@
+{
+  "model": "anthropic/claude-sonnet-5.5",
+  "max_tokens": 1500,
+  "reasoning": {
+    "effort": "none"
+  },
+  "price_caps": {
+    "prompt": "2.00",
+    "completion": "10.00",
+    "request": "0"
+  },
+  "reply_schema": {
+    "type": "object",
+    "properties": {
+      "reason": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "gradable": {
+        "type": "boolean"
+      },
+      "not_gradable": {
+        "type": "string",
+        "enum": [
+          "narrative_review",
+          "case_report",
+          "protocol",
+          "not_a_study",
+          "none"
+        ]
+      },
+      "design_category": {
+        "type": "string",
+        "enum": [
+          "randomised_trial",
+          "non_randomised_trial",
+          "observational",
+          "review",
+          "animal",
+          "lab",
+          "none"
+        ]
+      },
+      "review_includes": {
+        "type": "string",
+        "enum": [
+          "randomised_trials",
+          "observational",
+          "mixed",
+          "animal_or_lab",
+          "none"
+        ]
+      },
+      "review_reported_level": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 1,
+        "maximum": 4
+      },
+      "main_outcome": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "participants": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 1
+      },
+      "duration": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 100
+      },
+      "population": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 200
+      },
+      "moves": {
+        "type": "array",
+        "maxItems": 8,
+        "items": {
+          "type": "object",
+          "properties": {
+            "factor": {
+              "type": "string",
+              "enum": [
+                "design",
+                "size",
+                "duration",
+                "population"
+              ]
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "raises",
+                "lowers"
+              ]
+            },
+            "levels": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 300
+            }
+          },
+          "required": [
+            "factor",
+            "direction",
+            "levels",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "funder": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 300
+      },
+      "funder_type": {
+        "type": "string",
+        "enum": [
+          "industry",
+          "public",
+          "charity",
+          "none",
+          "not_stated"
+        ]
+      },
+      "funding_source": {
+        "type": "string",
+        "enum": [
+          "abstract",
+          "grant_metadata",
+          "not_stated"
+        ]
+      },
+      "funder_sells_product": {
+        "type": "string",
+        "enum": [
+          "yes",
+          "no",
+          "unknown"
+        ]
+      },
+      "sponsor_roles": {
+        "type": "array",
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "enum": [
+            "design",
+            "analysis",
+            "writing"
+          ]
+        }
+      },
+      "conflicts": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 300
+      },
+      "registered": {
+        "type": "string",
+        "enum": [
+          "yes",
+          "no",
+          "unknown"
+        ]
+      },
+      "outcome_switched": {
+        "type": "string",
+        "enum": [
+          "yes",
+          "no",
+          "unknown"
+        ]
+      },
+      "surrogate_outcome": {
+        "type": "boolean"
+      },
+      "funding_risks_counted_elsewhere": {
+        "type": "boolean"
+      },
+      "funding_concern": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 300
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "reason",
+      "gradable",
+      "not_gradable",
+      "design_category",
+      "review_includes",
+      "review_reported_level",
+      "main_outcome",
+      "participants",
+      "duration",
+      "population",
+      "moves",
+      "funder",
+      "funder_type",
+      "funding_source",
+      "funder_sells_product",
+      "sponsor_roles",
+      "conflicts",
+      "registered",
+      "outcome_switched",
+      "surrogate_outcome",
+      "funding_risks_counted_elsewhere",
+      "funding_concern"
+    ]
+  }
+}

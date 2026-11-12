@@ -53,6 +53,7 @@ Workers live in `workers/` and use `uv`. Run these from `workers/`, after loadin
 - Triage: `uv run python -m pipeline.triage` for articles it hasn't handled, or add `--article-id ID` (repeatable) to decide chosen articles again. Needs `OPENROUTER_API_KEY`
 - Check the model client's cost unit (one tiny live call, needs `OPENROUTER_API_KEY`): `uv run python -m pipeline.models.check_cost`
 - Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision --rev-id 0002 -m "<summary>"` with the next number, then edit it by hand
+- Eval abstracts (needs `EUROPE_PMC_CONTACT`): `uv run python -m evals.abstracts evals/triage/dataset.jsonl` fetches and caches every abstract a dataset doesn't store, in `EVAL_CACHE_DIR` (default `~/.cache/research-pipeline/abstracts`); `--store-open` writes the CC BY and CC0 ones into the dataset
 <!-- Add eval commands once they exist. -->
 
 The API lives in `api/` and uses npm. Run these from `api/`:

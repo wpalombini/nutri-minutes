@@ -13,6 +13,7 @@ The stored reasons carry the moves actually applied, so the level can be checked
 `level == clamp(starting_level + raises - lowers, 1, 4)`.
 """
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -42,6 +43,22 @@ DESIGN_START = {
 TRIALS = ("randomised_trial", "non_randomised_trial")
 MODEL_FUNDING_SOURCES = ("abstract", "grant_metadata", "not_stated")
 """Sources the model can cite while it reads only abstracts and grant data."""
+
+
+NO_CONFLICTS = re.compile(
+    r"\s*(?:"
+    r"none(?: declared| reported| stated)?|nil|no|n/?a|not applicable"
+    r"|nothing to (?:declare|disclose)"
+    r"|(?:the )?authors? (?:declare|declared|declares|have|has|report|reported) no "
+    r"(?:competing|financial)? ?(?:interests?|conflicts?(?: of interest)?)"
+    r"|no (?:competing|financial)? ?(?:interests?|conflicts?(?: of interest)?)"
+    r"(?: (?:were |was )?(?:declared|reported|to declare))?"
+    r")\.?\s*",
+    re.IGNORECASE,
+)
+"""A whole statement that the authors have no conflicts, stored as no conflicts so it can never
+count as a funding concern. Only whole statements match, so "Author A is paid by a dairy council;
+the others declare no conflicts" keeps its conflict."""
 
 
 class ReplyError(ModelCallError):
@@ -102,8 +119,17 @@ def starting_level(design: str, includes: str | None, reported: int | None) -> i
     return REVIEW_START[includes]
 
 
-def can_raise(design: str, includes: str | None) -> bool:
-    return design not in ("animal", "lab") and includes != "animal_or_lab"
+def can_raise(design: str, includes: str | None, reported: int | None) -> bool:
+    """Animal and lab studies, and reviews of them, never move up. A review that reports its own
+    certainty has already counted what would raise it."""
+    return design not in ("animal", "lab") and includes != "animal_or_lab" and reported is None
+
+
+def declared_conflicts(text: str | None) -> str | None:
+    """The authors' declared conflicts, or None when there are none."""
+    if text is None or NO_CONFLICTS.fullmatch(text):
+        return None
+    return text
 
 
 def funding_lowered(funding: Funding, design: str, risks_counted_elsewhere: bool) -> bool:
@@ -160,7 +186,7 @@ def _funding(reply: dict[str, Any]) -> Funding:
         funding_source=source,
         funder_sells_product=_choice(reply, "funder_sells_product", YES_NO_UNKNOWN),
         sponsor_roles=tuple(r for r in SPONSOR_ROLES if r in roles),
-        conflicts=_text(reply, "conflicts"),
+        conflicts=declared_conflicts(_text(reply, "conflicts")),
         registered=_choice(reply, "registered", YES_NO_UNKNOWN),
         outcome_switched=_choice(reply, "outcome_switched", YES_NO_UNKNOWN),
         surrogate_outcome=surrogate,
@@ -193,14 +219,17 @@ def _moves(reply: dict[str, Any]) -> list[Reason]:
 
 
 def _apply_caps(reasons: list[Reason], start: int, allow_raise: bool) -> list[Reason]:
-    """Reduce raises to what the caps allow, keeping them listed. Lowers are kept as given; the
-    level is floored at very low instead."""
+    """Reduce raises to what the caps allow, dropping any left at 0 levels, because readers see
+    every raise under "Raises certainty". Lowers are kept as given; the level is floored at very
+    low instead."""
     room = min(MAX_RAISE, MAX_LEVEL - start) if allow_raise else 0
     capped = []
     for reason in reasons:
         if reason.direction == "raises":
             levels = min(reason.levels, room)
             room -= levels
+            if levels == 0:
+                continue
             reason = Reason(reason.factor, reason.direction, levels, reason.text)
         capped.append(reason)
     return capped
@@ -222,6 +251,8 @@ def parse_reply(reply: dict[str, Any]) -> Grade | NotGradable:
         return NotGradable(not_gradable, reason)
     if reply.get("gradable") is not True:
         raise ReplyError("Reply has no gradable true or false")
+    if reply.get("not_gradable") != "none":
+        raise ReplyError("A gradable reply gives a reason it isn't gradable")
 
     design = _choice(reply, "design_category", DESIGN_CATEGORIES)
     includes: str | None = None
@@ -244,7 +275,7 @@ def parse_reply(reply: dict[str, Any]) -> Grade | NotGradable:
 
     funding = _funding(reply)
     start = starting_level(design, includes, reported)
-    reasons = _apply_caps(_moves(reply), start, can_raise(design, includes))
+    reasons = _apply_caps(_moves(reply), start, can_raise(design, includes, reported))
     lowered = funding_lowered(funding, design, counted_elsewhere)
     concern = _text(reply, "funding_concern")
     if lowered and concern is None:

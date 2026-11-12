@@ -59,12 +59,12 @@ def test_raises_are_capped_at_one_level() -> None:
         moves=[move("design", "raises", 2), move("size", "raises", 1)],
     )
     assert grade.level == 3
-    assert [r.levels for r in grade.reasons] == [1, 0]
+    assert [r.levels for r in grade.reasons] == [1]
 
 
 def test_trials_never_go_above_high() -> None:
     grade = _grade(moves=[move("size", "raises", 1)])
-    assert grade.level == 4 and grade.reasons[0].levels == 0
+    assert grade.level == 4 and grade.reasons == ()
 
 
 @pytest.mark.parametrize(
@@ -81,9 +81,19 @@ def test_trials_never_go_above_high() -> None:
     ],
 )
 def test_animal_and_lab_never_move_up(overrides: dict[str, Any]) -> None:
-    grade = _grade(moves=[move("size", "raises", 1)], **overrides)
-    assert grade.level == grade.starting_level
-    assert grade.reasons[0].levels == 0
+    grade = _grade(moves=[move("size", "raises", 1), move("design")], **overrides)
+    assert grade.level == max(1, grade.starting_level - 1)
+    assert [(r.factor, r.direction) for r in grade.reasons] == [("design", "lowers")]
+
+
+def test_a_review_reporting_its_certainty_is_not_raised() -> None:
+    grade = _grade(
+        design_category="review",
+        review_includes="observational",
+        review_reported_level=2,
+        moves=[move("design", "raises", 1)],
+    )
+    assert grade.level == 2 and grade.reasons == ()
 
 
 def test_review_fields_are_dropped_for_other_designs() -> None:
@@ -156,6 +166,29 @@ def test_a_risk_already_counted_is_not_counted_again() -> None:
     assert not grade.funding_lowered
 
 
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "None",
+        "None declared.",
+        "No conflicts of interest",
+        "The authors declare no competing interests.",
+        "no conflict of interest was declared",
+        "Nothing to disclose",
+        "N/A",
+    ],
+)
+def test_no_conflicts_statements_are_not_a_concern(statement: str) -> None:
+    grade = _grade(conflicts=statement, surrogate_outcome=True)
+    assert grade.funding.conflicts is None and not grade.funding_lowered
+
+
+def test_declared_conflicts_are_kept_even_beside_no_conflicts() -> None:
+    statement = "Author A is paid by a dairy council; the others declare no conflicts."
+    grade = _grade(conflicts=statement, surrogate_outcome=True, funding_concern="A conflict.")
+    assert grade.funding.conflicts == statement and grade.funding_lowered
+
+
 def test_funding_not_stated_is_kept() -> None:
     grade = _grade(funder=None, funder_type="not_stated", funding_source="not_stated")
     assert grade.funding.funding_source == "not_stated"
@@ -171,6 +204,7 @@ def test_not_gradable() -> None:
     ("overrides", "message"),
     [
         ({"reason": " "}, "no reason"),
+        ({"not_gradable": "case_report"}, "reason it isn't gradable"),
         ({"gradable": False, "not_gradable": "none"}, "not_gradable"),
         ({"design_category": "none"}, "design_category"),
         ({"design_category": "review", "review_includes": "none"}, "review_includes"),

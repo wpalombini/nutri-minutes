@@ -8,7 +8,7 @@ Set gradable to false, with the reason in not_gradable, for:
 - narrative_review: an overview or commentary on a field without a systematic search, including scoping reviews and expert opinion that summarise studies without combining their results in a planned way.
 - case_report: findings about one person or a handful of individual patients.
 - protocol: a plan for a study, with no results yet.
-- not_a_study: anything else that reports no study results, such as guidelines, consensus statements, methods papers, or a description of a dataset.
+- not_a_study: anything else that reports no measured study results, such as guidelines, consensus statements, methods papers, a description of a dataset, or a qualitative study that only reports what people said in interviews or focus groups.
 Otherwise set gradable to true and not_gradable to "none". When gradable is false, fill the other fields with "none", "unknown", null, false or empty lists, and give no moves.
 
 ## Design
@@ -31,7 +31,7 @@ For a review, set review_includes to what it combines: "randomised_trials", "obs
 
 ## Moves
 Suggest how each of these factors moves the grade from its starting point, as a list of moves. Each move has a factor, a direction ("raises" or "lowers"), levels (1 or 2; for a lowering, 0 notes a concern without moving the grade) and text. Leave a factor out when there is nothing to say.
-- design: how well the study was set up and run, and whether its comparisons were fair. Lower 1 for a serious problem, such as no blinding where it matters, many dropouts, a self-reported measure taken once, or confounding not addressed; lower 2 for very serious problems. For a review, judge the studies it combines and how consistent their results are; don't lower again for problems a reported certainty rating already counted. Don't raise a review that reports its own certainty. An observational study may be raised 1 for a large effect, a clear dose-response, or careful control of confounding.
+- design: how well the study was set up and run, and whether its comparisons were fair. Lower 1 for a serious problem, such as no blinding where it matters, many dropouts, a self-reported measure taken once, or confounding not addressed; lower 2 for very serious problems. Always lower a cross-sectional study 1 for design, because it measures people once and can't show which came first. For a review, judge the studies it combines and how consistent their results are; don't lower again for problems a reported certainty rating already counted. Don't raise a review that reports its own certainty. An observational study may be raised 1 for a large effect, a clear dose-response, or careful control of confounding.
 - size: how many took part. Lower 1 when the study is small for its question (as a rough guide, under 100 people in a trial, or a few hundred in an observational study) or its result is imprecise, such as a confidence interval that includes both benefit and no effect; lower 2 when it is very small (under 30 people). A very large, well-followed observational study may be raised 1.
 - duration: whether people were followed long enough to see the outcome that matters. Lower 1 when it is too short for the outcome claimed, such as a few weeks for bone density or fractures.
 - population: whether the people studied are like the people the result is meant for. Lower 1 when they differ in a way that matters, such as young athletes for a claim about older adults.

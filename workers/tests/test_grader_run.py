@@ -162,11 +162,18 @@ def test_failures_fail_only_that_article(clean_engine: Engine, prompt: Prompt) -
         insert_in_scope(conn, 2)
         insert_in_scope(conn, 3)
         insert_in_scope(conn, 4, abstract=None)
+        insert_in_scope(conn, 5, abstract="  ")
+        insert_in_scope(conn, 6)
     animal_rct = graded(design_category="animal")
     client = LoggedFakeClient(
         clean_engine,
         _by_title(
-            {"Study 1": ModelCallError("HTTP 503"), "Study 2": animal_rct, "Study 3": graded()}
+            {
+                "Study 1": ModelCallError("HTTP 503"),
+                "Study 2": animal_rct,
+                "Study 3": graded(),
+                "Study 6": graded(funding_source="grant_metadata"),
+            }
         ),
     )
     notifier = FakeNotifier()
@@ -178,6 +185,8 @@ def test_failures_fail_only_that_article(clean_engine: Engine, prompt: Prompt) -
     assert stages["Study 2"][0] == "failed" and "study in people" in (stages["Study 2"][1] or "")
     assert stages["Study 3"] == ("done", None)
     assert stages["Study 4"] == ("failed", "No abstract to grade from")
+    assert stages["Study 5"] == ("failed", "No abstract to grade from")
+    assert stages["Study 6"][0] == "failed" and "grant list" in (stages["Study 6"][1] or "")
     assert [r.inputs["title"] for r in client.requests].count("Study 2") == 3
     assert [a.severity for a in notifier.alerts] == [Severity.WARNING]
 

@@ -262,6 +262,8 @@ def _read(article: GraderArticle, reply: dict[str, Any]) -> Grade | NotGradable:
         conflict = design_conflict(article, decision.design_category)
         if conflict is not None:
             raise ReplyError(conflict)
+        if decision.funding.funding_source == "grant_metadata" and not article.grant_agencies:
+            raise ReplyError("Funding comes from the grant list, but none is listed")
     return decision
 
 
@@ -299,7 +301,7 @@ def _grade_one(
     call_id = 0
     failure: str | None = None
     if rule is None:
-        if not article.abstract:
+        if not (article.abstract or "").strip():
             failure = "No abstract to grade from"
         else:
             try:

@@ -21,16 +21,16 @@
 ## How the papers were chosen
 From the papers Triage had kept by 2026-11-12, grouped by publication type and abstract wording, then picked at random within each group: 15 indexed randomised trials, 15 indexed systematic reviews or meta-analyses, 15 likely observational studies, 7 likely animal and 3 likely lab studies, 2 likely narrative reviews, 2 likely non-randomised studies, 1 case report and 5 from the rest. Four edge cases were added by hand: two single-group intervention studies, a randomised trial not indexed as one, and a single-arm observational follow-up. The groups were only a way to pick; every label comes from reading the abstract, so some papers ended up in other designs.
 
-The 69 papers: 16 observational, 14 reviews, 14 randomised trials, 2 non-randomised trials, 5 animal, 5 lab, and 13 not gradable (8 narrative reviews, 2 interview-only studies, 2 protocols, 1 case report). Expected levels: 29 very low, 13 low, 12 moderate, 2 high.
+The 69 papers: 16 observational, 14 reviews, 14 randomised trials, 2 non-randomised trials, 5 animal, 5 lab, and 13 not gradable (8 narrative reviews, 2 interview-only studies, 2 protocols, 1 case report). Expected levels: 30 very low, 12 low, 12 moderate, 2 high.
 
 ## How the labels were settled
-Labels were drafted from the abstracts using the Grader's prompt and the rules in `docs/agents.md`. A second labeller then graded every paper blind, from the same rules, without seeing the drafts. They agreed on 61 of 69 papers; every level they both gave was within one of the other. Of the 8 splits:
+Labels were drafted from the abstracts using the Grader's prompt and the rules in `docs/agents.md`. A second labeller then graded every paper blind, from the same rules, without seeing the drafts. They agreed on 61 of 69 papers (60 kept as `agreement`); every level they both gave was within one of the other. Of the 8 splits:
 - 5 were settled by the written rules (`reconciled`), such as a review that does report its certainty and an observational study raised for a clear dose-response.
-- 3 were settled by two rules the repo owner set:
+- 3 were settled by two rules the repo owner set, which also changed one paper both labellers had agreed on (4 `owner-rule` rows in all):
   - Studies that only report what people said in interviews or focus groups aren't graded (`not_a_study`).
   - Cross-sectional studies, which measure people once, sit one level lower for design.
 
-The prompt follows both rules. A paid expert is planned to spot-check a sample of grades before launch.
+The prompt follows both rules.
 
 ## What the eval will score
 The runner isn't built yet. It will score, on approved rows:

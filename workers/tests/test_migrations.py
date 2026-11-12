@@ -13,6 +13,8 @@ EXPECTED_TABLES = {
     "model_calls",
     "article_stages",
     "triage_decisions",
+    "evidence_grades",
+    "evidence_grade_reasons",
 }
 
 

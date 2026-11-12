@@ -2,7 +2,7 @@
 
 The Postgres schema: what each table holds and why. Change this document in the same PR as any migration. [ADR 0002](adr/0002-database-migrations-and-schema-growth.md) covers migration tooling and how the schema grows.
 
-**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), and `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
+**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage), and `0004` adds `evidence_grades` and `evidence_grade_reasons` for the [Evidence Grader](agents.md#agents). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
 
 ## Overview
 
@@ -16,6 +16,9 @@ erDiagram
     articles ||--o{ article_stages : "has"
     articles ||--o{ triage_decisions : "has"
     model_calls |o--o{ triage_decisions : "produced"
+    articles ||--o{ evidence_grades : "has"
+    model_calls |o--o{ evidence_grades : "produced"
+    evidence_grades ||--o{ evidence_grade_reasons : "explained by"
 
     articles {
         bigint id PK
@@ -63,6 +66,19 @@ erDiagram
         bigint model_call_id FK
         boolean in_scope
         text primary_topic
+    }
+    evidence_grades {
+        bigint id PK
+        bigint article_id FK
+        bigint model_call_id FK
+        text design_category
+        smallint level
+    }
+    evidence_grade_reasons {
+        bigint grade_id PK
+        smallint position PK
+        text factor
+        text direction
     }
 ```
 
@@ -296,6 +312,59 @@ Triage's scope decisions. A re-run adds a row and never changes an old one, so e
 - Check constraints enforce the pairings above, the rule names, relevance from 1 to 5, and topics from the list of 7. A new topic needs a migration, and `tests/test_topics.py` fails if the list and `web/content/topics.md` differ.
 - An index on `(article_id, id)` finds an article's current decision, one on `model_call_id` finds a call's decision, and a GIN index on `topics` finds a topic's articles.
 
+### `evidence_grades`
+The Evidence Grader's grades, one per article for its main outcome. Levels are GRADE's four, stored as numbers: 1 very low, 2 low, 3 moderate and 4 high certainty, as `/how-we-grade` describes. A re-run adds a row and never changes an old one. An article's current grade is its row with the highest `id`.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | `bigint` identity | No | Primary key |
+| `article_id` | `bigint` | No | References `articles` |
+| `run_id` | `bigint` | No | References `pipeline_runs` |
+| `decided_by` | `text` | No | `rule` (decided from the record, without a model call) or `model` |
+| `model_call_id` | `bigint` | Yes | References `model_calls`: the call that graded, which gives the model and prompt version. Set exactly when `decided_by` is `model`. |
+| `not_gradable` | `text` | Yes | Why the paper wasn't graded: `narrative_review`, `case_report`, `protocol` or `not_a_study`. Ungraded papers get no summary. A `rule` decision is always ungraded. |
+| `design_category` | `text` | Yes | `randomised_trial`, `non_randomised_trial`, `observational`, `review`, `animal` or `lab`. Mendelian randomisation studies are `observational`. The web app owns the reader-facing label. |
+| `review_includes` | `text` | Yes | What a review combines: `randomised_trials`, `observational`, `mixed` or `animal_or_lab`. Set exactly when the design is `review`. |
+| `review_reported_level` | `smallint` | Yes | The certainty a review reports for its main outcome, 1 to 4, when it reports one. Only for reviews. |
+| `starting_level` | `smallint` | Yes | Set by the design: trials 4, non-randomised trials and observational studies 2, animal and lab studies 1. A review starts at the level it reports, or else from what it combines: trials 4, observational studies or a mix 2, animal or lab studies 1. |
+| `level` | `smallint` | Yes | The grade, 1 to 4. At most one above the starting level, and never above it for animal and lab studies or reviews of them. |
+| `main_outcome` | `text` | Yes | The outcome the grade is for |
+| `participants` | `integer` | Yes | How many took part, when stated. Above zero. |
+| `duration` | `text` | Yes | How long people were followed, as stated |
+| `population` | `text` | Yes | Who was studied |
+| `funder` | `text` | Yes | Who paid, as stated |
+| `funder_type` | `text` | Yes | `industry`, `public`, `charity`, `none` or `not_stated` |
+| `funding_source` | `text` | Yes | Where the funding facts came from: `abstract`, `grant_metadata` (Europe PMC's grant list), `full_text` or `not_stated`. `not_stated` exactly when `funder_type` is `not_stated`, which reads as "not stated in the abstract", never as unfunded. |
+| `funder_sells_product` | `text` | Yes | `yes`, `no` or `unknown`. A trade body for the product counts as selling it. |
+| `sponsor_roles` | `text[]` | No | What the sponsor did, when the study says: `design`, `analysis`, `writing`. Defaults to empty. |
+| `conflicts` | `text` | Yes | Conflicts the authors declared |
+| `registered` | `text` | Yes | Whether the study was registered before it began: `yes`, `no` or `unknown` |
+| `outcome_switched` | `text` | Yes | Whether the main outcome changed after the study started: `yes`, `no` or `unknown` |
+| `surrogate_outcome` | `boolean` | Yes | Whether the result rests on a stand-in measure, such as a blood marker |
+| `funding_lowered` | `boolean` | Yes | Whether funding and conflicts lowered the grade, by one level at most ([rule](agents.md#evidence-grader-funding-and-conflicts)) |
+| `reason` | `text` | No | A one-sentence summary for people inspecting grades, not shown to readers |
+| `created_at` | `timestamptz` | No | |
+
+Columns from `design_category` to `funding_lowered` are set exactly when the paper is graded (except `participants`, `duration`, `population`, `funder`, `conflicts` and the review columns, which may be null), and are all null or empty when it isn't.
+
+**Constraints and indexes:**
+- Check constraints enforce the pairings above, the allowed values, the starting levels and the caps on `level`. That `level` equals the starting level plus the reasons' moves spans two tables, so the Grader's code computes and tests it.
+- An index on `(article_id, id)` finds an article's current grade, and one on `model_call_id` finds a call's grade.
+
+### `evidence_grade_reasons`
+What raised or lowered a grade, in the order the study page lists them under "Why this grade".
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `grade_id` | `bigint` | No | References `evidence_grades`. Part of the primary key. |
+| `position` | `smallint` | No | Order on the page, from 1. Part of the primary key. |
+| `factor` | `text` | No | `design`, `size`, `duration`, `population` or `funding_and_conflicts` |
+| `direction` | `text` | No | `raises` or `lowers` |
+| `levels` | `smallint` | No | How many levels it moved the grade, 0 to 2. 0 lists a concern, such as a funding concern without a concrete risk, without moving the grade. |
+| `reason` | `text` | No | Reader-facing sentence on what was found, checked before it publishes. Not empty. |
+
+The `pipeline_worker` role can add rows to both tables but not change or delete them.
+
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.
 - **No match:** insert a new article.
@@ -328,7 +397,6 @@ Each agent's or feature's tables are added by their own migration when it's buil
 
 | Agent or area | Will store |
 |---|---|
-| Evidence Grader | Evidence grades and their reasons |
 | Extractor | Structured facts |
 | Writer | Summary versions |
 | Fact-Checker and Hype Detector | Checks and flags per version of the checked text (summaries, Editor text and scripts) |

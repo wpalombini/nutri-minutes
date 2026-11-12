@@ -1,6 +1,6 @@
 # Europe PMC search terms for Scout, in Europe PMC query syntax. Scout adds the PubMed-only
 # filter (SRC:MED) and the date window. Keep this broad: Triage decides scope and quality.
-# Scope: nutrition, exercise for health outcomes only, and occasional gene-diet and
+# Scope: nutrition, exercise for health (not performance or looks), and occasional gene-diet and
 # gene-ageing research (see CLAUDE.md).
 
 query = """

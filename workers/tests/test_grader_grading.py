@@ -176,6 +176,10 @@ def test_a_risk_already_counted_is_not_counted_again() -> None:
         "no conflict of interest was declared",
         "Nothing to disclose",
         "N/A",
+        "The authors declare no competing financial interests.",
+        "The authors declare that they have no conflicts of interest.",
+        "There are no conflicts of interest.",
+        "No relevant conflicts of interest.",
     ],
 )
 def test_no_conflicts_statements_are_not_a_concern(statement: str) -> None:
@@ -183,8 +187,16 @@ def test_no_conflicts_statements_are_not_a_concern(statement: str) -> None:
     assert grade.funding.conflicts is None and not grade.funding_lowered
 
 
-def test_declared_conflicts_are_kept_even_beside_no_conflicts() -> None:
-    statement = "Author A is paid by a dairy council; the others declare no conflicts."
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "Author A is paid by a dairy council; the others declare no conflicts.",
+        "No conflicts, except A consults for a food company.",
+        "None, but B owns shares in the sponsor.",
+        "No. A received fees from a supplement maker.",
+    ],
+)
+def test_declared_conflicts_are_kept_even_beside_no_conflicts(statement: str) -> None:
     grade = _grade(conflicts=statement, surrogate_outcome=True, funding_concern="A conflict.")
     assert grade.funding.conflicts == statement and grade.funding_lowered
 

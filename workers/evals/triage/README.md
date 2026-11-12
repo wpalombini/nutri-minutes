@@ -8,10 +8,17 @@
 - `licence`: the licence code Scout recorded. The rule on abstracts below depends on it.
 - `sample`: `random` for the random sample, `picked` for hand-picked papers.
 - `expected`: the correct decision. `in_scope` is true or false. For an in-scope paper, `topics` lists every topic it fits, best first, and `primary_topic` is the first of them. For an out-of-scope paper, `topics` is empty and `primary_topic` is null.
-- `label`: `suggested` until the repo owner has reviewed the row, then `approved`. Only approved rows count towards scores.
+- `label`: `suggested` until the row is reviewed, then `approved`. Only approved rows count towards scores.
+- `reviewed_by`: how an approved label was settled. `owner`: the repo owner reviewed the paper. `owner-rule`: a rule the owner set for a kind of paper decided it. `agreement`: the suggested label and an independent blind labelling of the paper agreed. Absent while the label is `suggested`.
 - `unsure`: true when the call is close enough that the owner should look at it first.
 - `note`: why the label was chosen, in a few words. Required when `unsure` is true.
 - `abstract` (optional): may be stored only when the licence is `cc-by` or `cc0`. None are stored yet. Other abstracts will be fetched from Europe PMC by PMID when the eval runs, and cached outside the repo.
+
+## How the labels were settled
+Labels were first suggested with a note on each close call. A second labeller then labelled every paper blind, from the scope rules alone, without seeing the suggestions. The two agreed on 131 of 140 papers. The repo owner reviewed 26 papers directly and settled the disagreements with three rules:
+- Nutritional risk scores built from blood tests and body weight are out of scope: they measure nourishment, not diet.
+- A paper needs a health outcome. Exercise or diet research with none, such as a bibliometric study or exercise physiology in healthy young adults, is out of scope.
+- Research on why physical activity declines with age is in scope, even without a diet or exercise exposure.
 
 ## How the papers were chosen
 From the 2,566 papers Scout had stored by 2026-11-11 that pass Triage's rules (not retracted, research, with an abstract, in English), chosen in two ways:

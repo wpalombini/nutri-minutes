@@ -23,7 +23,7 @@ REQUIRED = {
     "unsure",
     "note",
 }
-OPTIONAL = {"abstract"}
+OPTIONAL = {"abstract", "reviewed_by"}
 
 
 def _rows() -> list[dict[str, Any]]:
@@ -61,6 +61,10 @@ def test_row_fields(row: dict[str, Any]) -> None:
     assert row["licence"] in LICENCE_CODES
     assert row["sample"] in {"random", "picked"}
     assert row["label"] in {"suggested", "approved"}
+    if row["label"] == "approved":
+        assert row.get("reviewed_by") in {"owner", "owner-rule", "agreement"}
+    else:
+        assert "reviewed_by" not in row
     assert isinstance(row["unsure"], bool)
     assert isinstance(row["note"], str)
     if row["unsure"]:

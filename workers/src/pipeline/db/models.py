@@ -138,7 +138,15 @@ GRADE_STARTING_LEVEL = (
     "WHEN 'mixed' THEN 2 WHEN 'animal_or_lab' THEN 1 END) "
     "END"
 )
-"""Starting levels (1 very low to 4 high) by design, as `/how-we-grade` describes them."""
+"""Starting levels (1 very low to 4 high) by design: GRADE's usual starting points, with the
+Grader's rules for non-randomised trials and reviews."""
+
+GRADE_FUNDING_LOWERED = (
+    "NOT funding_lowered OR "
+    "(funder_sells_product = 'yes' AND sponsor_roles && ARRAY['analysis', 'writing']::text[]) "
+    "OR outcome_switched = 'yes' OR registered = 'no' OR surrogate_outcome"
+)
+"""Funding lowers a grade only with a concrete risk (docs/agents.md, funding and conflicts)."""
 
 
 def _in_list(column: str, values: tuple[str, ...]) -> str:
@@ -493,6 +501,8 @@ class EvidenceGrade(Base):
             "(funding_source = 'not_stated') = (funder_type = 'not_stated')",
             name="funding_not_stated",
         ),
+        CheckConstraint(GRADE_FUNDING_LOWERED, name="funding_lowered"),
+        CheckConstraint("length(main_outcome) > 0 AND length(reason) > 0", name="not_empty"),
         Index(None, "article_id", "id"),
         Index(None, "model_call_id"),
     )
@@ -518,4 +528,14 @@ class EvidenceGradeReason(Base):
         CheckConstraint(_in_list("direction", REASON_DIRECTIONS), name="direction"),
         CheckConstraint("levels BETWEEN 0 AND 2", name="levels"),
         CheckConstraint("length(reason) > 0", name="reason"),
+        CheckConstraint(
+            "factor <> 'funding_and_conflicts' OR (direction = 'lowers' AND levels <= 1)",
+            name="funding",
+        ),
+        Index(
+            "uq_evidence_grade_reasons_one_funding_drop",
+            "grade_id",
+            unique=True,
+            postgresql_where=text("factor = 'funding_and_conflicts' AND levels > 0"),
+        ),
     )

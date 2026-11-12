@@ -137,6 +137,20 @@ VALID: list[tuple[str, dict[str, Any]]] = [
             "level": 3,
         },
     ),
+    ("graded", {"design_category": "non_randomised_trial", "starting_level": 2, "level": 3}),
+    ("graded", {"funding_lowered": False, "surrogate_outcome": False, "sponsor_roles": []}),
+    ("graded", {"funding_lowered": True, "surrogate_outcome": False, "registered": "no"}),
+    ("graded", {"funding_lowered": True, "surrogate_outcome": False, "outcome_switched": "yes"}),
+    ("graded", {"surrogate_outcome": False, "sponsor_roles": ["writing"]}),
+    (
+        "review",
+        {
+            "review_includes": "animal_or_lab",
+            "review_reported_level": 2,
+            "starting_level": 2,
+            "level": 2,
+        },
+    ),
     ("ungraded", {}),
     (
         "ungraded",
@@ -184,6 +198,18 @@ INVALID: list[tuple[str, dict[str, Any]]] = [
     ("review", {"review_includes": "animal_or_lab", "starting_level": 1, "level": 2}),
     ("review", {"review_reported_level": 5, "starting_level": 5, "level": 4}),
     ("review", {"review_reported_level": 2, "starting_level": 4}),
+    ("graded", {"surrogate_outcome": False, "sponsor_roles": ["design"]}),
+    ("graded", {"surrogate_outcome": False, "funder_sells_product": "unknown"}),
+    ("graded", {"main_outcome": ""}),
+    (
+        "review",
+        {
+            "review_includes": "animal_or_lab",
+            "review_reported_level": 2,
+            "starting_level": 2,
+            "level": 3,
+        },
+    ),
     ("ungraded", {"not_gradable": None}),
     ("ungraded", {"not_gradable": "editorial"}),
     ("ungraded", {"model_call_id": "call"}),
@@ -237,6 +263,8 @@ def test_valid_reasons(conn: Connection) -> None:
         {"levels": -1},
         {"reason": ""},
         {"grade_id": -1},
+        {"factor": "funding_and_conflicts", "direction": "raises"},
+        {"factor": "funding_and_conflicts", "levels": 2},
     ],
 )
 def test_reason_checks(conn: Connection, overrides: dict[str, Any]) -> None:
@@ -250,6 +278,15 @@ def test_reason_positions_are_unique(conn: Connection) -> None:
     conn.execute(text(REASON), _reason(grade_id))
     with pytest.raises(IntegrityError):
         conn.execute(text(REASON), _reason(grade_id))
+
+
+def test_one_funding_drop_per_grade(conn: Connection) -> None:
+    grade_id = conn.execute(text(GRADE), _graded(_setup(conn))).scalar_one()
+    funding = {"factor": "funding_and_conflicts"}
+    conn.execute(text(REASON), _reason(grade_id, **funding))
+    conn.execute(text(REASON), _reason(grade_id, position=2, levels=0, **funding))
+    with pytest.raises(IntegrityError):
+        conn.execute(text(REASON), _reason(grade_id, position=3, **funding))
 
 
 def test_worker_role_can_only_add(conn: Connection) -> None:

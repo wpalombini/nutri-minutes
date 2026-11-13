@@ -8,10 +8,13 @@ A fixed vocabulary, in parentheses, sentence case:
 | `design_category` | Label |
 |---|---|
 | `randomised_trial` | (Randomised trial) |
+| `non_randomised_trial` | (Non-randomised trial) |
 | `observational` | (Observational study) |
 | `animal` | (Animal study) |
 | `lab` | (Lab study) |
 | `review` | (Review of studies) |
+
+Mendelian randomisation studies are `observational`, as the Evidence Grader records them ([`docs/agents.md`](../../docs/agents.md#evidence-grader)).
 
 The app owns this map. It never shows free text from the API here, so a label can't be reworded into something softer.
 
@@ -26,7 +29,7 @@ The app owns this map. It never shows free text from the API here, so a label ca
 
 ## Tokens
 - `type.meta`, colour `text.primary`. Primary, not secondary, text: the label matters as much as the grade, and for animal and lab studies it changes how the finding should be read.
-- The label may wrap between words ("(Observational" / "study)") when its column is narrow; it never overflows or truncates. At 320px, "(Observational study)" is wider than half the row, so rows put it on its own full-width line on phones (see [finding row](finding-row.md#below-720px)). Don't use `white-space: nowrap`.
+- The label may wrap between words ("(Observational" / "study)") when its column is narrow; it never overflows or truncates. At 320px, "(Observational study)" is wider than half the row, so rows put it on its own full-width line on phones (see [finding row](finding-row.md#below-720px)). "(Non-randomised trial)" is about as wide and is handled the same way; it may also break after its hyphen. Don't use `white-space: nowrap`.
 
 ## Layout
 - In a row and on the study page it follows the [evidence grade](evidence-grade.md) on the same line, `column-gap: space.16`, wrapping below it when they don't fit.
@@ -42,4 +45,4 @@ None.
 
 | Field | Type | Notes |
 |---|---|---|
-| `design_category` | enum | One of the five values above |
+| `design_category` | enum | One of the six values above |

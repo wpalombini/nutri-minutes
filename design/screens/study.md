@@ -147,7 +147,7 @@ API failure or an invalid summary (no grade, design category, or DOI or PMID): t
 - **No interval reported:** the interval's [no-range state](../components/interval.md#states): no drawing, numbers in words, "The abstract doesn't report a range."
 - **No effect size:** the figure is left out; the top block goes from the grade line straight to the body, with `space.40` before it.
 - **Linear outcome:** the interval's difference scale, unit in the outcome line.
-- **Animal or lab study:** the design label says so; the limits block starts with its fixed item.
+- **Non-randomised trial, observational, animal or lab study:** the design label says so; the limits block starts with its [fixed item](../components/limits-block.md#purpose-and-content).
 - **Very long headline:** wraps; never truncated.
 
 ## Keyboard and screen readers

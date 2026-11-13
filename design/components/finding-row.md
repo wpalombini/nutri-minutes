@@ -101,7 +101,7 @@ None. No hover lift, no reveal on scroll.
 |---|---|---|
 | `public_id` | string | For the study URL |
 | `headline` | string | The finding, sentence case |
-| `topic` | `{ name, slug }` | Primary topic, from Triage (`triage_decisions.topics`, first entry) |
+| `topic` | `{ name, slug }` | Primary topic, from Triage (`triage_decisions.primary_topic`, a slug); its name comes from `web/content/topics.md` |
 | `grade_level` | 1–4 | [Evidence grade](evidence-grade.md) |
 | `design_category` | enum | [Study design label](study-design-label.md) |
 | `effect` | object or null | `measure`, `scale`, `estimate`, `ci_lower`, `ci_upper`, `ci_level`, `unit` and `outcome_label`: the [interval](interval.md#data) fields the glyph and its hidden sentence need |

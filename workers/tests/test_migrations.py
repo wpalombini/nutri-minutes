@@ -15,6 +15,8 @@ EXPECTED_TABLES = {
     "triage_decisions",
     "evidence_grades",
     "evidence_grade_reasons",
+    "extractions",
+    "extraction_facts",
 }
 
 

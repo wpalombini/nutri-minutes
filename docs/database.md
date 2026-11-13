@@ -2,7 +2,7 @@
 
 The Postgres schema: what each table holds and why. Change this document in the same PR as any migration. [ADR 0002](adr/0002-database-migrations-and-schema-growth.md) covers migration tooling and how the schema grows.
 
-**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage), and `0004` adds `evidence_grades` and `evidence_grade_reasons` for the [Evidence Grader](agents.md#agents). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
+**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage), `0004` adds `evidence_grades` and `evidence_grade_reasons` for the [Evidence Grader](agents.md#agents), and `0005` adds `extractions` and `extraction_facts` for the [Extractor](agents.md#agents). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
 
 ## Overview
 
@@ -19,6 +19,10 @@ erDiagram
     articles ||--o{ evidence_grades : "has"
     model_calls |o--o{ evidence_grades : "produced"
     evidence_grades ||--o{ evidence_grade_reasons : "explained by"
+    articles ||--o{ extractions : "has"
+    evidence_grades ||--o{ extractions : "is the basis of"
+    model_calls ||--o{ extractions : "produced"
+    extractions ||--o{ extraction_facts : "lists"
 
     articles {
         bigint id PK
@@ -79,6 +83,20 @@ erDiagram
         smallint position PK
         text factor
         text direction
+    }
+    extractions {
+        bigint id PK
+        bigint article_id FK
+        bigint grade_id FK
+        bigint model_call_id FK
+        text measure
+        numeric estimate
+    }
+    extraction_facts {
+        bigint extraction_id PK
+        smallint position PK
+        text kind
+        text quote
     }
 ```
 
@@ -367,6 +385,52 @@ A `funding_and_conflicts` reason always lowers, by one level at most, and a uniq
 
 The `pipeline_worker` role can add rows to both tables but not change or delete them.
 
+### `extractions`
+The Extractor's structured facts for a graded article: who was studied, what was tested and against what, and the main effect in the shape the study page's [interval](../design/components/interval.md#data) draws. Every fact keeps the text it came from (a `*_quote` column), so the Writer, the Fact-Checker and a person can trace it. A re-run adds a row and never changes an old one. An article's current extraction is its row with the highest `id`.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | `bigint` identity | No | Primary key |
+| `article_id` | `bigint` | No | References `articles` |
+| `run_id` | `bigint` | No | References `pipeline_runs` |
+| `grade_id` | `bigint` | No | References `evidence_grades`: the grade the extraction was given, whose main outcome the main effect must be for, so grade and interval agree |
+| `model_call_id` | `bigint` | No | References `model_calls`: the call that extracted, which gives the model and prompt version |
+| `source_basis` | `text` | No | Which text the facts came from: `abstract` or `full_text`. Only abstracts are used for now. |
+| `population`, `population_quote` | `text` | No | Who was studied, and the text that says so |
+| `intervention`, `intervention_quote` | `text` | No | What was tested, or for observational studies the exposure, and its text |
+| `comparator`, `comparator_quote` | `text` | Yes | What it was compared with, and its text. Both null when there was no comparison. |
+| `measure` | `text` | Yes | The main effect's measure: `risk_ratio`, `odds_ratio`, `hazard_ratio`, `rate_ratio`, `mean_difference`, `risk_difference` or `standardised_mean_difference`. Null when the abstract reports no effect size for the main outcome; then every column to `effect_quote` is null too. |
+| `estimate` | `numeric` | Yes | The effect, with the study's precision: `numeric` keeps the digits as stored, so 0.80 stays 0.80. Set exactly when `measure` is. |
+| `ci_lower`, `ci_upper` | `numeric` | Yes | The confidence interval's limits. Both null when the abstract gives no range. |
+| `ci_level` | `smallint` | Yes | The interval's level, such as 95. Set exactly when the limits are. |
+| `unit` | `text` | Yes | For differences, such as `kg` or `percentage points`. Always null for ratios. |
+| `outcome_label` | `text` | Yes | What the effect is on, such as "Hip fracture risk" |
+| `comparison_label` | `text` | Yes | What was compared, such as "Highest compared with lowest dairy intake" |
+| `lower_label`, `higher_label` | `text` | Yes | Direction words, such as "Lower risk" and "Higher risk" |
+| `effect_quote` | `text` | Yes | The text that reports the effect and its interval |
+| `created_at` | `timestamptz` | No | |
+
+**Constraints and indexes:**
+- Every text column is non-empty when set, and a comparator comes with its quote.
+- With a `measure`, `estimate`, `outcome_label`, `comparison_label`, both direction words and `effect_quote` are required; without one, all main-effect columns are null.
+- An interval is consistent: both limits and a level or none, the lower limit below the upper, and the estimate between them (a limit may equal it). The level is 50 to 99.
+- Ratios have a positive estimate and lower limit, and no unit.
+- That each quote appears in the abstract (ignoring differences in whitespace) and each number appears in its quote needs the source text, so the Extractor's code checks it and asks again, up to 3 calls, before failing the article.
+- An index on `(article_id, id)` finds an article's current extraction, and ones on `grade_id` and `model_call_id` find a grade's or a call's extractions.
+
+### `extraction_facts`
+The rest of an extraction's facts, each with its quote, in the order the model gave them.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `extraction_id` | `bigint` | No | References `extractions`. Part of the primary key. |
+| `position` | `smallint` | No | From 1. Part of the primary key. |
+| `kind` | `text` | No | `outcome` (an outcome measured), `result` (another result, beyond the main effect), `absolute` (absolute numbers, such as events per group) or `limitation` (a limit the authors state) |
+| `fact` | `text` | No | The fact in plain words. Not empty. |
+| `quote` | `text` | No | The text it came from. Not empty. |
+
+The `pipeline_worker` role can add rows to both tables but not change or delete them.
+
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.
 - **No match:** insert a new article.
@@ -377,7 +441,7 @@ The `pipeline_worker` role can add rows to both tables but not change or delete 
 
 ## Roles and access
 Migrations run as the role that owns the schema. Migration `0001` also creates a `pipeline_worker` group role, which can't log in, so the migrating role needs `CREATEROLE` unless the group role already exists. On managed Postgres without it, create the role first. The migration lock covers one database only, so don't run the first migration on two databases on the same server at the same time.
-- **`pipeline_worker`:** can select, insert and update the Scout tables and `article_stages`, and select and insert into `pipeline_run_errors`, `model_calls` and `triage_decisions`. It can't delete rows, edit logged errors, model calls or decisions, or change the schema.
+- **`pipeline_worker`:** can select, insert and update the Scout tables and `article_stages`, and select and insert into `pipeline_run_errors`, `model_calls`, `triage_decisions`, `evidence_grades`, `evidence_grade_reasons`, `extractions` and `extraction_facts`. It can't delete rows, edit logged errors, model calls or decisions, or change the schema.
 - **Login roles:** created outside migrations, with their passwords kept out of the repo, then granted a group role. Both are kept up to date by `infra/postgres/login-roles.sql` (see `docs/operations.md`). The workers' login role is `pipeline_runner`, granted `pipeline_worker`. The API's is `api_runner`, limited to 10 connections, which has no group role and no access to any table until the published views and its group role are added.
 - **Server-wide roles:** roles belong to the whole Postgres server, not one database. A downgrade revokes the role's access but doesn't drop it, because it may have access to other databases.
 - **API access:** the web app and future clients reach the database only through the API ([ADR 0003](adr/0003-database-api-for-the-web-app.md)), which connects as `api_runner`. Its group role, added with the first published view, reads published views only, never base tables (see "Tables to come"). It will also get write access to the tables the web app owns, such as accounts and billing, when they are added.
@@ -399,7 +463,6 @@ Each agent's or feature's tables are added by their own migration when it's buil
 
 | Agent or area | Will store |
 |---|---|
-| Extractor | Structured facts |
 | Writer | Summary versions |
 | Fact-Checker and Hype Detector | Checks and flags per version of the checked text (summaries, Editor text and scripts) |
 | Contradiction Tracker | Links between findings |

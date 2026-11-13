@@ -290,10 +290,13 @@ def test_estimate_and_limits_are_separate_numbers() -> None:
 def test_the_level_needs_a_percent_sign() -> None:
     abstract = ABSTRACT + " We analysed 90 participants (HR 0.80, 0.65 to 0.97)."
     _fails("level 90%", abstract, ci_level="90", effect_quote="HR 0.80, 0.65 to 0.97")
-    _fails("level 90%", abstract + " 90 percentage points.", ci_level="90")
+    for near_miss in ("90 percentage points", "90 per centenarian", "1.90 per cent"):
+        _fails("level 90%", f"{abstract} {near_miss}.", ci_level="90")
 
 
-@pytest.mark.parametrize("stated", ["90 per cent", "90 percent", "90 Per Cent", "90\u00a0percent"])
+@pytest.mark.parametrize(
+    "stated", ["90 per cent", "90 percent", "90 Per Cent", "90\u00a0per\u00a0cent"]
+)
 def test_the_level_may_be_stated_in_words(stated: str) -> None:
     abstract = ABSTRACT + f" Intervals are {stated} confidence intervals."
     effect = parse_reply(extracted(ci_level="90"), abstract).effect

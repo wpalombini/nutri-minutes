@@ -91,7 +91,7 @@ def test_numbers_must_be_plain_decimals(value: str) -> None:
 
 
 def test_the_level_must_be_stated() -> None:
-    _fails("level 90 isn't in the abstract", ci_level="90")
+    _fails("level 90% isn't in the abstract", ci_level="90")
 
 
 def test_the_level_may_be_stated_elsewhere_in_the_abstract() -> None:
@@ -258,3 +258,55 @@ def test_unknown_fact_kind_fails() -> None:
 
 def test_normalise() -> None:
     assert normalise(" a\n\tb  c ") == "a b c"
+
+
+def test_a_quote_cannot_cut_a_number() -> None:
+    abstract = "Risk fell (HR 0.80, 95% CI 0.65 to 0.975). Mass was -1.2 kg. Density rose 1.25%."
+    reply = extracted(effect_quote="HR 0.80, 95% CI 0.65 to 0.97", ci_upper="0.97")
+    with pytest.raises(ReplyError, match="partway through a number"):
+        parse_reply(reply, abstract + " " + ABSTRACT)
+    with pytest.raises(ReplyError, match="partway"):
+        parse_reply(
+            extracted(facts=[fact("result", "1.2 kg", "1.2 kg")]), abstract + " " + ABSTRACT
+        )
+    with pytest.raises(ReplyError, match="partway"):
+        parse_reply(
+            extracted(facts=[fact("result", "Rose 1.2", "rose 1.2")]), abstract + " " + ABSTRACT
+        )
+    with pytest.raises(ReplyError, match="partway"):
+        parse_reply(extracted(facts=[fact("result", "200 women", "200 women")]), ABSTRACT)
+
+
+def test_a_quote_may_repeat_and_one_clean_place_is_enough() -> None:
+    abstract = "Mass was -1.2 kg in men. Mass was 1.2 kg higher in women."
+    parse_reply(extracted(facts=[fact("result", "1.2 kg higher", "1.2 kg")]), abstract + ABSTRACT)
+
+
+def test_estimate_and_limits_are_separate_numbers() -> None:
+    _fails("three separate numbers", estimate="0.97")
+    _fails("three separate numbers", ci_lower="0.97", ci_upper="0.97")
+
+
+def test_the_level_needs_a_percent_sign() -> None:
+    abstract = ABSTRACT + " We analysed 90 participants (HR 0.80, 0.65 to 0.97)."
+    _fails("level 90%", abstract, ci_level="90", effect_quote="HR 0.80, 0.65 to 0.97")
+
+
+def test_typographic_minus_and_no_leading_zero_are_accepted() -> None:
+    abstract = "Lean mass changed (MD \u22121.2 kg, 95% CI \u22122.0 to \u22120.4); p = .03."
+    reply = _difference(
+        abstract,
+        "MD \u22121.2 kg, 95% CI \u22122.0 to \u22120.4",
+        estimate="\u22121.2",
+        ci_lower="-2.0",
+        ci_upper="-0.4",
+        ci_level="95",
+        facts=[fact("result", "p = .03", "p = .03")],
+    )
+    effect = parse_reply(reply, abstract).effect
+    assert effect is not None and effect.estimate == Decimal("-1.2")
+
+
+def test_thousands_removal_never_joins_decimals() -> None:
+    assert numbers_in("0.03,100 people") == ["0.03", "100"]
+    assert numbers_in("31,200 and 1,000,000") == ["31200", "1000000"]

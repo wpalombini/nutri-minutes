@@ -137,7 +137,9 @@ def test_handled_articles_are_not_extracted_again(clean_engine: Engine, prompt: 
     assert len(client.requests) == 1
 
 
-def test_a_re_grade_makes_the_extraction_stale(clean_engine: Engine, prompt: Prompt) -> None:
+def test_a_re_grade_makes_extractions_and_failures_pending(
+    clean_engine: Engine, prompt: Prompt
+) -> None:
     with clean_engine.begin() as conn:
         article_id = insert_graded(conn, 1)
         failed = insert_graded(conn, 2)
@@ -145,15 +147,16 @@ def test_a_re_grade_makes_the_extraction_stale(clean_engine: Engine, prompt: Pro
         clean_engine, _by_title({"Study 1": extracted(), "Study 2": ModelCallError("HTTP 503")})
     )
     run_extractor(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
+    assert select_articles(clean_engine, 10) == []  # a failure isn't retried on its own
     with clean_engine.begin() as conn:
         new_grade = add_grade(conn, article_id)
         add_grade(conn, failed)
-    assert [a.id for a in select_articles(clean_engine, 10)] == [article_id]
+    assert [a.id for a in select_articles(clean_engine, 10)] == [article_id, failed]
 
     run_extractor(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
     rows = _extractions(clean_engine)
     assert [r.grade_id for r in rows][-1] == new_grade and len(rows) == 2
-    assert select_articles(clean_engine, 10) == []
+    assert select_articles(clean_engine, 10) == []  # failed again, with the new grade
 
 
 def test_a_re_grade_to_not_gradable_is_skipped(clean_engine: Engine, prompt: Prompt) -> None:

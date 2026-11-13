@@ -386,7 +386,7 @@ A `funding_and_conflicts` reason always lowers, by one level at most, and a uniq
 The `pipeline_worker` role can add rows to both tables but not change or delete them.
 
 ### `extractions`
-The Extractor's structured facts for a graded article: who was studied, what was tested and against what, and the main effect in the shape the study page's [interval](../design/components/interval.md#data) draws. Every fact keeps the text it came from (a `*_quote` column), so the Writer, the Fact-Checker and a person can trace it. A re-run adds a row and never changes an old one. An article's current extraction is its row with the highest `id`.
+The Extractor's structured facts for a graded article: who was studied, what was tested and against what, and the main effect in the shape the study page's [interval](../design/components/interval.md#data) draws. Every fact keeps the text it came from (a `*_quote` column), so the Writer, the Fact-Checker and a person can trace it. A re-run adds a row and never changes an old one. An article's current extraction is its row with the highest `id`, provided its `grade_id` is still the article's current grade; after a re-grade, an older extraction is stale until the article is extracted again.
 
 | Column | Type | Null | Notes |
 |---|---|---|---|
@@ -414,7 +414,9 @@ The Extractor's structured facts for a graded article: who was studied, what was
 - Every text column is non-empty when set, and a comparator comes with its quote.
 - With a `measure`, `estimate`, `outcome_label`, `comparison_label`, both direction words and `effect_quote` are required; without one, all main-effect columns are null.
 - An interval is consistent: both limits and a level or none, the lower limit below the upper, and the estimate between them (a limit may equal it). The level is 50 to 99.
-- Ratios have a positive estimate and lower limit, and no unit.
+- Numbers are finite (`numeric` would otherwise accept `NaN` and infinities). Ratios have a positive estimate and lower limit, and no unit; mean and risk differences need a unit, and a standardised mean difference may have none.
+- Inconsistent numbers are rejected, not stored, so the interval's "inconsistent numbers" state never comes from this table. An abstract whose numbers can't be stored this way fails the article after the Extractor's retries.
+- That `grade_id` is a graded row for the same article, and `model_call_id` a call about it, spans tables, so the Extractor's code ensures it.
 - That each quote appears in the abstract (ignoring differences in whitespace) and each number appears in its quote needs the source text, so the Extractor's code checks it and asks again, up to 3 calls, before failing the article.
 - An index on `(article_id, id)` finds an article's current extraction, and ones on `grade_id` and `model_call_id` find a grade's or a call's extractions.
 

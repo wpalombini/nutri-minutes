@@ -100,7 +100,22 @@ VALID: list[dict[str, Any]] = [
     {"ci_lower": "0.91"},
     {"ci_upper": "0.91"},
     {"ci_level": 90},
-    {"measure": "mean_difference", "estimate": "-1.2", "ci_lower": "-2.0", "ci_upper": "0"},
+    {
+        "measure": "mean_difference",
+        "unit": "kg",
+        "estimate": "-1.2",
+        "ci_lower": "-2.0",
+        "ci_upper": "0",
+    },
+    {
+        "measure": "risk_ratio",
+        "estimate": "0.91",
+        "ci_lower": None,
+        "ci_upper": None,
+        "ci_level": None,
+    },
+    {"ci_level": 50},
+    {"ci_level": 99},
     {"measure": "mean_difference", "unit": "kg", "estimate": "0.6", "ci_lower": "-0.3"},
     {"measure": "risk_difference", "unit": "percentage points", "estimate": "1.0"},
     {"measure": "standardised_mean_difference", "estimate": "0.95"},
@@ -161,6 +176,14 @@ INVALID: list[dict[str, Any]] = [
     {"measure": "odds_ratio", "estimate": "0.5", "ci_lower": "0"},
     {"unit": "kg"},
     {"measure": "mean_difference", "unit": ""},
+    {"measure": "mean_difference", "estimate": "0.6", "ci_lower": "-0.3"},
+    {"measure": "risk_difference", "estimate": "1.0"},
+    {"ci_level": 49},
+    {**NO_EFFECT, "ci_lower": "0.80", "ci_upper": "1.04", "ci_level": 95},
+    {**NO_EFFECT, "unit": "kg"},
+    {"estimate": "NaN", "ci_lower": None, "ci_upper": None, "ci_level": None},
+    {"ci_upper": "Infinity"},
+    {"measure": "mean_difference", "unit": "kg", "ci_lower": "-Infinity"},
 ]
 
 

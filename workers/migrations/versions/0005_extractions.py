@@ -93,6 +93,7 @@ def upgrade() -> None:
         sa.CheckConstraint(
             "source_basis IN ('abstract', 'full_text')", name=op.f("ck_extractions_source_basis")
         ),
+        # A null column makes its term null, which a check accepts: only empty text fails.
         sa.CheckConstraint(
             "length(population) > 0 AND length(population_quote) > 0 "
             "AND length(intervention) > 0 AND length(intervention_quote) > 0 "
@@ -122,6 +123,16 @@ def upgrade() -> None:
             "(ci_lower IS NOT NULL AND ci_upper IS NOT NULL AND ci_level IS NOT NULL "
             "AND ci_lower < ci_upper AND ci_lower <= estimate AND estimate <= ci_upper)",
             name=op.f("ck_extractions_interval"),
+        ),
+        sa.CheckConstraint(
+            "estimate NOT IN ('NaN', 'Infinity', '-Infinity') "
+            "AND ci_lower NOT IN ('NaN', 'Infinity', '-Infinity') "
+            "AND ci_upper NOT IN ('NaN', 'Infinity', '-Infinity')",
+            name=op.f("ck_extractions_finite"),
+        ),
+        sa.CheckConstraint(
+            "measure NOT IN ('mean_difference', 'risk_difference') OR unit IS NOT NULL",
+            name=op.f("ck_extractions_difference_unit"),
         ),
         sa.CheckConstraint("ci_level BETWEEN 50 AND 99", name=op.f("ck_extractions_ci_level")),
         sa.CheckConstraint(

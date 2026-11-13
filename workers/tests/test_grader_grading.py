@@ -197,6 +197,32 @@ def test_a_risk_already_counted_is_not_counted_again() -> None:
     assert not grade.funding_lowered
 
 
+def test_a_review_reporting_its_certainty_counts_funding_risks_itself() -> None:
+    """Its model lowers stay at 0 levels, so a risk the model "counted elsewhere" wasn't."""
+    grade = _grade(
+        design_category="review",
+        review_includes="randomised_trials",
+        review_reported_level=3,
+        moves=[move("design", text="Outcome is a blood marker.")],
+        funder_type="industry",
+        surrogate_outcome=True,
+        funding_risks_counted_elsewhere=True,
+        funding_concern="Industry funded.",
+    )
+    assert grade.funding_lowered and grade.level == 2
+
+
+def test_an_animal_review_reporting_its_certainty_is_not_raised() -> None:
+    grade = _grade(
+        design_category="review",
+        review_includes="animal_or_lab",
+        review_reported_level=2,
+        moves=[move("size", "raises", 1), move("design")],
+    )
+    assert grade.level == 2
+    assert [(r.factor, r.direction, r.levels) for r in grade.reasons] == [("design", "lowers", 0)]
+
+
 @pytest.mark.parametrize(
     "statement",
     [

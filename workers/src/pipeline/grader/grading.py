@@ -293,7 +293,8 @@ def parse_reply(reply: dict[str, Any]) -> Grade | NotGradable:
     reasons = _apply_caps(
         _moves(reply), start, can_raise(design, includes, reported), allow_lower=reported is None
     )
-    lowered = funding_lowered(funding, design, counted_elsewhere)
+    # A review's own rating keeps model lowers at 0 levels, so no risk is counted elsewhere.
+    lowered = funding_lowered(funding, design, counted_elsewhere and reported is None)
     concern = _text(reply, "funding_concern")
     if lowered and concern is None:
         raise ReplyError("Funding lowers the grade, but the reply has no funding_concern text")

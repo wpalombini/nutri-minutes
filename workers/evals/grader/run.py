@@ -61,7 +61,7 @@ class PaperResult:
     reason: str | None = None
     starting_level: int | None = None
     moves: tuple[str, ...] = ()
-    """Each move the grade kept, as "factor direction levels: text", for reports."""
+    """Each move and concern in the grade, as "factor direction levels: text", for reports."""
     error: str | None = None
 
     @property

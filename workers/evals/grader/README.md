@@ -64,7 +64,7 @@ Neither model wrote a funding concern that only says there are no conflicts: Son
 
 ## Harshness check (2026-11-13)
 Production's first 1,000 articles and both models' eval misses graded lower than the labels. The reports, which now list each grade's starting level and moves, showed four causes:
-- Cohort and other observational studies were lowered for design just for being observational (confounding, can't show which came first), which is why they start low. About 140 of 345 in production. Cross-sectional studies still lower one level.
+- Cohort and other observational studies were lowered for design just for being observational (confounding, can't show which came first), which is why they start low. About 140 of the 345 observational studies graded in production. Cross-sectional studies still lower one level.
 - Trials were lowered for blinding, allocation or dropouts the abstract didn't mention, and for results that weren't significant, on top of the size lowering that already counts imprecision.
 - Duration was judged against long-term effects the paper didn't claim, such as a three-hour blood pressure study being "too short for long-term effects".
 - Studies in healthy young adults were lowered for population for age alone. Population now lowers for age only when the outcome depends on it, such as bone loss, falls or muscle loss with age (repo owner's rule).
@@ -74,6 +74,6 @@ Reviews that report their own certainty were also lowered again by the model. Th
 | Prompt | Runs | Levels exact | Levels within one | Misses lower / higher than the label |
 |---|---|---|---|---|
 | Before (#72) | 3 | 66.7–72.7% | 96.3–96.4% | 14–18 / 0–2 |
-| After | 3 | 72.7–82.1% | 96.2–100% | 7–8 / 2–3 (two runs checked) |
+| After | 4 | 72.7–85.7% | 96.2–100% | 7–8 / 2–3 (in the two runs with move details) |
 
 Runs vary by up to 10 points on exact levels, so single runs are noisy. Design labels stayed within 91–96%, with no mix-ups.

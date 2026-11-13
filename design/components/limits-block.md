@@ -9,12 +9,13 @@ The limits of a study, as first-class content in their own marked block, never a
 
 | Design | Fixed first item |
 |---|---|
+| Non-randomised trial | "People weren't put into groups by chance, so other differences between the groups may explain the result." |
 | Observational study | "It can't show cause and effect. It found a link, and other differences between the people in it may explain that link." |
 | Animal study | "It was done in animals. Results in animals often don't carry over to people." |
 | Lab study | "It was done on cells or tissue in a lab, not in people." |
 | Randomised trial, review | No fixed item |
 
-The pipeline's own limits follow. Whether the writer should then avoid repeating the fixed item is in the [open questions](../OPEN-QUESTIONS.md).
+The pipeline's own limits follow. The Writer doesn't repeat the fixed item (owner, 2026-11-12).
 
 ## Wireframe
 
@@ -57,7 +58,7 @@ Same shape at 360px and 1280px; it fills the reading column (`layout.study-colum
 
 ## States
 - **Rendered with its page;** no loading state.
-- **No limits from the pipeline:** for observational, animal and lab studies the fixed item still shows. For a randomised trial or review with no limits, the summary is incomplete: treat it as invalid, like a missing grade, and show the error page. (This is stricter than the content rules require; the owner accepted it.)
+- **No limits from the pipeline:** for non-randomised trials and observational, animal and lab studies the fixed item still shows. For a randomised trial or review with no limits, the summary is incomplete: treat it as invalid, like a missing grade, and show the error page. (This is stricter than the content rules require; the owner accepted it.)
 - **Long items:** wrap; no truncation, no "show more".
 
 ## Keyboard and screen readers

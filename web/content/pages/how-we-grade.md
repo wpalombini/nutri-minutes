@@ -1,6 +1,6 @@
 ---
 title: How we grade
-updated: 2026-11-09
+updated: 2026-11-13
 ---
 
 Every study we summarise gets an evidence grade. The grade tells you how much the result can be trusted: how likely it is that better research would give a different answer. It is about the study, not about how important the topic is.
@@ -21,17 +21,22 @@ Each grade is shown in words and as four squares, with one to four filled.
 The type of study sets the starting point:
 
 - **Randomised trials** start at high certainty, because chance decides who gets the treatment. They move down for problems.
-- **Reviews of studies** start from the certainty of the studies they combine, then move up or down.
-- **Observational studies** start at low certainty. They follow what people already do, so they can show a link but usually can't show cause and effect.
+- **Non-randomised trials** start at low certainty. People get a treatment, but chance doesn't decide who, so the groups may differ in other ways.
+- **Observational studies** start at low certainty. They follow what people already do, so they can show a link but usually can't show cause and effect. This includes studies that use people's genes to estimate the effect of a diet or habit (Mendelian randomisation).
+- **Reviews of studies** start from the certainty of the studies they combine: high for reviews of randomised trials, low for reviews of observational studies or a mix of both, and very low for reviews of animal or lab studies. When a review rates the certainty of its own evidence, we start from its rating.
 - **Animal and lab studies** start at very low certainty in our grading, because they don't test people.
 
-We always label observational, animal and lab studies, so you know what kind of evidence you are reading.
+Every summary shows what kind of study it was, so you know what kind of evidence you are reading.
+
+## What we don't grade
+
+Some papers have no measured results to grade, so we don't grade or summarise them: narrative reviews that don't combine studies in a set way, reports of one or a few patients, study plans, and studies based only on interviews.
 
 ## What moves a grade
 
-From the starting point, a study's grade can move up or down. We look at:
+From the starting point, a study's grade can move up or down. A grade moves up one level at most, and never for animal and lab studies, reviews of them, or a review that rated its own evidence. We look at:
 
-- **Design:** how well the study was set up and run, and whether its comparisons were fair.
+- **Design:** how well the study was set up and run, and whether its comparisons were fair. A study that measures people only once, at a single point in time, always loses one level for its design, because it can't show which came first.
 - **Size:** how many people took part. Small studies give less precise results.
 - **Duration:** whether people were followed long enough to see the outcome that matters.
 - **Population:** whether the people studied are like the people the result is meant for.

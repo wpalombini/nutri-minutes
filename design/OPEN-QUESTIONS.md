@@ -11,11 +11,14 @@ Questions raised by the [screen](screens/README.md) and [component](components/R
 - The privacy page, when written, says the theme choice is stored on the reader's device only.
 - The plan changes are accepted: the extra at-a-glance rows and "Funding and conflicts", "Raises / Lowers certainty", and treating a trial or review with no limits as invalid.
 
-## For the Evidence Grader and the pipeline
-- **Starting points.** Do the fixed "Why this grade" sentences match the Evidence Grader's rules: trials start high, observational studies low, animal and lab studies very low, reviews from the studies they combine? ([Why this grade](components/why-this-grade.md#content))
-- **Designs outside the five labels.** How do non-randomised trials and Mendelian randomisation studies map to the five design categories? ([Study design label](components/study-design-label.md#content))
-- **Repeated limits.** The app adds a fixed first limit for observational, animal and lab studies. Should the writer avoid repeating it? ([Limits block](components/limits-block.md#purpose-and-content))
-- **One outcome per study.** The specs draw one main interval per summary. Do some summaries need a second one?
+## Decided by the owner (2026-11-12), with the Evidence Grader plan
+- **Starting points.** The "Why this grade" sentences match the Grader: randomised trials start high; non-randomised trials and observational studies low; animal and lab studies very low; a review from what it combines (trials high, observational studies or a mix low, animal or lab studies very low), or from its own certainty rating when it reports one. ([Why this grade](components/why-this-grade.md#content))
+- **Designs outside the five labels.** A sixth label, "Non-randomised trial", starting low. Mendelian randomisation studies are observational. Narrative reviews, case reports, study plans and interview-only studies aren't graded and get no summary. ([Study design label](components/study-design-label.md#content))
+- **Repeated limits.** The Writer doesn't repeat the app's fixed first limit. Non-randomised trials get a fixed first limit too. ([Limits block](components/limits-block.md#purpose-and-content))
+- **One outcome per study.** One grade and one main interval per summary, for the study's main outcome. Whether some summaries need a second outcome is decided with the Writer.
+
+## Settled by a built stage
+- **Primary topic** for each summary: Triage stores the topics of each in-scope article with the primary topic first (`triage_decisions.topics`, [database](../docs/database.md#triage_decisions)). ([Finding row](components/finding-row.md#data-a-summary-list-item))
 
 ## Data no planned stage produces yet
 The specs need these fields, but none of the stages in [`docs/agents.md`](../docs/agents.md) or the tables planned in [`docs/database.md`](../docs/database.md#tables-to-come) produce them:
@@ -23,7 +26,6 @@ The specs need these fields, but none of the stages in [`docs/agents.md`](../doc
 - **`rechecked`:** whether a summary has been checked again after a correction. No stage re-checks summaries yet.
 - **Editions:** the week's set of findings, its order and its publication date. The Editor chooses and orders findings, but nothing stores an edition the web app can read. ([Home](screens/home.md#data))
 - **Topic descriptions and summary counts.** ([Topics](screens/topics.md#data))
-- **Primary topic** for each summary. Triage may produce topic tags, but nothing picks one primary topic for rows and the study page's topic link. ([Finding row](components/finding-row.md#data-a-summary-list-item))
 
 ## Topic coverage
 The scope is nutrition and exercise research that bears on health (not sports performance or looks) and fits one of seven topics: bone, muscle, falls, heart and metabolism, brain, longevity, and genes and diet. Triage currently drops a nutrition study outside them, for example on gut health, cancer or pregnancy. Should the scope widen, who decides whether to add topics, or a catch-all topic, and what rows show meanwhile? ([Topics](screens/topics.md#topic-list))

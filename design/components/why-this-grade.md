@@ -7,10 +7,11 @@ An expandable section on the study page that explains the evidence grade: what r
 - **When open:**
   1. One sentence on the starting point, fixed by design category, so readers see why trials and observational studies start in different places:
      - Randomised trial: "Randomised trials start at high certainty, then move down for problems."
-     - Review of studies: "A review starts from the certainty of the studies it combines, then moves up or down."
+     - Non-randomised trial: "Trials that don't put people into groups by chance start at low certainty, then move up or down."
+     - Review of studies: "A review starts from the certainty of the studies it combines, or from its own rating when it gives one, then moves up or down."
      - Observational study: "Observational studies start at low certainty, then move up or down."
      - Animal and lab studies: "Animal and lab studies start at very low certainty, because they don't test people."
-     (These follow GRADE's usual starting points. The exact rules belong to the Evidence Grader; whether these sentences match it is in the [open questions](../OPEN-QUESTIONS.md).)
+     (These match the Evidence Grader's starting points in [`docs/agents.md`](../../docs/agents.md#evidence-grader). A cross-sectional study, which measures people once, starts low like other observational studies and always has a Design reason under "Lowers certainty".)
   2. **"Raises certainty"** (plus icon) with its reasons.
   3. **"Lowers certainty"** (minus icon) with its reasons.
   4. A text link: "How we grade" (`/how-we-grade`).

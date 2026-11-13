@@ -45,7 +45,7 @@ Phone first, with only the two token breakpoints:
 ### Content rules the app enforces
 These come from `CLAUDE.md` and the plan, and the app fails closed on them rather than trusting the API:
 - **Every summary shows its evidence grade and its source.** The source is the DOI, or the PubMed record when there is no DOI. A summary that arrives without a grade level, a study design category or either source identifier is invalid. Lists leave it out; the study page shows the error page. Either way, log it with the summary's public ID.
-- **Observational, animal and lab studies are always labelled** with the [study design label](../components/study-design-label.md), wherever the summary appears.
+- **Non-randomised trials and observational, animal and lab studies are always labelled** with the [study design label](../components/study-design-label.md), wherever the summary appears.
 - **Nothing relies on colour alone.** Every state has text, and every mark has a text equivalent.
 - **The disclosure is in the footer of every page,** including the 404 and error pages.
 

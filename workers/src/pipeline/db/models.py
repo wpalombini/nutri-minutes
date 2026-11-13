@@ -149,6 +149,39 @@ GRADE_FUNDING_LOWERED = (
 """Funding lowers a grade only with a concrete risk (docs/agents.md, funding and conflicts)."""
 
 
+RATIO_MEASURES: tuple[str, ...] = ("risk_ratio", "odds_ratio", "hazard_ratio", "rate_ratio")
+"""Effect measures drawn on a log scale, with no difference at 1."""
+
+DIFFERENCE_MEASURES: tuple[str, ...] = (
+    "mean_difference",
+    "risk_difference",
+    "standardised_mean_difference",
+)
+"""Effect measures drawn on a linear scale, with no difference at 0."""
+
+EFFECT_MEASURES: tuple[str, ...] = RATIO_MEASURES + DIFFERENCE_MEASURES
+"""The interval's `measure` values (design/components/interval.md)."""
+
+SOURCE_BASES: tuple[str, ...] = ("abstract", "full_text")
+"""Which text an extraction or summary was written from."""
+
+EXTRACTION_FACT_KINDS: tuple[str, ...] = ("outcome", "result", "absolute", "limitation")
+
+EXTRACTION_EFFECT_COLUMNS: tuple[str, ...] = (
+    "estimate",
+    "ci_lower",
+    "ci_upper",
+    "ci_level",
+    "unit",
+    "outcome_label",
+    "comparison_label",
+    "lower_label",
+    "higher_label",
+    "effect_quote",
+)
+"""Main-effect columns that are all null when an extraction has no effect size."""
+
+
 def _in_list(column: str, values: tuple[str, ...]) -> str:
     quoted = ", ".join(f"'{value}'" for value in values)
     return f"{column} IN ({quoted})"
@@ -538,4 +571,98 @@ class EvidenceGradeReason(Base):
             unique=True,
             postgresql_where=text("factor = 'funding_and_conflicts' AND levels > 0"),
         ),
+    )
+
+
+class Extraction(Base):
+    """Structured facts for a graded article, each with its quote. Added, never written over.
+
+    Quotes are checked against the abstract by the Extractor; the checks here hold what one row
+    can show, including an interval consistent with its estimate.
+    """
+
+    __tablename__ = "extractions"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    article_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("articles.id"))
+    run_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("pipeline_runs.id"))
+    grade_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("evidence_grades.id"))
+    model_call_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("model_calls.id"))
+    source_basis: Mapped[str] = mapped_column(Text)
+    population: Mapped[str] = mapped_column(Text)
+    population_quote: Mapped[str] = mapped_column(Text)
+    intervention: Mapped[str] = mapped_column(Text)
+    intervention_quote: Mapped[str] = mapped_column(Text)
+    comparator: Mapped[str | None] = mapped_column(Text)
+    comparator_quote: Mapped[str | None] = mapped_column(Text)
+    measure: Mapped[str | None] = mapped_column(Text)
+    estimate: Mapped[Decimal | None] = mapped_column(Numeric)
+    ci_lower: Mapped[Decimal | None] = mapped_column(Numeric)
+    ci_upper: Mapped[Decimal | None] = mapped_column(Numeric)
+    ci_level: Mapped[int | None] = mapped_column(SmallInteger)
+    unit: Mapped[str | None] = mapped_column(Text)
+    outcome_label: Mapped[str | None] = mapped_column(Text)
+    comparison_label: Mapped[str | None] = mapped_column(Text)
+    lower_label: Mapped[str | None] = mapped_column(Text)
+    higher_label: Mapped[str | None] = mapped_column(Text)
+    effect_quote: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(_in_list("source_basis", SOURCE_BASES), name="source_basis"),
+        CheckConstraint(
+            "length(population) > 0 AND length(population_quote) > 0 "
+            "AND length(intervention) > 0 AND length(intervention_quote) > 0 "
+            "AND length(comparator) > 0 AND length(comparator_quote) > 0 "
+            "AND length(unit) > 0 AND length(outcome_label) > 0 "
+            "AND length(comparison_label) > 0 AND length(lower_label) > 0 "
+            "AND length(higher_label) > 0 AND length(effect_quote) > 0",
+            name="not_empty",
+        ),
+        CheckConstraint(
+            "(comparator IS NULL) = (comparator_quote IS NULL)", name="comparator_quote"
+        ),
+        CheckConstraint(_in_list("measure", EFFECT_MEASURES), name="measure"),
+        CheckConstraint(
+            "(measure IS NOT NULL AND estimate IS NOT NULL AND outcome_label IS NOT NULL "
+            "AND comparison_label IS NOT NULL AND lower_label IS NOT NULL "
+            "AND higher_label IS NOT NULL AND effect_quote IS NOT NULL) OR "
+            f"(measure IS NULL AND num_nonnulls({', '.join(EXTRACTION_EFFECT_COLUMNS)}) = 0)",
+            name="effect_fields",
+        ),
+        CheckConstraint(
+            "(ci_lower IS NULL AND ci_upper IS NULL AND ci_level IS NULL) OR "
+            "(ci_lower IS NOT NULL AND ci_upper IS NOT NULL AND ci_level IS NOT NULL "
+            "AND ci_lower < ci_upper AND ci_lower <= estimate AND estimate <= ci_upper)",
+            name="interval",
+        ),
+        CheckConstraint("ci_level BETWEEN 50 AND 99", name="ci_level"),
+        CheckConstraint(
+            f"NOT ({_in_list('measure', RATIO_MEASURES)}) OR "
+            "(estimate > 0 AND (ci_lower IS NULL OR ci_lower > 0) AND unit IS NULL)",
+            name="ratio",
+        ),
+        Index(None, "article_id", "id"),
+        Index(None, "grade_id"),
+        Index(None, "model_call_id"),
+    )
+
+
+class ExtractionFact(Base):
+    """An outcome, other result, absolute number or author-stated limit, with its quote."""
+
+    __tablename__ = "extraction_facts"
+
+    extraction_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("extractions.id"), primary_key=True
+    )
+    position: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    kind: Mapped[str] = mapped_column(Text)
+    fact: Mapped[str] = mapped_column(Text)
+    quote: Mapped[str] = mapped_column(Text)
+
+    __table_args__ = (
+        CheckConstraint("position >= 1", name="position"),
+        CheckConstraint(_in_list("kind", EXTRACTION_FACT_KINDS), name="kind"),
+        CheckConstraint("length(fact) > 0 AND length(quote) > 0", name="not_empty"),
     )

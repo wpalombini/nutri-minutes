@@ -6,7 +6,7 @@ Every fact must be traceable, so the reply is rejected (and the model asked agai
   match "0.80" and "95.0" doesn't match "95";
 - the main effect's estimate and limits appear in its quote, and a positive estimate isn't
   quoted only with a minus sign;
-- the interval's level appears in the abstract with a % sign or "per cent";
+- the interval's level appears in the abstract with a % sign, "per cent" or "percent";
 - the main effect fits the shape `extractions` stores: a known measure, an interval that
   contains its estimate, a level from 50 to below 100, ratios above 0 with no unit,
   mean and risk differences with a unit.

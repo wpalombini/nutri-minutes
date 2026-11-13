@@ -227,10 +227,12 @@ def _moves(reply: dict[str, Any]) -> list[Reason]:
     return reasons
 
 
-def _apply_caps(reasons: list[Reason], start: int, allow_raise: bool) -> list[Reason]:
+def _apply_caps(
+    reasons: list[Reason], start: int, allow_raise: bool, allow_lower: bool
+) -> list[Reason]:
     """Reduce raises to what the caps allow, dropping any left at 0 levels, because readers see
-    every raise under "Raises certainty". Lowers are kept as given; the level is floored at very
-    low instead."""
+    every raise under "Raises certainty". Lowers are kept as given, and the level is floored at
+    very low instead, unless `allow_lower` is false: then they stay as concerns at 0 levels."""
     room = min(MAX_RAISE, MAX_LEVEL - start) if allow_raise else 0
     capped = []
     for reason in reasons:
@@ -240,6 +242,8 @@ def _apply_caps(reasons: list[Reason], start: int, allow_raise: bool) -> list[Re
             if levels == 0:
                 continue
             reason = Reason(reason.factor, reason.direction, levels, reason.text)
+        elif not allow_lower and reason.levels:
+            reason = Reason(reason.factor, reason.direction, 0, reason.text)
         capped.append(reason)
     return capped
 
@@ -284,7 +288,11 @@ def parse_reply(reply: dict[str, Any]) -> Grade | NotGradable:
 
     funding = _funding(reply)
     start = starting_level(design, includes, reported)
-    reasons = _apply_caps(_moves(reply), start, can_raise(design, includes, reported))
+    # A review's own certainty rating already counted its studies' design, size, consistency
+    # and directness, so the model's moves don't change it; only the funding rule can.
+    reasons = _apply_caps(
+        _moves(reply), start, can_raise(design, includes, reported), allow_lower=reported is None
+    )
     lowered = funding_lowered(funding, design, counted_elsewhere)
     concern = _text(reply, "funding_concern")
     if lowered and concern is None:

@@ -40,10 +40,12 @@ EFFECT_FIELDS = (
 """Reply fields that must all be null when the measure is "none"."""
 
 _WHITESPACE = re.compile(r"\s+")
-_THOUSANDS = re.compile(r"(?<=\d)[,\u00a0\u2009\u202f](?=\d{3}(?!\d))")
-"""A comma or narrow space between digit groups, as in "31,200", removed before comparing."""
-_NUMBER = re.compile(r"\d+(?:\.\d+)?")
-_DECIMAL = re.compile(r"-?\d+(?:\.\d+)?")
+_SEPARATORS = ",\u00a0\u2009\u202f"
+_THOUSANDS = re.compile(rf"(?<![\d.,])\d{{1,3}}(?:[{_SEPARATORS}]\d{{3}})+(?!\d)")
+"""A whole number with commas or narrow spaces between digit groups, as in "31,200", whose
+separators are removed before comparing. Digits after a decimal point never count."""
+_NUMBER = re.compile(r"\d+(?:\.\d+)?|\.\d+")
+_DECIMAL = re.compile(r"-?(?:\d+(?:\.\d+)?|\.\d+)")
 _LEVEL = re.compile(r"\d+(?:\.\d+)?")
 _MINUS_SIGNS = "-\u2212\u2010\u2011\u2013"
 """Hyphen-minus, minus, hyphen, non-breaking hyphen and en dash. Right after a digit they join a
@@ -93,8 +95,12 @@ def normalise(text: str) -> str:
     return _WHITESPACE.sub(" ", unicodedata.normalize("NFC", text)).strip()
 
 
+def _drop_separators(match: re.Match[str]) -> str:
+    return re.sub(f"[{_SEPARATORS}]", "", match.group())
+
+
 def _number_form(text: str) -> str:
-    return normalise(_THOUSANDS.sub("", unicodedata.normalize("NFC", text)))
+    return normalise(_THOUSANDS.sub(_drop_separators, unicodedata.normalize("NFC", text)))
 
 
 def numbers_in(text: str) -> list[str]:
@@ -135,9 +141,34 @@ def _required(reply: dict[str, Any], key: str) -> str:
     return value
 
 
+def _cuts_a_number(text: str, start: int, end: int) -> bool:
+    """Whether text[start:end] begins or ends partway through a number, or just after its minus
+    sign, so a quote of "0.97" from "0.975", or "1.2 kg" from "-1.2 kg", is rejected."""
+    before = text[start - 1] if start > 0 else ""
+    before2 = text[start - 2] if start > 1 else ""
+    after = text[end] if end < len(text) else ""
+    after2 = text[end + 1] if end + 1 < len(text) else ""
+    first, last = text[start], text[end - 1]
+    if first.isdigit() or first == ".":
+        if before.isdigit() or before == "." or (before in _SEPARATORS and before2.isdigit()):
+            return True
+        if before and before in _MINUS_SIGNS and not before2.isdigit():
+            return True
+    if last.isdigit() and (after.isdigit() or (after in "." + _SEPARATORS and after2.isdigit())):
+        return True
+    return last == "." and end >= 2 and text[end - 2].isdigit() and after.isdigit()
+
+
 def _check_quote(quote: str, abstract: str, label: str) -> None:
-    if normalise(quote) not in normalise(abstract):
+    text, wanted = normalise(abstract), normalise(quote)
+    start = text.find(wanted)
+    if start < 0 or not wanted:
         raise ReplyError(f"The {label} quote isn't in the abstract")
+    while start >= 0:
+        if not _cuts_a_number(text, start, start + len(wanted)):
+            return
+        start = text.find(wanted, start + 1)
+    raise ReplyError(f"The {label} quote starts or ends partway through a number")
 
 
 def _check_numbers(text: str, quote: str, label: str) -> None:
@@ -156,20 +187,33 @@ def _quoted(reply: dict[str, Any], key: str, abstract: str) -> tuple[str, str]:
 
 def _decimal(reply: dict[str, Any], key: str, pattern: re.Pattern[str]) -> tuple[str, Decimal]:
     raw = _required(reply, key)
+    if raw[0] in _MINUS_SIGNS:
+        raw = "-" + raw[1:]  # a typographic minus, as abstracts write it
     if not pattern.fullmatch(raw):
         raise ReplyError(f"Reply {key} isn't a plain decimal number")
     return raw, Decimal(raw)
 
 
-def _check_quoted_number(raw: str, quote: str, label: str) -> None:
+def _quoted_number(raw: str, quote: str, label: str) -> set[int]:
+    """Where a reported number appears in the effect quote. Raises unless it appears there, with
+    a sign that doesn't contradict it."""
     digits = raw.removeprefix("-")
     found = _occurrences(digits, quote)
     if not found:
         raise ReplyError(f"The {label} {raw} isn't in the effect quote as written")
     # A difference stated in words ("1.2 kg less") is negative without a minus sign, so only a
     # positive number quoted with nothing but a minus sign is a contradiction.
-    if not raw.startswith("-") and all(_has_minus(m) for m in found):
-        raise ReplyError(f"The {label} {raw} is quoted with a minus sign")
+    if not raw.startswith("-"):
+        found = [m for m in found if not _has_minus(m)]
+        if not found:
+            raise ReplyError(f"The {label} {raw} is quoted with a minus sign")
+    return {m.start() for m in found}
+
+
+def _distinct_places(estimate: set[int], lower: set[int], upper: set[int]) -> bool:
+    """Whether the estimate and limits can come from three different places in the quote, the
+    lower limit before the upper, so one number is never reported as two of them."""
+    return any(e not in (lo, up) and lo < up for e in estimate for lo in lower for up in upper)
 
 
 def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
@@ -185,7 +229,7 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
     quote = _required(reply, "effect_quote")
     _check_quote(quote, abstract, "effect")
     raw_estimate, estimate = _decimal(reply, "estimate", _DECIMAL)
-    _check_quoted_number(raw_estimate, quote, "estimate")
+    estimate_at = _quoted_number(raw_estimate, quote, "estimate")
 
     limits = [reply.get(key) for key in ("ci_lower", "ci_upper", "ci_level")]
     lower = upper = level = None
@@ -195,10 +239,13 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
         raw_lower, lower = _decimal(reply, "ci_lower", _DECIMAL)
         raw_upper, upper = _decimal(reply, "ci_upper", _DECIMAL)
         raw_level, level = _decimal(reply, "ci_level", _LEVEL)
-        _check_quoted_number(raw_lower, quote, "lower limit")
-        _check_quoted_number(raw_upper, quote, "upper limit")
-        if not (appears(raw_level, quote) or appears(raw_level, abstract)):
-            raise ReplyError(f"The interval's level {raw_level} isn't in the abstract")
+        lower_at = _quoted_number(raw_lower, quote, "lower limit")
+        upper_at = _quoted_number(raw_upper, quote, "upper limit")
+        if not _distinct_places(estimate_at, lower_at, upper_at):
+            raise ReplyError("The estimate and limits aren't three separate numbers in the quote")
+        level_pattern = rf"(?<![\d.]){re.escape(raw_level)}\s?%"
+        if not re.search(level_pattern, _number_form(abstract)):
+            raise ReplyError(f"The interval's level {raw_level}% isn't in the abstract")
         if not MIN_CI_LEVEL <= level < MAX_CI_LEVEL:
             raise ReplyError(f"The interval's level {raw_level} isn't from 50 to below 100")
         if not lower < upper:

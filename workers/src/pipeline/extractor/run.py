@@ -8,6 +8,7 @@ docs/agents.md.
 
 An article's current extraction is its latest, provided it was made from the article's current
 grade. After a re-grade the old extraction is stale, so the next run extracts the article again.
+An article that failed is tried again once it has a grade newer than the run that failed it.
 
 The run loop follows the Grader's (`pipeline.grader.run`) on purpose; the three can share it once
 the common part is clear.
@@ -119,6 +120,8 @@ PENDING = text(
     + "LEFT JOIN article_stages s ON s.article_id = a.id AND s.agent = :agent "
     "WHERE s.article_id IS NULL OR (s.status = 'done' AND (SELECT x.grade_id FROM extractions x "
     "WHERE x.article_id = a.id ORDER BY x.id DESC LIMIT 1) IS DISTINCT FROM g.id) "
+    "OR (s.status = 'failed' AND (SELECT r.started_at FROM pipeline_runs r "
+    "WHERE r.id = s.run_id) < g.created_at) "
     "ORDER BY a.id LIMIT :limit"
 )
 CHOSEN = text(SELECT_ARTICLES + "WHERE a.id = ANY(:ids) ORDER BY a.id")

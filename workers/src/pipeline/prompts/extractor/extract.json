@@ -1,0 +1,183 @@
+{
+  "model": "anthropic/claude-haiku-5.5",
+  "max_tokens": 3000,
+  "reasoning": {
+    "effort": "none"
+  },
+  "price_caps": {
+    "prompt": "0.12",
+    "completion": "0.60",
+    "request": "0"
+  },
+  "reply_schema": {
+    "type": "object",
+    "properties": {
+      "population": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "population_quote": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "intervention": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "intervention_quote": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "comparator": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 300
+      },
+      "comparator_quote": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 600
+      },
+      "measure": {
+        "type": "string",
+        "enum": [
+          "risk_ratio",
+          "odds_ratio",
+          "hazard_ratio",
+          "rate_ratio",
+          "mean_difference",
+          "risk_difference",
+          "standardised_mean_difference",
+          "none"
+        ]
+      },
+      "estimate": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 20
+      },
+      "ci_lower": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 20
+      },
+      "ci_upper": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 20
+      },
+      "ci_level": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 10
+      },
+      "unit": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 60
+      },
+      "outcome_label": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 100
+      },
+      "comparison_label": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 150
+      },
+      "lower_label": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 40
+      },
+      "higher_label": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 40
+      },
+      "effect_quote": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 600
+      },
+      "facts": {
+        "type": "array",
+        "maxItems": 12,
+        "items": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "outcome",
+                "result",
+                "absolute",
+                "limitation"
+              ]
+            },
+            "fact": {
+              "type": "string",
+              "maxLength": 300
+            },
+            "quote": {
+              "type": "string",
+              "maxLength": 600
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "fact",
+            "quote"
+          ]
+        }
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "population",
+      "population_quote",
+      "intervention",
+      "intervention_quote",
+      "comparator",
+      "comparator_quote",
+      "measure",
+      "estimate",
+      "ci_lower",
+      "ci_upper",
+      "ci_level",
+      "unit",
+      "outcome_label",
+      "comparison_label",
+      "lower_label",
+      "higher_label",
+      "effect_quote",
+      "facts"
+    ]
+  }
+}

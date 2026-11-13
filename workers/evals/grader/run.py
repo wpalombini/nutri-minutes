@@ -15,14 +15,13 @@ A failed call counts as a wrong design label and drops out of the level scores, 
 check also caps failed calls.
 """
 
-import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field, replace
 from decimal import Decimal
 from typing import Any
 
 from evals.abstracts import Row
-from pipeline.grader.grading import FUNDING, Grade
+from pipeline.grader.grading import FUNDING, Grade, declared_conflicts
 from pipeline.grader.rules import GraderArticle, apply_rules
 from pipeline.grader.run import MAX_ERROR_LENGTH, STAGE, ask_model, prompt_inputs
 from pipeline.models import CallRequest, ModelCallError, ModelClient, Prompt
@@ -31,11 +30,6 @@ EVAL_RUN_ID = 0
 """Eval calls belong to no pipeline run. The in-memory call log keys the budget on this."""
 
 NOT_IN_PEOPLE = ("animal", "lab")
-NO_CONFLICTS_SENTENCE = re.compile(
-    r"\bno (?:\w+ ){0,3}(?:conflicts?|competing interests?)\b|\bnone declared\b", re.IGNORECASE
-)
-"""A funding concern that only says the authors have no conflicts, which isn't a concern
-(#67 review). Counted so the prompt can be fixed if the model often writes one."""
 
 
 def design_label(gradable: bool, design: str | None, not_gradable: str | None) -> str | None:
@@ -90,9 +84,10 @@ class PaperResult:
 
     @property
     def no_conflicts_concern(self) -> bool:
-        return self.funding_concern is not None and bool(
-            NO_CONFLICTS_SENTENCE.search(self.funding_concern)
-        )
+        """A funding concern that is a whole no-conflicts statement, which isn't a concern
+        (#67 review). Uses the Grader's own test, so "Industry funded it; the authors declare no
+        conflicts" doesn't count."""
+        return self.funding_concern is not None and declared_conflicts(self.funding_concern) is None
 
 
 def _ratio(part: int, whole: int) -> float | None:

@@ -162,12 +162,16 @@ def test_funding_concerns_that_only_say_no_conflicts_are_counted(tmp_path: Path)
             moves=[move("size")],
         ),
         "Study 3": graded(),
+        "Study 4": graded(
+            funder_type="industry",
+            funding_concern="Industry funded it; the authors declare no conflicts.",
+        ),
     }
     client = FakeModelClient(lambda request: replies[request.inputs["title"]])
-    rows = [row("1"), row("2"), row("3")]
-    results = run_eval(client, prompt, rows, {p: "A." for p in "123"})
+    rows = [row("1"), row("2"), row("3"), row("4")]
+    results = run_eval(client, prompt, rows, {p: "A." for p in "1234"})
     scores = score(results)
-    assert scores.funding_concerns == 2
+    assert scores.funding_concerns == 3
     assert scores.no_conflicts_concern_pmids == ("1",)
     assert results[1].funding_lowered is False
 

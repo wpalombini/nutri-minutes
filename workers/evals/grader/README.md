@@ -58,6 +58,6 @@ Both models ran the prompt from #68 on all 69 approved papers (56 gradable). Hai
 | `anthropic/claude-haiku-5.5` | 95.7%, 94.2% | 0, 0 | 69.1%, 72.7% | 98.2%, 96.4% | 0, 0 | $0.050, $0.050 |
 | `anthropic/claude-sonnet-5.5` | 98.6% | 0 | 57.1% | 94.6% | 0 | $0.97 |
 
-Haiku ships: it agrees with the labels on levels more often, and its misses are smaller, at a twentieth of the cost. Sonnet got one or two more design labels right. Both models grade lower than the labels when they miss, Sonnet more often: it took 11 of the 12 papers labelled low down to very low. Sonnet 5.5 refuses requests with reasoning turned off, so its run used low reasoning effort.
+Haiku ships: it agrees with the labels on levels more often, and its misses are smaller, at a twentieth of the cost. Sonnet got one or two more design labels right. Both models grade lower than the labels when they miss, Sonnet more often: it took 11 of the 12 papers labelled low down to very low. In these runs OpenRouter refused every Sonnet 5.5 request with reasoning turned off ("Reasoning is mandatory for this endpoint"), so its run used low reasoning effort.
 
 Neither model wrote a funding concern that only says there are no conflicts: Sonnet wrote one real concern, Haiku none.

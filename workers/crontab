@@ -1,4 +1,5 @@
 # Pipeline schedule, run by supercronic in the scheduler service. Times are UTC.
-# Scout fetches new papers, then Triage decides which are in scope. Triage runs even if Scout
-# fails, so articles from earlier runs are still handled. The job fails if either of them fails.
-15 3 * * * python -m pipeline.scout; scout=$?; python -m pipeline.triage && exit $scout
+# Scout fetches new papers, Triage decides which are in scope, then the Evidence Grader grades the
+# in-scope ones. Each stage runs even if the one before it fails, so articles from earlier runs
+# are still handled. The job fails if any of them fails.
+15 3 * * * python -m pipeline.scout; scout=$?; python -m pipeline.triage; triage=$?; python -m pipeline.grader && [ $scout -eq 0 ] && [ $triage -eq 0 ]

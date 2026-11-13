@@ -43,8 +43,9 @@ The full stack runs with Docker Compose; `docs/operations.md` covers deploying a
 - Stack: `docker compose up -d --build` (database, migrations, login roles, the daily schedule, the API and its Cloudflare tunnel)
 - One-off Scout run: `docker compose run --rm scout`
 - One-off Triage run: `docker compose run --rm triage`
+- One-off Evidence Grader run: `docker compose run --rm grader`
 
-Workers live in `workers/` and use `uv`. Run these from `workers/`, after loading `.env` into your shell with `set -a; . ../.env; set +a`. Host-side runs connect as the schema owner, so use the compose `scout` and `triage` services to test as the workers' role.
+Workers live in `workers/` and use `uv`. Run these from `workers/`, after loading `.env` into your shell with `set -a; . ../.env; set +a`. Host-side runs connect as the schema owner, so use the compose `scout`, `triage` and `grader` services to test as the workers' role.
 - Local database only: `docker compose up -d --wait db` from the repo root. Create the test database once with `docker compose exec db createdb -U pipeline pipeline_test`.
 - Install: `uv sync`
 - Tests: `uv run pytest` (needs the test database; its schema is dropped and recreated)

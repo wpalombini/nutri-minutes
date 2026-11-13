@@ -24,10 +24,12 @@ x-worker-env: &worker-env
   SCOUT_OVERLAP_DAYS: ${SCOUT_OVERLAP_DAYS:-}
   SCOUT_MAX_RESUMES: ${SCOUT_MAX_RESUMES:-}
   TRIAGE_MAX_ARTICLES: ${TRIAGE_MAX_ARTICLES:-}
+  GRADER_MAX_ARTICLES: ${GRADER_MAX_ARTICLES:-}
   OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
   MODEL_TIMEOUT_SECONDS: ${MODEL_TIMEOUT_SECONDS:-}
   MODEL_MAX_ATTEMPTS: ${MODEL_MAX_ATTEMPTS:-}
   MODEL_BUDGET_USD_TRIAGE: ${MODEL_BUDGET_USD_TRIAGE:-}
+  MODEL_BUDGET_USD_GRADER: ${MODEL_BUDGET_USD_GRADER:-}
   TZ: UTC
 
 services:
@@ -93,8 +95,8 @@ services:
     command: ["supercronic", "-passthrough-logs", "/app/crontab"]
     restart: unless-stopped
     # On stop, supercronic waits for a running job but doesn't signal it, so the job is killed
-    # after this grace period. Scout resumes next time, and the next Triage run picks up the
-    # articles it didn't reach. If Scout is cut off, that day's Triage run is skipped.
+    # after this grace period. Scout resumes next time, and the next Triage and Grader runs pick up
+    # the articles they didn't reach. The stages after a cut-off one are skipped that day.
     stop_grace_period: 60s
     environment: *worker-env
     depends_on:
@@ -117,6 +119,17 @@ services:
     <<: *workers
     profiles: ["manual"]
     entrypoint: ["python", "-m", "pipeline.triage"]
+    command: []
+    environment: *worker-env
+    depends_on:
+      db-roles:
+        condition: service_completed_successfully
+
+  # One-off Evidence Grader runs: docker compose run --rm grader [--article-id ID ...]
+  grader:
+    <<: *workers
+    profiles: ["manual"]
+    entrypoint: ["python", "-m", "pipeline.grader"]
     command: []
     environment: *worker-env
     depends_on:

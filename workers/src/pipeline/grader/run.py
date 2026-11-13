@@ -47,8 +47,8 @@ STAGE = "grader"
 """The model client's budget stage. Its budget comes from `MODEL_BUDGET_USD_GRADER`."""
 PROMPT_NAME = "grader/grade"
 DEFAULT_BUDGET_USD = Decimal("1.00")
-"""Per run, unless `MODEL_BUDGET_USD_GRADER` sets another. A full run of 300 articles costs about
-US$0.22 on Haiku 5.5 (US$0.05 for the 69 eval papers), so this leaves room for retries. A spent
+"""Per run, unless `MODEL_BUDGET_USD_GRADER` sets another. A full run of 1,000 articles costs about
+US$0.70 on Haiku 5.5 (US$0.05 for the 69 eval papers), so this leaves room for retries. A spent
 budget stops the run, and the rest wait for the next."""
 COUNT_KEYS = ("selected", "rule_not_gradable", "not_gradable", "graded", "failed")
 MAX_ERROR_LENGTH = 500
@@ -60,12 +60,12 @@ MAX_GRANT_AGENCIES = 10
 
 @dataclass(frozen=True)
 class GraderSettings:
-    max_articles: int = 300
+    max_articles: int = 1000
     """The most articles one run looks at. The rest wait for the next run."""
 
     @classmethod
     def from_env(cls) -> GraderSettings:
-        return cls(max_articles=int_env("GRADER_MAX_ARTICLES", 300, 1))
+        return cls(max_articles=int_env("GRADER_MAX_ARTICLES", 1000, 1))
 
 
 @dataclass(frozen=True)

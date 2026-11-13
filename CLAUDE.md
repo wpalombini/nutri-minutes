@@ -54,6 +54,7 @@ Workers live in `workers/` and use `uv`. Run these from `workers/`, after loadin
 - Scout: `uv run python -m pipeline.scout` for the next window, or add `--window-start YYYY-MM-DD --window-end YYYY-MM-DD` to re-run a past one
 - Triage: `uv run python -m pipeline.triage` for articles it hasn't handled, or add `--article-id ID` (repeatable) to decide chosen articles again. Needs `OPENROUTER_API_KEY`
 - Evidence Grader: `uv run python -m pipeline.grader` for in-scope articles it hasn't graded, or add `--article-id ID` (repeatable) to grade chosen articles again. Needs `OPENROUTER_API_KEY`
+- Extractor: `uv run python -m pipeline.extractor` for graded articles with no current extraction, or add `--article-id ID` (repeatable) to extract chosen articles again. Needs `OPENROUTER_API_KEY`
 - Check the model client's cost unit (one tiny live call, needs `OPENROUTER_API_KEY`): `uv run python -m pipeline.models.check_cost`
 - Migrations: `uv run alembic upgrade head`; new revision: `uv run alembic revision --rev-id 0002 -m "<summary>"` with the next number, then edit it by hand
 - Eval abstracts (needs `EUROPE_PMC_CONTACT`): `uv run python -m evals.abstracts evals/triage/dataset.jsonl` fetches and caches every abstract a dataset doesn't store, in `EVAL_CACHE_DIR` (default `~/.cache/research-pipeline/abstracts`); `--store-open` writes the CC BY and CC0 ones into the dataset

@@ -206,10 +206,24 @@ def test_funding_not_stated_is_kept() -> None:
     assert grade.funding.funding_source == "not_stated"
 
 
-def test_funder_type_not_stated_settles_funding_as_not_stated() -> None:
-    grade = _grade(funder="private donation", funder_type="not_stated", funding_source="abstract")
+@pytest.mark.parametrize("source", ["abstract", "grant_metadata"])
+def test_no_funder_named_settles_funding_as_not_stated(source: str) -> None:
+    grade = _grade(funder=None, funder_type="not_stated", funding_source=source)
     assert grade.funding.funding_source == "not_stated"
-    assert grade.funding.funder is None
+    assert grade.funding.funder_type == "not_stated"
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"funder": "private donation"},
+        {"funder": None, "funder_sells_product": "yes"},
+    ],
+)
+def test_funding_mismatch_with_a_funder_hint_still_fails(overrides: dict[str, Any]) -> None:
+    reply = graded(funder_type="not_stated", funding_source="abstract", **overrides)
+    with pytest.raises(ReplyError, match="disagree"):
+        parse_reply(reply)
 
 
 def test_not_gradable() -> None:

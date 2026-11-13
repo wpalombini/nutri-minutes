@@ -23,7 +23,7 @@ The type of study sets the starting point:
 - **Randomised trials** start at high certainty, because chance decides who gets the treatment. They move down for problems.
 - **Non-randomised trials** start at low certainty. People get a treatment, but chance doesn't decide who, so the groups may differ in other ways.
 - **Observational studies** start at low certainty. They follow what people already do, so they can show a link but usually can't show cause and effect. This includes studies that use people's genes to estimate the effect of a diet or habit (Mendelian randomisation).
-- **Reviews of studies** start from the certainty of the studies they combine: high for reviews of randomised trials, low for reviews of observational studies or a mix of both, and very low for reviews of animal or lab studies. When a review rates the certainty of its own evidence, we start from its rating.
+- **Reviews of studies** start from the certainty of the studies they combine: high for reviews of randomised trials, low for reviews of observational studies or a mix of both, and very low for reviews of animal or lab studies. When a review rates the certainty of its own evidence, we use its rating, and only funding concerns can lower it.
 - **Animal and lab studies** start at very low certainty in our grading, because they don't test people.
 
 Every summary shows what kind of study it was, so you know what kind of evidence you are reading.

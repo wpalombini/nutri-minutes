@@ -61,3 +61,19 @@ Both models ran the prompt from #68 on all 69 approved papers (56 gradable). Hai
 Haiku ships: it agrees with the labels on levels more often, and its misses are smaller, at a twentieth of the cost. Sonnet got one or two more design labels right. Both models grade lower than the labels when they miss, Sonnet more often: it took 11 of the 12 papers labelled low down to very low. In these runs OpenRouter refused every Sonnet 5.5 request with reasoning turned off ("Reasoning is mandatory for this endpoint"), so its run used low reasoning effort.
 
 Neither model wrote a funding concern that only says there are no conflicts: Sonnet wrote one real concern, Haiku none.
+
+## Harshness check (2026-11-13)
+Production's first 1,000 articles and both models' eval misses graded lower than the labels. The reports, which now list each grade's starting level and moves, showed four causes:
+- Cohort and other observational studies were lowered for design just for being observational (confounding, can't show which came first), which is why they start low. About 140 of 345 in production. Cross-sectional studies still lower one level.
+- Trials were lowered for blinding, allocation or dropouts the abstract didn't mention, and for results that weren't significant, on top of the size lowering that already counts imprecision.
+- Duration was judged against long-term effects the paper didn't claim, such as a three-hour blood pressure study being "too short for long-term effects".
+- Studies in healthy young adults were lowered for population for age alone. Population now lowers for age only when the outcome depends on it, such as bone loss, falls or muscle loss with age (repo owner's rule).
+
+Reviews that report their own certainty were also lowered again by the model. The code now keeps the review's rating and stores the model's concerns at 0 levels.
+
+| Prompt | Runs | Levels exact | Levels within one | Misses lower / higher than the label |
+|---|---|---|---|---|
+| Before (#72) | 3 | 66.7–72.7% | 96.3–96.4% | 14–18 / 0–2 |
+| After | 3 | 72.7–82.1% | 96.2–100% | 7–8 / 2–3 (two runs checked) |
+
+Runs vary by up to 10 points on exact levels, so single runs are noisy. Design labels stayed within 91–96%, with no mix-ups.

@@ -73,11 +73,6 @@ def test_trials_never_go_above_high() -> None:
         {"design_category": "animal"},
         {"design_category": "lab"},
         {"design_category": "review", "review_includes": "animal_or_lab"},
-        {
-            "design_category": "review",
-            "review_includes": "animal_or_lab",
-            "review_reported_level": 2,
-        },
     ],
 )
 def test_animal_and_lab_never_move_up(overrides: dict[str, Any]) -> None:
@@ -94,6 +89,42 @@ def test_a_review_reporting_its_certainty_is_not_raised() -> None:
         moves=[move("design", "raises", 1)],
     )
     assert grade.level == 2 and grade.reasons == ()
+
+
+def test_a_review_reporting_its_certainty_keeps_it_and_lowers_become_concerns() -> None:
+    grade = _grade(
+        design_category="review",
+        review_includes="randomised_trials",
+        review_reported_level=2,
+        moves=[
+            move("size", text="312 players."),
+            move("design", "raises", 1),
+            move("population", levels=2),
+        ],
+    )
+    assert grade.level == 2
+    assert [(r.factor, r.levels, r.text) for r in grade.reasons] == [
+        ("size", 0, "312 players."),
+        ("population", 0, "x"),
+    ]
+
+
+def test_a_review_reporting_its_certainty_can_still_lose_a_level_for_funding() -> None:
+    grade = _grade(
+        design_category="review",
+        review_includes="randomised_trials",
+        review_reported_level=3,
+        moves=[move("size")],
+        funder_type="industry",
+        funder_sells_product="yes",
+        sponsor_roles=["analysis"],
+        funding_concern="Funded by the maker of the product tested.",
+    )
+    assert grade.level == 2
+    assert [(r.factor, r.levels) for r in grade.reasons] == [
+        ("size", 0),
+        ("funding_and_conflicts", 1),
+    ]
 
 
 def test_review_fields_are_dropped_for_other_designs() -> None:

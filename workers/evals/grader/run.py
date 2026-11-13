@@ -59,6 +59,9 @@ class PaperResult:
     funding_concern: str | None = None
     funding_lowered: bool | None = None
     reason: str | None = None
+    starting_level: int | None = None
+    moves: tuple[str, ...] = ()
+    """Each move the grade kept, as "factor direction levels: text", for reports."""
     error: str | None = None
 
     @property
@@ -201,6 +204,8 @@ def grade(client: ModelClient, prompt: Prompt, row: Row, abstract: str) -> Paper
         funding_concern=concern,
         funding_lowered=decision.funding_lowered,
         reason=decision.reason,
+        starting_level=decision.starting_level,
+        moves=tuple(f"{r.factor} {r.direction} {r.levels}: {r.text}" for r in decision.reasons),
     )
 
 

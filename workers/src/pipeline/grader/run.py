@@ -48,7 +48,7 @@ STAGE = "grader"
 PROMPT_NAME = "grader/grade"
 DEFAULT_BUDGET_USD = Decimal("1.00")
 """Per run, unless `MODEL_BUDGET_USD_GRADER` sets another. A full run of 300 articles costs about
-US$0.25 on Haiku 5.5 (US$0.05 for the 69 eval papers), so this leaves room for retries. A spent
+US$0.22 on Haiku 5.5 (US$0.05 for the 69 eval papers), so this leaves room for retries. A spent
 budget stops the run, and the rest wait for the next."""
 COUNT_KEYS = ("selected", "rule_not_gradable", "not_gradable", "graded", "failed")
 MAX_ERROR_LENGTH = 500

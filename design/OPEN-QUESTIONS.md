@@ -15,10 +15,13 @@ Questions raised by the [screen](screens/README.md) and [component](components/R
 - **Starting points.** The "Why this grade" sentences match the Grader: randomised trials start high; non-randomised trials and observational studies low; animal and lab studies very low; a review from what it combines (trials high, observational studies or a mix low, animal or lab studies very low), or from its own certainty rating when it reports one. ([Why this grade](components/why-this-grade.md#content))
 - **Designs outside the five labels.** A sixth label, "Non-randomised trial", starting low. Mendelian randomisation studies are observational. Narrative reviews, case reports, study plans and interview-only studies aren't graded and get no summary. ([Study design label](components/study-design-label.md#content))
 - **Repeated limits.** The Writer doesn't repeat the app's fixed first limit. Non-randomised trials get a fixed first limit too. ([Limits block](components/limits-block.md#purpose-and-content))
-- **One outcome per study.** One grade and one main interval per summary, for the study's main outcome. Whether some summaries need a second outcome is decided with the Writer.
+- **One outcome per study.** One grade and one main interval per summary, for the study's main outcome.
+
+## For the Writer
+- **A second outcome.** Do some summaries need a second outcome and interval? Decided when the Writer is planned.
 
 ## Settled by a built stage
-- **Primary topic** for each summary: Triage stores the topics of each in-scope article with the primary topic first (`triage_decisions.topics`, [database](../docs/database.md#triage_decisions)). ([Finding row](components/finding-row.md#data-a-summary-list-item))
+- **Primary topic** for each summary: Triage stores one for each in-scope article as a topic slug (`triage_decisions.primary_topic`, [database](../docs/database.md#triage_decisions)). ([Finding row](components/finding-row.md#data-a-summary-list-item))
 
 ## Data no planned stage produces yet
 The specs need these fields, but none of the stages in [`docs/agents.md`](../docs/agents.md) or the tables planned in [`docs/database.md`](../docs/database.md#tables-to-come) produce them:

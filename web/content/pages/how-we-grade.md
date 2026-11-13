@@ -30,13 +30,13 @@ Every summary shows what kind of study it was, so you know what kind of evidence
 
 ## What we don't grade
 
-Some papers have no measured results to grade, so we don't grade or summarise them: narrative reviews that don't combine studies in a set way, reports of one or a few patients, study plans, and studies based only on interviews.
+Some papers have no measured results to grade, so we don't grade or summarise them: narrative reviews that don't combine studies in a set way, reports of one or a few patients, study plans, studies based only on interviews, and other papers with no results of their own, such as guidelines.
 
 ## What moves a grade
 
 From the starting point, a study's grade can move up or down. A grade moves up one level at most, and never for animal and lab studies, reviews of them, or a review that rated its own evidence. We look at:
 
-- **Design:** how well the study was set up and run, and whether its comparisons were fair. A study that measures people only once, at a single point in time, always loses one level for its design, because it can't show which came first.
+- **Design:** how well the study was set up and run, and whether its comparisons were fair. A study that measures people only once, at a single point in time, always loses at least one level for its design, because it can't show which came first.
 - **Size:** how many people took part. Small studies give less precise results.
 - **Duration:** whether people were followed long enough to see the outcome that matters.
 - **Population:** whether the people studied are like the people the result is meant for.

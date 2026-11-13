@@ -149,6 +149,8 @@ def _cuts_a_number(text: str, start: int, end: int) -> bool:
     after = text[end] if end < len(text) else ""
     after2 = text[end + 1] if end + 1 < len(text) else ""
     first, last = text[start], text[end - 1]
+    if first in _MINUS_SIGNS and before.isdigit():
+        return True  # a range dash, as in "0.70-0.91", isn't a minus sign
     if first.isdigit() or first == ".":
         if before.isdigit() or before == "." or (before in _SEPARATORS and before2.isdigit()):
             return True
@@ -160,7 +162,9 @@ def _cuts_a_number(text: str, start: int, end: int) -> bool:
 
 
 def _check_quote(quote: str, abstract: str, label: str) -> None:
-    text, wanted = normalise(abstract), normalise(quote)
+    # Compared with thousands separators removed, so a quote of "200 women" from "31 200 women"
+    # (with a narrow space) is seen to start partway through 31200.
+    text, wanted = _number_form(abstract), _number_form(quote)
     start = text.find(wanted)
     if start < 0 or not wanted:
         raise ReplyError(f"The {label} quote isn't in the abstract")

@@ -310,3 +310,21 @@ def test_typographic_minus_and_no_leading_zero_are_accepted() -> None:
 def test_thousands_removal_never_joins_decimals() -> None:
     assert numbers_in("0.03,100 people") == ["0.03", "100"]
     assert numbers_in("31,200 and 1,000,000") == ["31200", "1000000"]
+
+
+@pytest.mark.parametrize("space", ["\u00a0", "\u2009", "\u202f"])
+def test_a_quote_cannot_cut_a_number_with_narrow_spaces(space: str) -> None:
+    abstract = ABSTRACT.replace("1,200", f"31{space}200")
+    with pytest.raises(ReplyError, match="partway"):
+        parse_reply(
+            extracted(population="200 women", population_quote="200 women aged 65"), abstract
+        )
+
+
+def test_a_quote_cannot_start_at_a_range_dash() -> None:
+    abstract = "Lean mass rose (mean difference 1.2 kg, range 0.70-0.91 kg)."
+    reply = _difference(
+        abstract, "-0.91 kg", estimate="-0.91", ci_lower=None, ci_upper=None, ci_level=None
+    )
+    with pytest.raises(ReplyError, match="partway"):
+        parse_reply(reply, abstract)

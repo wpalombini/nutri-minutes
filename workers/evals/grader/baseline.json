@@ -1,0 +1,31 @@
+{
+  "prompt": "grader/grade",
+  "prompt_version": "39e7f55edcaa134c",
+  "model": "anthropic/claude-haiku-5.5",
+  "cost_usd": "0.0502144",
+  "scores": {
+    "papers": 69,
+    "gradable": 56,
+    "failed": 0,
+    "decided_by_rule": 1,
+    "design_label": 0.942,
+    "mixups": 0,
+    "level_scored": 55,
+    "level_exact": 0.7273,
+    "level_within_one": 0.9636,
+    "funding_concerns": 0,
+    "no_conflicts_concerns": 0,
+    "wrong_label_pmids": [
+      "42968090",
+      "42972440",
+      "42996681",
+      "42997011"
+    ],
+    "mixup_pmids": [],
+    "off_by_two_pmids": [
+      "42968062",
+      "42988186"
+    ],
+    "no_conflicts_concern_pmids": []
+  }
+}

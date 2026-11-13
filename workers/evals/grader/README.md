@@ -32,7 +32,32 @@ Labels were drafted from the abstracts using the Grader's prompt and the rules i
 
 The prompt follows both rules.
 
-## What the eval will score
-The runner isn't built yet. It will score, on approved rows:
-- **Design label:** the share of papers given the right design category or the right "not gradable" reason. Calling an animal or lab study a study in people, or the reverse, is the worst error.
-- **Level:** exact agreement and agreement within one level, on papers where both the expected and the model's answer are gradable.
+## What the eval scores
+On approved rows, each paper goes through production's path: the Grader's rules first, then the model through the production client, then the code that turns its reply into a grade.
+- **Design label:** the share of papers given the right design category or the right "not gradable" reason. A failed call counts as a wrong label.
+- **Mix-ups:** studies in people called animal or lab studies, or the reverse. A review of animal or lab studies counts as not in people. This is the worst error, because readers would see the wrong kind of evidence.
+- **Level:** exact agreement and agreement within one level, on papers both the label and the Grader call gradable.
+- **No-conflicts funding concerns:** how many funding concerns only say the authors have no conflicts, which isn't a concern. Reported, not checked.
+
+## Running the eval
+`uv run python -m evals.grader` from `workers/` prints the scores (`CLAUDE.md` has the options). Keep `--report` files outside the repo: the model's reasons and funding concerns may quote abstracts.
+
+## In CI
+The `grader-eval` workflow runs the eval with `--check` on pull requests that change the Grader prompt, the Grader, the model client or the evals, for about $0.05 a run. It compares the scores with `baseline.json`, which holds the scores only. The check fails, and so blocks merging, when:
+- any study in people and animal or lab study are mixed up;
+- more than 2 calls fail;
+- the design label score or the share of levels within one falls more than 10 points below the baseline, or the share of exact levels more than 15 points.
+
+A pull request that changes the dataset must refresh the baseline with `--write-baseline`, or the check fails. Refresh it too after a change that improves the scores. `--write-baseline` with `--prompt-root` writes a candidate prompt's scores, so use it only when that prompt is being shipped.
+
+## Model comparison (2026-11-13)
+Both models ran the prompt from #68 on all 69 approved papers (56 gradable). Haiku ran twice; the second run is the baseline.
+
+| Model | Design labels right | Mix-ups | Levels exact | Levels within one | Failed calls | Cost per run |
+|---|---|---|---|---|---|---|
+| `anthropic/claude-haiku-5.5` | 95.7%, 94.2% | 0, 0 | 69.1%, 72.7% | 98.2%, 96.4% | 0, 0 | $0.050, $0.050 |
+| `anthropic/claude-sonnet-5.5` | 98.6% | 0 | 57.1% | 94.6% | 0 | $0.97 |
+
+Haiku ships: it agrees with the labels on levels more often, and its misses are smaller, at a twentieth of the cost. Sonnet got one or two more design labels right. Both models grade lower than the labels when they miss, Sonnet more often: it took 11 of the 12 papers labelled low down to very low. Sonnet 5.5 refuses requests with reasoning turned off, so its run used low reasoning effort.
+
+Neither model wrote a funding concern that only says there are no conflicts: Sonnet wrote one real concern, Haiku none.

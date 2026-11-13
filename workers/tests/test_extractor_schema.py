@@ -116,6 +116,9 @@ VALID: list[dict[str, Any]] = [
     },
     {"ci_level": 50},
     {"ci_level": 99},
+    {"ci_level": "97.5"},
+    {"ci_level": "98.33"},
+    {"ci_level": "99.9"},
     {"measure": "mean_difference", "unit": "kg", "estimate": "0.6", "ci_lower": "-0.3"},
     {"measure": "risk_difference", "unit": "percentage points", "estimate": "1.0"},
     {"measure": "standardised_mean_difference", "estimate": "0.95"},
@@ -129,12 +132,16 @@ def test_valid_extractions(conn: Connection, overrides: dict[str, Any]) -> None:
 
 
 def test_numbers_keep_their_precision(conn: Connection) -> None:
-    extraction_id = conn.execute(text(EXTRACTION), _extraction(_ids(conn))).scalar_one()
+    extraction_id = conn.execute(
+        text(EXTRACTION), _extraction(_ids(conn), ci_level="97.5")
+    ).scalar_one()
     stored = conn.execute(
-        text("SELECT estimate::text, ci_lower::text FROM extractions WHERE id = :id"),
+        text(
+            "SELECT estimate::text, ci_lower::text, ci_level::text FROM extractions WHERE id = :id"
+        ),
         {"id": extraction_id},
     ).one()
-    assert tuple(stored) == ("0.91", "0.80")
+    assert tuple(stored) == ("0.91", "0.80", "97.5")
 
 
 INVALID: list[dict[str, Any]] = [
@@ -179,6 +186,8 @@ INVALID: list[dict[str, Any]] = [
     {"measure": "mean_difference", "estimate": "0.6", "ci_lower": "-0.3"},
     {"measure": "risk_difference", "estimate": "1.0"},
     {"ci_level": 49},
+    {"ci_level": "49.9"},
+    {"ci_level": "NaN"},
     {**NO_EFFECT, "ci_lower": "0.80", "ci_upper": "1.04", "ci_level": 95},
     {**NO_EFFECT, "unit": "kg"},
     {"estimate": "NaN", "ci_lower": None, "ci_upper": None, "ci_level": None},

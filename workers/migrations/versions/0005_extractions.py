@@ -67,7 +67,7 @@ def upgrade() -> None:
         sa.Column("estimate", sa.Numeric(), nullable=True),
         sa.Column("ci_lower", sa.Numeric(), nullable=True),
         sa.Column("ci_upper", sa.Numeric(), nullable=True),
-        sa.Column("ci_level", sa.SmallInteger(), nullable=True),
+        sa.Column("ci_level", sa.Numeric(), nullable=True),
         sa.Column("unit", sa.Text(), nullable=True),
         sa.Column("outcome_label", sa.Text(), nullable=True),
         sa.Column("comparison_label", sa.Text(), nullable=True),
@@ -134,7 +134,10 @@ def upgrade() -> None:
             "measure NOT IN ('mean_difference', 'risk_difference') OR unit IS NOT NULL",
             name=op.f("ck_extractions_difference_unit"),
         ),
-        sa.CheckConstraint("ci_level BETWEEN 50 AND 99", name=op.f("ck_extractions_ci_level")),
+        # A level as the study states it, such as 95 or 97.5; never rounded.
+        sa.CheckConstraint(
+            "ci_level >= 50 AND ci_level < 100", name=op.f("ck_extractions_ci_level")
+        ),
         sa.CheckConstraint(
             f"NOT (measure IN {RATIO_MEASURES}) OR "
             "(estimate > 0 AND (ci_lower IS NULL OR ci_lower > 0) AND unit IS NULL)",

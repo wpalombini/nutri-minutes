@@ -599,7 +599,7 @@ class Extraction(Base):
     estimate: Mapped[Decimal | None] = mapped_column(Numeric)
     ci_lower: Mapped[Decimal | None] = mapped_column(Numeric)
     ci_upper: Mapped[Decimal | None] = mapped_column(Numeric)
-    ci_level: Mapped[int | None] = mapped_column(SmallInteger)
+    ci_level: Mapped[Decimal | None] = mapped_column(Numeric)
     unit: Mapped[str | None] = mapped_column(Text)
     outcome_label: Mapped[str | None] = mapped_column(Text)
     comparison_label: Mapped[str | None] = mapped_column(Text)
@@ -647,7 +647,8 @@ class Extraction(Base):
             "measure NOT IN ('mean_difference', 'risk_difference') OR unit IS NOT NULL",
             name="difference_unit",
         ),
-        CheckConstraint("ci_level BETWEEN 50 AND 99", name="ci_level"),
+        # A level as the study states it, such as 95 or 97.5; never rounded.
+        CheckConstraint("ci_level >= 50 AND ci_level < 100", name="ci_level"),
         CheckConstraint(
             f"NOT ({_in_list('measure', RATIO_MEASURES)}) OR "
             "(estimate > 0 AND (ci_lower IS NULL OR ci_lower > 0) AND unit IS NULL)",

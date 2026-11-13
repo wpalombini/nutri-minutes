@@ -402,7 +402,7 @@ The Extractor's structured facts for a graded article: who was studied, what was
 | `measure` | `text` | Yes | The main effect's measure: `risk_ratio`, `odds_ratio`, `hazard_ratio`, `rate_ratio`, `mean_difference`, `risk_difference` or `standardised_mean_difference`. Null when the abstract reports no effect size for the main outcome; then every column to `effect_quote` is null too. |
 | `estimate` | `numeric` | Yes | The effect, with the study's precision: `numeric` keeps the digits as stored, so 0.80 stays 0.80. Set exactly when `measure` is. |
 | `ci_lower`, `ci_upper` | `numeric` | Yes | The confidence interval's limits. Both null when the abstract gives no range. |
-| `ci_level` | `smallint` | Yes | The interval's level, such as 95. Set exactly when the limits are. |
+| `ci_level` | `numeric` | Yes | The interval's level as the study states it, such as 95 or 97.5, never rounded. Set exactly when the limits are. |
 | `unit` | `text` | Yes | For differences, such as `kg` or `percentage points`. Always null for ratios. |
 | `outcome_label` | `text` | Yes | What the effect is on, such as "Hip fracture risk" |
 | `comparison_label` | `text` | Yes | What was compared, such as "Highest compared with lowest dairy intake" |
@@ -413,7 +413,7 @@ The Extractor's structured facts for a graded article: who was studied, what was
 **Constraints and indexes:**
 - Every text column is non-empty when set, and a comparator comes with its quote.
 - With a `measure`, `estimate`, `outcome_label`, `comparison_label`, both direction words and `effect_quote` are required; without one, all main-effect columns are null.
-- An interval is consistent: both limits and a level or none, the lower limit below the upper, and the estimate between them (a limit may equal it). The level is 50 to 99.
+- An interval is consistent: both limits and a level or none, the lower limit below the upper, and the estimate between them (a limit may equal it). The level is at least 50 and below 100.
 - Numbers are finite (`numeric` would otherwise accept `NaN` and infinities). Ratios have a positive estimate and lower limit, and no unit; mean and risk differences need a unit, and a standardised mean difference may have none.
 - Inconsistent numbers are rejected, not stored, so the interval's "inconsistent numbers" state never comes from this table. An abstract whose numbers can't be stored this way fails the article after the Extractor's retries.
 - That `grade_id` is a graded row for the same article, and `model_call_id` a call about it, spans tables, so the Extractor's code ensures it.

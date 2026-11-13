@@ -182,7 +182,7 @@ In `@media (forced-colors: active)`, backgrounds are removed by default, which w
 | `scale` | enum | `ratio` or `difference`, derived from `measure` by the API so clients don't map it themselves |
 | `estimate` | decimal string | Kept as a string with the study's precision; parse only to position |
 | `ci_lower`, `ci_upper` | decimal string or null | Both null when no interval is reported |
-| `ci_level` | integer | Usually 95 |
+| `ci_level` | decimal string | As the study states it: usually "95", sometimes "97.5". Printed as given, never rounded |
 | `unit` | string or null | For differences ("kg", "percentage points") |
 | `outcome_label` | string | "Hip fracture risk" |
 | `comparison_label` | string | "Highest compared with lowest dairy intake" |

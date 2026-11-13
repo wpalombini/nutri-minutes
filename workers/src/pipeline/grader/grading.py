@@ -174,7 +174,13 @@ def _choice(reply: dict[str, Any], key: str, allowed: tuple[str, ...]) -> str:
 def _funding(reply: dict[str, Any]) -> Funding:
     funder_type = _choice(reply, "funder_type", FUNDER_TYPES)
     source = _choice(reply, "funding_source", MODEL_FUNDING_SOURCES)
-    if (source == "not_stated") != (funder_type == "not_stated"):
+    funder = _text(reply, "funder")
+    if funder_type == "not_stated" and source != "not_stated":
+        # The model found no funder type it could name, so treat the funding as not stated
+        # rather than fail the article (run 16: "not stated" with source "abstract").
+        source, funder = "not_stated", None
+    if source == "not_stated" and funder_type != "not_stated":
+        # A named funder type with no source could hide an industry funder; fail instead.
         raise ReplyError("Funding source and funder type disagree on whether funding is stated")
     roles = reply.get("sponsor_roles")
     if not isinstance(roles, list) or not set(roles) <= set(SPONSOR_ROLES):
@@ -183,7 +189,7 @@ def _funding(reply: dict[str, Any]) -> Funding:
     if not isinstance(surrogate, bool):
         raise ReplyError("Reply has no surrogate_outcome true or false")
     return Funding(
-        funder=_text(reply, "funder"),
+        funder=funder,
         funder_type=funder_type,
         funding_source=source,
         funder_sells_product=_choice(reply, "funder_sells_product", YES_NO_UNKNOWN),

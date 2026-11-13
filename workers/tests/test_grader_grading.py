@@ -206,6 +206,12 @@ def test_funding_not_stated_is_kept() -> None:
     assert grade.funding.funding_source == "not_stated"
 
 
+def test_funder_type_not_stated_settles_funding_as_not_stated() -> None:
+    grade = _grade(funder="private donation", funder_type="not_stated", funding_source="abstract")
+    assert grade.funding.funding_source == "not_stated"
+    assert grade.funding.funder is None
+
+
 def test_not_gradable() -> None:
     assert parse_reply(not_gradable("protocol")) == NotGradable(
         "protocol", "An overview without a systematic search."
@@ -222,7 +228,6 @@ def test_not_gradable() -> None:
         ({"design_category": "review", "review_includes": "none"}, "review_includes"),
         ({"main_outcome": ""}, "main outcome"),
         ({"participants": 0}, "participants"),
-        ({"funder_type": "not_stated"}, "disagree"),
         ({"funding_source": "not_stated"}, "disagree"),
         ({"moves": [move("size", text=" ")]}, "no text"),
         ({"moves": [move("funding_and_conflicts")]}, "factor"),

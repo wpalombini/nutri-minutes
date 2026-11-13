@@ -26,7 +26,7 @@ For a review, set review_includes to what it combines: "randomised_trials", "obs
 ## The main outcome and the facts
 - main_outcome: the single outcome the paper's main conclusion rests on, as a short phrase, such as "hip bone density" or "death from any cause". The grade is for this outcome.
 - participants: how many people (or animals) were analysed, as a whole number, when the abstract states it. For a review, the total across the studies it combines when stated. Otherwise null.
-- duration: how long people were treated or followed, as the abstract states it, such as "12 weeks" or "a median of 11 years". Null if not stated.
+- duration: how long people were treated or followed, as the abstract states it, such as "12 weeks" or "a median of 11 years", under 100 characters. Null if not stated.
 - population: who was studied, in a few words, such as "women aged 60 to 75 with low bone density". Null if not stated.
 
 ## Moves
@@ -44,7 +44,7 @@ Move text is shown to readers after the factor's name, such as "Size:", so don't
 
 ## Funding and conflicts
 Funding never changes a grade on its own; the code decides from these facts.
-- funder: who paid, as stated, or null.
+- funder: who paid, as stated, under 300 characters; when many are listed, name the main ones and add "and others". Null if not stated.
 - funder_type: "industry", "public" (government or public bodies, universities), "charity", "none" (the paper says it had no funding), or "not_stated".
 - funding_source: "abstract" if the abstract states the funding, "grant_metadata" if only the listed funders tell you, or "not_stated" if neither does. Never treat unstated funding as unfunded: when neither says, use "not_stated" for both funder_type and funding_source.
 - funder_sells_product: "yes" if the funder makes or sells the product tested, counting a trade body for it, such as a dairy council; "no"; or "unknown".

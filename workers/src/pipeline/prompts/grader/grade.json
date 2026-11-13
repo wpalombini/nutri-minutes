@@ -75,7 +75,7 @@
           "string",
           "null"
         ],
-        "maxLength": 100
+        "maxLength": 200
       },
       "population": {
         "type": [
@@ -130,7 +130,7 @@
           "string",
           "null"
         ],
-        "maxLength": 300
+        "maxLength": 600
       },
       "funder_type": {
         "type": "string",

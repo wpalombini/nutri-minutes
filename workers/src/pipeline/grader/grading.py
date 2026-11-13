@@ -175,12 +175,13 @@ def _funding(reply: dict[str, Any]) -> Funding:
     funder_type = _choice(reply, "funder_type", FUNDER_TYPES)
     source = _choice(reply, "funding_source", MODEL_FUNDING_SOURCES)
     funder = _text(reply, "funder")
-    if funder_type == "not_stated" and source != "not_stated":
-        # The model found no funder type it could name, so treat the funding as not stated
-        # rather than fail the article (run 16: "not stated" with source "abstract").
-        source, funder = "not_stated", None
-    if source == "not_stated" and funder_type != "not_stated":
-        # A named funder type with no source could hide an industry funder; fail instead.
+    sells = _choice(reply, "funder_sells_product", YES_NO_UNKNOWN)
+    if funder_type == "not_stated" and funder is None and sells != "yes":
+        # The model named no funder and no funder type, so the funding is not stated whatever
+        # source it gave (run 16: "not stated" with source "abstract" or "grant_metadata").
+        source = "not_stated"
+    if (source == "not_stated") != (funder_type == "not_stated"):
+        # Any other mismatch could hide a funder, such as an industry one; fail instead.
         raise ReplyError("Funding source and funder type disagree on whether funding is stated")
     roles = reply.get("sponsor_roles")
     if not isinstance(roles, list) or not set(roles) <= set(SPONSOR_ROLES):
@@ -192,7 +193,7 @@ def _funding(reply: dict[str, Any]) -> Funding:
         funder=funder,
         funder_type=funder_type,
         funding_source=source,
-        funder_sells_product=_choice(reply, "funder_sells_product", YES_NO_UNKNOWN),
+        funder_sells_product=sells,
         sponsor_roles=tuple(r for r in SPONSOR_ROLES if r in roles),
         conflicts=declared_conflicts(_text(reply, "conflicts")),
         registered=_choice(reply, "registered", YES_NO_UNKNOWN),

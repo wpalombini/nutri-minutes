@@ -6,8 +6,9 @@ Every fact must be traceable, so the reply is rejected (and the model asked agai
   match "0.80" and "95.0" doesn't match "95";
 - the main effect's estimate and limits appear in its quote, and a positive estimate isn't
   quoted only with a minus sign;
+- the interval's level appears in the abstract with a % sign or "per cent";
 - the main effect fits the shape `extractions` stores: a known measure, an interval that
-  contains its estimate, a stated level from 50 to below 100, ratios above 0 with no unit,
+  contains its estimate, a level from 50 to below 100, ratios above 0 with no unit,
   mean and risk differences with a unit.
 The table checks the shape again, but checking it here means a bad reply is asked again instead
 of failing the article on a database error.
@@ -247,8 +248,8 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
         upper_at = _quoted_number(raw_upper, quote, "upper limit")
         if not _distinct_places(estimate_at, lower_at, upper_at):
             raise ReplyError("The estimate and limits aren't three separate numbers in the quote")
-        level_pattern = rf"(?<![\d.]){re.escape(raw_level)}\s?%"
-        if not re.search(level_pattern, _number_form(abstract)):
+        level_pattern = rf"(?<![\d.]){re.escape(raw_level)}(?:\s?%|\s+per\s?cent\b)"
+        if not re.search(level_pattern, _number_form(abstract), re.IGNORECASE):
             raise ReplyError(f"The interval's level {raw_level}% isn't in the abstract")
         if not MIN_CI_LEVEL <= level < MAX_CI_LEVEL:
             raise ReplyError(f"The interval's level {raw_level} isn't from 50 to below 100")

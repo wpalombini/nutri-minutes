@@ -263,7 +263,8 @@ def source_for(article: WriterArticle) -> Source:
 
 
 SELECT_ARTICLES = """
-SELECT a.id, a.title, a.abstract, x.id AS extraction_id, x.source_basis, x.population, x.population_quote,
+SELECT a.id, a.title, a.abstract, x.id AS extraction_id, x.source_basis,
+       x.population, x.population_quote,
        x.intervention,
        x.intervention_quote, x.comparator, x.comparator_quote, x.measure, x.estimate, x.ci_lower,
        x.ci_upper, x.ci_level, x.unit, x.outcome_label, x.comparison_label, x.lower_label,

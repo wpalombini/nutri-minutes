@@ -39,7 +39,7 @@ Let a reader understand in under a minute what the study found, how sure we can 
 |  -------<===◆==|=>-----------  |
 |  0.5             1          2  |  end and null labels only
 |  Lower risk        Higher risk |
-| Hip fracture risk was 9% lower |  caption
+| Hip fracture risk was lower    |  caption
 | … Hazard ratio 0.91, 95%       |
 | confidence interval 0.80 to    |
 | 1.04. The range includes 1, so |
@@ -81,7 +81,7 @@ Let a reader understand in under a minute what the study found, how sure we can 
 |  ------------------<=====◆=====|==>------------------------------------  |
 |  0.5          0.67             1             1.5                    2   |
 |  Lower risk                                                Higher risk  |
-|  Hip fracture risk was 9% lower … (caption, measure.caption)             |
+|  Hip fracture risk was lower … (caption, measure.caption)                |
 |                                                                          |
 | What the study found                          | +----------------------+ |
 | (body, measure.body, in study-column-max)     | | Study at a glance    | |

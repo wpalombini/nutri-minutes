@@ -5,15 +5,17 @@ again) unless:
 - the headline, result sentence and absolute sentence are single lines, and every text has words;
 - the body has 2 to 4 paragraphs and 150 to 250 words, and the limits fill the page's 2 to 4
   "does not show" items with the app's fixed first item (so 1 to 3 when it has one);
-- every number in it appears in the extraction (its fields, facts or quotes), so nothing is
-  computed, rounded or brought in from elsewhere;
+- every number written in digits appears in the extraction (its fields, facts or quotes), so
+  nothing is computed, rounded or brought in from elsewhere;
 - an absolute sentence is given only when the extraction has absolute numbers;
 - the body reads no higher than grade 10 (Flesch-Kincaid, computed here). The target is grade 8
   to 10, but plain text often scores below 8, so a lower score never fails a summary;
 - it never says "AI" and never gives advice;
 - it mentions the funding when the funder sells the product tested;
 - when the abstract's licence doesn't allow reuse, no run of 8 or more words is copied from it.
-The Fact-Checker and the Hype Detector check meaning later; these are the checks code can make.
+- no limit repeats the app's fixed first item (the same text, or a run of 6 or more of its words).
+Numbers written as words, such as "twice" or "nine", aren't checked here. The Fact-Checker and
+the Hype Detector check meaning later; these are the checks code can make.
 """
 
 import re
@@ -30,6 +32,8 @@ MIN_BODY_WORDS, MAX_BODY_WORDS = 150, 250
 SHOWN_LIMITS_MIN, SHOWN_LIMITS_MAX = 2, 4
 """"What this study does not show" items a reader sees, the app's fixed first item included."""
 MAX_READING_GRADE = Decimal(10)
+FIXED_LIMIT_RUN_WORDS = 6
+"""A limit sharing this many words in a row with the fixed first item repeats it."""
 COPY_RUN_WORDS = 8
 """The shortest run of words, copied from an abstract we may not reuse, that fails a summary."""
 
@@ -48,14 +52,17 @@ _ADVICE = re.compile(
     r"|(?:talk|speak) to your (?:doctor|gp|pharmacist)"
     r"|(?:ask|consult|see) your (?:doctor|gp|pharmacist)"
     r"|consult (?:a|your) (?:doctor|health professional|healthcare provider)"
-    r"|(?:start|stop|try|consider) (?:taking|eating|drinking|adding|using)"
+    r"|(?:^|(?<=[.!?] ))(?:start|stop|try|consider) (?:taking|eating|drinking|adding|using)"
     r"|is (?:recommended|advised) for (?:you|everyone|older adults|adults)"
     r")\b",
     re.IGNORECASE,
 )
 """Phrases that tell the reader what to do. Summaries report what a study found; they never
 advise. This catches the common forms; the Hype Detector looks for the rest."""
-_FUNDING = re.compile(r"\b(fund\w*|paid for|sponsor\w*|financed|financial support)\b", re.I)
+_FUNDING = re.compile(
+    r"\b(fund(?:ed|ing|er|ers|s)?|paid for|sponsor(?:ed|s|ship)?|financed|financial support)\b",
+    re.IGNORECASE,
+)
 
 
 class ReplyError(ModelCallError):
@@ -70,8 +77,8 @@ class Source:
     """Every extraction text a number may come from: fields, labels, facts and quotes."""
     effect_numbers: tuple[Decimal, ...]
     has_absolute: bool
-    fixed_limit: bool
-    """Whether the app shows a fixed first "does not show" item for this design."""
+    fixed_limit: str | None
+    """The fixed first "does not show" item the app shows for this design, if any."""
     funder_sells_product: bool
     abstract: str
     may_reuse_abstract: bool
@@ -183,7 +190,7 @@ def _check_shape(paragraphs: tuple[str, ...], limits: tuple[str, ...], source: S
         raise ReplyError(
             f"The body has {count} words; it needs {MIN_BODY_WORDS} to {MAX_BODY_WORDS}"
         )
-    low, high = limit_range(source.fixed_limit)
+    low, high = limit_range(source.fixed_limit is not None)
     if not low <= len(limits) <= high:
         raise ReplyError(f"There are {len(limits)} limits; give {low} to {high}")
 
@@ -217,9 +224,20 @@ def _check_wording(fields: Iterable[tuple[str, str]]) -> None:
             )
 
 
-def _runs(text: str) -> set[tuple[str, ...]]:
+def _runs(text: str, size: int = COPY_RUN_WORDS) -> set[tuple[str, ...]]:
     found = [w.lower().replace("\u2019", "'") for w in words(text)]
-    return {tuple(found[i : i + COPY_RUN_WORDS]) for i in range(len(found) - COPY_RUN_WORDS + 1)}
+    return {tuple(found[i : i + size]) for i in range(len(found) - size + 1)}
+
+
+def _check_fixed_limit(limits: tuple[str, ...], source: Source) -> None:
+    if source.fixed_limit is None:
+        return
+    fixed_runs = _runs(source.fixed_limit, FIXED_LIMIT_RUN_WORDS)
+    for position, limit in enumerate(limits, start=1):
+        if _runs(limit, FIXED_LIMIT_RUN_WORDS) & fixed_runs:
+            raise ReplyError(
+                f"Limit {position} repeats the page's fixed first item; give a different limit"
+            )
 
 
 def _check_copying(fields: Iterable[tuple[str, str]], source: Source) -> None:
@@ -247,6 +265,7 @@ def parse_reply(reply: dict[str, Any], source: Source) -> Draft:
     paragraphs = _texts(reply, "paragraphs")
     limits = _texts(reply, "limits")
     _check_shape(paragraphs, limits, source)
+    _check_fixed_limit(limits, source)
     if absolute_sentence is not None and not source.has_absolute:
         raise ReplyError("The facts have no absolute numbers, so absolute_sentence must be null")
 
@@ -261,8 +280,7 @@ def parse_reply(reply: dict[str, Any], source: Source) -> Draft:
     _check_wording(fields)
     _check_copying(fields, source)
 
-    body = "\n\n".join(paragraphs)
-    grade = reading_grade(body)
+    grade = reading_grade("\n\n".join(paragraphs))
     if grade > MAX_READING_GRADE:
         raise ReplyError(
             f"The body reads at grade {grade}, above grade {MAX_READING_GRADE}: use shorter "

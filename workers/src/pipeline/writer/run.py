@@ -255,7 +255,7 @@ def source_for(article: WriterArticle) -> Source:
         numbers_text=tuple(t for t in numbers_text if t),
         effect_numbers=tuple(effect_numbers),
         has_absolute=any(kind == "absolute" for kind, _, _ in article.facts),
-        fixed_limit=article.design_category in FIXED_LIMITS,
+        fixed_limit=FIXED_LIMITS.get(article.design_category),
         funder_sells_product=article.funder_sells_product == "yes",
         abstract=article.abstract,
         may_reuse_abstract=article.may_reuse_abstract,
@@ -263,8 +263,8 @@ def source_for(article: WriterArticle) -> Source:
 
 
 SELECT_ARTICLES = """
-SELECT a.id, a.title, a.abstract, x.id AS extraction_id, x.source_basis, x.created_at
-       AS extraction_created_at, x.population, x.population_quote, x.intervention,
+SELECT a.id, a.title, a.abstract, x.id AS extraction_id, x.source_basis, x.population, x.population_quote,
+       x.intervention,
        x.intervention_quote, x.comparator, x.comparator_quote, x.measure, x.estimate, x.ci_lower,
        x.ci_upper, x.ci_level, x.unit, x.outcome_label, x.comparison_label, x.lower_label,
        x.higher_label, x.effect_quote, g.id AS grade_id, g.design_category, g.review_includes,
@@ -412,7 +412,8 @@ def _set_stage(conn: Connection, run: Run, article_id: int, error: str | None) -
 def _store(conn: Connection, run: Run, article: WriterArticle, draft: Draft, call_id: int) -> None:
     # The extraction must still be the article's current one, and the call about this article,
     # so a summary never points at another article's facts or ones replaced while the model was
-    # writing. A re-extraction in the meantime fails the article here; a person re-runs it.
+    # writing. A re-extraction in the meantime fails the article here; the next run writes it again
+    # from the new extraction.
     current = conn.execute(CURRENT_EXTRACTION, {"article_id": article.id}).scalar_one_or_none()
     if current != article.extraction_id:
         raise RuntimeError(

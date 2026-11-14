@@ -202,6 +202,7 @@ def test_words_containing_ai_pass(word: str) -> None:
         "Talk to your doctor before starting.",
         "Experts recommend more vitamin D.",
         "Consider taking a supplement.",
+        "The results were clear. Start eating more fish.",
     ],
 )
 def test_advice_is_rejected(advice: str) -> None:
@@ -284,3 +285,32 @@ def test_prompt_inputs_describe_the_article() -> None:
     )
     assert "Funder: Dairy Co (industry)." in inputs["funding"]
     assert "sells the product tested: yes" in inputs["funding"]
+
+
+def test_fundamental_is_not_a_funding_mention() -> None:
+    article = replace(
+        ARTICLE, funder="A supplement maker", funder_type="industry", funder_sells_product="yes"
+    )
+    with pytest.raises(ReplyError, match="who funded the study"):
+        _parse(written(paragraphs=_with_paragraph("The fundamental question remains.")), article)
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "Half the group was asked to start eating more fish.",
+        "The researchers did not consider using a different dose.",
+    ],
+)
+def test_describing_what_a_study_did_is_not_advice(description: str) -> None:
+    _parse(written(paragraphs=_with_paragraph(description)))
+
+
+def test_a_limit_must_not_repeat_the_fixed_item() -> None:
+    observational = replace(ARTICLE, design_category="observational", design="observational")
+    with pytest.raises(ReplyError, match="repeats the page's fixed first item"):
+        _parse(
+            written(limits=["It can't show cause and effect, only a link."]),
+            observational,
+        )
+    _parse(written(limits=["It can't show what dose works best."]), observational)

@@ -33,7 +33,7 @@ Highest compared with lowest dairy intake                    type.meta, text.sec
 0.5         0.67              1             1.5         2    tick labels, type.figures, text.secondary
 Lower risk                                     Higher risk   direction words, type.meta-strong, text.primary
                                                              space.16
-Hip fracture risk was 9% lower among people who ate the      caption, type.interface,
+Hip fracture risk was lower among people who ate the         caption, type.interface,
 most dairy. Hazard ratio 0.91, 95% confidence interval       text.primary, measure.caption
 0.80 to 1.04. The range includes 1, so no difference is
 still plausible.
@@ -122,8 +122,8 @@ Only for ratios beyond 0.1 or 10. The bar runs to the edge of the plot and that 
 
 Built from structured fields in this order, as one `<figcaption>`:
 
-1. **Plain result** (`result_sentence`, written and fact-checked by the pipeline): "Hip fracture risk was 9% lower among people who ate the most dairy."
-2. **Absolute numbers**, when the study gives them (`absolute_sentence`): "That's 19 in every 1,000 people compared with 21 in every 1,000 over 11 years."
+1. **Plain result** (`result_sentence`, written and fact-checked by the pipeline): "Hip fracture risk was lower among people who ate the most dairy."
+2. **Absolute numbers**, when the study gives them (`absolute_sentence`): "Hip fractures occurred in 152 of 7,012 people who ate the most dairy and 171 of 7,005 who ate the least." Every number in either sentence is copied from the study's extracted facts; the pipeline never computes a percentage or rate from the effect.
 3. **Numbers in full,** formatted by the app from the numeric fields so they always match the drawing: "{Measure name} {estimate}, {level}% confidence interval {lower} to {upper}." Measure names in words: "Hazard ratio", "Risk ratio", "Odds ratio", "Rate ratio", "Mean difference", "Risk difference", "Standardised mean difference". Differences add the unit after each number ("−1.2 kg"). Decimals as the API provides them (it keeps the study's precision); never round further.
 4. **No-difference sentence,** fixed text, only when the interval includes no difference: "The range includes 1, so no difference is still plausible." (ratios) or "The range includes 0, so no difference is still plausible." (differences). Nothing is added when it doesn't: the app never adds words like "significant" or "proven".
 5. **Clipped note**, if an end is clipped (above).

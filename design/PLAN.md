@@ -199,7 +199,7 @@ Wireframe rows are shortened to fit. The real rows always show full labels, such
 |  -------<===◆==|=>-----------  |
 |  0.5   0.67      1   1.5    2  |
 |  Lower risk        Higher risk |
-| Hip fracture risk was 9% lower |
+| Hip fracture risk was lower    |
 | (HR 0.91, 95% CI 0.80-1.04).   |
 | The range crosses 1, so no     |
 | difference is still plausible. |
@@ -242,7 +242,7 @@ Wireframe rows are shortened to fit. The real rows always show full labels, such
 |                               No difference                              |
 |  0.5 ------------------<=====◆=====|==>------------------------------ 2  |
 |  Lower risk                                                Higher risk   |
-|  Hip fracture risk was 9% lower (HR 0.91, 95% CI 0.80 to 1.04). ...      |
+|  Hip fracture risk was lower (HR 0.91, 95% CI 0.80 to 1.04). ...         |
 |                                                                          |
 | What the study found                          | +----------------------+ |
 | Researchers followed 31,200 adults ...        | | Study at a glance    | |

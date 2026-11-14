@@ -18,7 +18,7 @@
 - `abstract` (optional): stored only for CC BY and CC0 papers, as in the Grader dataset. Every other abstract is fetched from Europe PMC by PMID and cached outside the repo (`evals/abstracts.py`).
 
 ## How the papers were chosen
-The 56 papers the Grader dataset labels gradable, since the Extractor only reads graded articles. They cover every design: 14 reviews, 14 randomised trials, 16 observational studies, 2 non-randomised trials, 5 animal and 5 lab studies.
+The 56 papers the Grader dataset labels gradable, since the Extractor only reads graded articles. By the Grader dataset's labels they cover every design: 14 reviews, 14 randomised trials, 16 observational studies, 2 non-randomised trials, 5 animal and 5 lab studies.  keeps production's design even where it differs: production graded three of the observational studies (pmids 42968090, 42969229, 42997011) as non-randomised trials.
 
 The 56 papers: 21 with a main effect (8 mean differences, 7 standardised mean differences, 4 odds ratios, 2 hazard ratios) and 35 without one, mostly because the abstract gives only p values, group means or no numbers at all. 13 rows accept another main effect too, 5 papers give absolute numbers per group and 27 state a limit.
 
@@ -30,4 +30,4 @@ Labels were drafted from the abstracts using the Extractor's prompt. A second la
   - A difference on a score given without a unit takes "points" as its unit.
 
 ## Known gap
-One row, a time difference stated as "4.17 days" shorter (pmid 42968156), expects -4.17 with limits -6.44 and -1.90, as the prompt asks. The Extractor's code check rejects that answer today, because the limits appear in the abstract in the opposite order ("1.90-6.44"). The eval will count it as a miss until the check accepts swapped limits for a negated difference.
+One row, a time difference stated as "4.17 days" shorter (pmid 42968156), expects -4.17 with limits -6.44 and -1.90: the prompt asks for the negative estimate, and the limits follow from it. The Extractor's code check rejects that answer today, because the limits appear in the abstract in the opposite order ("1.90-6.44"). Production fails such articles the same way, after three calls. Until the check accepts swapped limits for a negated difference, and the prompt says how to write them, the eval counts this row as a miss.

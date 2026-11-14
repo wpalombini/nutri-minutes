@@ -12,7 +12,14 @@ from pipeline.models.client import CallRequest
 from pipeline.models.prompts import Prompt
 from pipeline.notify import Severity
 from pipeline.runs import agent_lock
-from tests.extractor_helpers import NO_EFFECT, add_grade, extracted, extractor_prompt, insert_graded
+from tests.extractor_helpers import (
+    NO_EFFECT,
+    add_grade,
+    extracted,
+    extractor_prompt,
+    fact,
+    insert_graded,
+)
 from tests.fakes import FakeNotifier
 from tests.grader_helpers import insert_in_scope
 from tests.triage_helpers import LoggedFakeClient
@@ -207,6 +214,26 @@ def test_a_reply_that_fails_the_checks_is_asked_again(clean_engine: Engine, prom
     with clean_engine.connect() as conn:
         last_call = conn.execute(text("SELECT max(id) FROM model_calls")).scalar_one()
     assert _extractions(clean_engine)[0].model_call_id == last_call
+    first, second = (request.inputs["check_failure"] for request in client.requests)
+    assert first == ""
+    assert second.startswith("<check_failure>") and "0.8" in second
+
+
+def test_the_last_call_drops_bad_facts(clean_engine: Engine, prompt: Prompt) -> None:
+    with clean_engine.begin() as conn:
+        insert_graded(conn, 1)
+    bad = fact("result", "Bone density rose by 2.4%.", "Bone density rose by 1.2% (p = 0.03).")
+    client = LoggedFakeClient(clean_engine, lambda _: extracted(facts=[bad, *extracted()["facts"]]))
+    result = run_extractor(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
+
+    assert result is not None and result.status == "succeeded"
+    assert len(client.requests) == 3
+    with clean_engine.connect() as conn:
+        stored = conn.execute(
+            text("SELECT position, fact FROM extraction_facts ORDER BY position")
+        ).all()
+    assert [position for position, _ in stored] == [1, 2, 3, 4]
+    assert "Bone density rose by 2.4%." not in [fact for _, fact in stored]
 
 
 def test_a_grade_replaced_mid_run_fails_the_article(clean_engine: Engine, prompt: Prompt) -> None:

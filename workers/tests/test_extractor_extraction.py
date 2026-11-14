@@ -36,6 +36,22 @@ def test_no_measure_with_effect_fields_fails() -> None:
     _fails("No measure", **{**NO_EFFECT, "estimate": "0.80"})
 
 
+@pytest.mark.parametrize("field", ["unit", "ci_level"])
+def test_no_measure_with_a_unit_or_interval_fails(field: str) -> None:
+    _fails("No measure", **{**NO_EFFECT, field: "95"})
+
+
+def test_no_measure_ignores_labels_and_effect_quote() -> None:
+    labels = {
+        "outcome_label": "Hip fracture risk",
+        "comparison_label": "Vitamin D compared with placebo",
+        "lower_label": "Lower risk",
+        "higher_label": "Higher risk",
+        "effect_quote": "not in the abstract",
+    }
+    assert parse_reply(extracted(**{**NO_EFFECT, **labels}), ABSTRACT).effect is None
+
+
 def test_no_comparator() -> None:
     extraction = parse_reply(extracted(comparator=None, comparator_quote=None), ABSTRACT)
     assert extraction.comparator is None and extraction.comparator_quote is None
@@ -85,7 +101,7 @@ def test_estimate_and_limits_must_be_in_the_effect_quote() -> None:
     _fails("upper limit 1.2", ci_upper="1.2")
 
 
-@pytest.mark.parametrize("value", ["0.80.1", "1e3", "0,80", "+0.80", "0.80%", ""])
+@pytest.mark.parametrize("value", ["0.80.1", "1e3", "0,80", "0.80%", "+", ""])
 def test_numbers_must_be_plain_decimals(value: str) -> None:
     _fails("estimate", estimate=value)
 
@@ -323,6 +339,23 @@ def test_numbers_in_labels_must_be_in_the_abstract() -> None:
     parse_reply(extracted(comparison_label="800 IU compared with placebo"), ABSTRACT)
 
 
+def test_bad_facts_are_dropped_only_when_asked() -> None:
+    bad = fact("result", "Bone density rose by 2.4%.", "Bone density rose by 1.2% (p = 0.03).")
+    reply = extracted(facts=[*extracted()["facts"], bad])
+    with pytest.raises(ReplyError, match=r"2\.4 in fact 5 isn't in fact 5's quote"):
+        parse_reply(reply, ABSTRACT)
+    extraction = parse_reply(reply, ABSTRACT, drop_bad_facts=True)
+    assert len(extraction.facts) == 4 and len(extraction.dropped) == 1
+    assert extraction.dropped[0].startswith("2.4 in fact 5")
+
+
+def test_dropping_bad_facts_never_drops_who_or_the_main_effect() -> None:
+    with pytest.raises(ReplyError, match="population quote"):
+        parse_reply(extracted(population_quote="Not in it"), ABSTRACT, drop_bad_facts=True)
+    with pytest.raises(ReplyError, match="estimate"):
+        parse_reply(extracted(estimate="0.81"), ABSTRACT, drop_bad_facts=True)
+
+
 def test_unknown_fact_kind_fails() -> None:
     _fails("no known kind", facts=[fact("opinion", "x", "Adherence was self-reported.")])
 
@@ -387,6 +420,22 @@ def test_typographic_minus_and_no_leading_zero_are_accepted() -> None:
     )
     effect = parse_reply(reply, abstract).effect
     assert effect is not None and effect.estimate == Decimal("-1.2")
+
+
+def test_an_explicit_plus_sign_is_accepted() -> None:
+    abstract = "Function changed less (-1.34%, 95% CI -4.15 to +1.57) than with usual care."
+    reply = _difference(
+        abstract,
+        "-1.34%, 95% CI -4.15 to +1.57",
+        estimate="-1.34",
+        ci_lower="-4.15",
+        ci_upper="+1.57",
+        ci_level="95",
+        unit="percentage points",
+        facts=[],
+    )
+    effect = parse_reply(reply, abstract).effect
+    assert effect is not None and str(effect.ci_upper) == "1.57"
 
 
 def test_thousands_removal_never_joins_decimals() -> None:

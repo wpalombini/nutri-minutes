@@ -28,9 +28,14 @@ Scores:
 - Units are compared ignoring case, spaces and "²" versus "2", and reported only.
 - A failed paper counts as wrong everywhere. The summary also gives calls, papers asked again and the cost per paper.
 
-CI (`extractor-eval`) blocks a pull request on more sign errors than `baseline.json`, more than 3 failed papers above it, main effects right or found falling more than 10 points below `baseline.json`, or stated limits found falling more than 15 points. Absolute numbers are reported only: one of the 5 papers moves the share by 20 points. The baseline also stores a hash of the labels, so any relabel marks it stale.
+CI (`extractor-eval`) blocks a pull request on any sign error, more than 10 failed papers, main effects right or found falling more than 10 points below `baseline.json`, or stated limits found falling more than 15 points. Absolute numbers are reported only: one of the 5 papers moves the share by 20 points. The baseline also stores a hash of the labels, so any relabel marks it stale.
 
-## First baseline (Haiku 5.5)
+## Baseline (Haiku 5.5)
+After the fixes below, four runs on 2026-11-14 failed 5 to 8 of 56 papers, with main effects right 82–88%, stated limits found 78–89%, no sign errors and US$0.0017–0.0019 per paper (1,000 articles about US$1.80). The baseline is the middle run: 6 failed, 85.7% right. What still fails is mostly the model keeping a number in the population or intervention that isn't in its quote (often a rounded one), or an effect quote it can't place.
+
+Fixes from the first baseline: the model is told which check its last reply failed when asked again; on the last call, extra facts that still fail are left out instead of failing the article; labels and effect quote are ignored when the measure is "none"; an explicit plus sign on a number is accepted; and the prompt says quotes come only from the abstract (the model was copying the Grader's population, even "not stated"), that "95% CI" states the level, and that numbers stay as written, words included.
+
+### First baseline
 Two runs on 2026-11-14: most papers fail all three calls (34 and 36 of 56), so main effects right is only 39% and 32%. The baseline is the lower run. Failures, both runs together: 17 replies with no measure but filled effect labels, 17 population quotes not word for word in the abstract, 14 fact numbers or quotes not in the quote or abstract, 9 intervals with limits but no level. One sign error (pmid 42968156, "4.17 days shorter" as +4.17), the known gap from #80. 42–45 papers needed more than one call; US$0.00225 per paper.
 
 ## How the papers were chosen

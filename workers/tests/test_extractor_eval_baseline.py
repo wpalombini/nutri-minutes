@@ -1,5 +1,5 @@
-"""The Extractor baseline check blocks a pull request on more sign errors than the baseline, on
-more than three failed papers above it, on a fall in main effects or stated limits beyond the
+"""The Extractor baseline check blocks a pull request on any sign error, on more than ten failed
+papers, on a fall in main effects or stated limits beyond the
 allowed margin, and on a stale baseline."""
 
 import json
@@ -13,7 +13,7 @@ from evals.abstracts import read_dataset
 from evals.extractor.__main__ import DATASET, main
 from evals.extractor.baseline import (
     BASELINE,
-    MAX_MORE_FAILED,
+    MAX_FAILED,
     baseline_data,
     check,
     read_baseline,
@@ -66,21 +66,24 @@ def test_a_run_like_the_baseline_passes() -> None:
     assert check(scores(wrong=1, no_limit=2), LABELS, baseline(wrong=1, no_limit=2)) == []
 
 
-def test_more_sign_errors_than_the_baseline_block() -> None:
-    problems = check(scores(signs=1), LABELS, baseline())
-    assert any("wrong sign, more than the baseline's 0: 0" in p for p in problems)
-    assert not [p for p in check(scores(signs=1), LABELS, baseline(signs=1)) if "sign" in p]
+def test_any_sign_error_blocks() -> None:
+    for base in (0, 1):
+        problems = check(scores(signs=1), LABELS, baseline(signs=base))
+        assert any("1 main effects with the wrong sign: " in p for p in problems)
+    assert not [p for p in check(scores(), LABELS, baseline()) if "sign" in p]
 
 
-def test_more_than_three_failed_papers_above_the_baseline_block() -> None:
+def test_more_than_ten_failed_papers_block_whatever_the_baseline() -> None:
     def failures(run: int, base: int) -> list[str]:
         return [
             p for p in check(scores(failed=run), LABELS, baseline(failed=base)) if "failed" in p
         ]
 
-    assert failures(MAX_MORE_FAILED, 0) == []
-    assert failures(MAX_MORE_FAILED + 1, 0) == ["4 papers failed, more than the 3 allowed"]
-    assert failures(5 + MAX_MORE_FAILED, 5) == []
+    assert failures(MAX_FAILED, 0) == []
+    assert failures(MAX_FAILED + 1, 0) == ["11 papers failed, more than the 10 allowed"]
+    assert failures(MAX_FAILED + 1, MAX_FAILED + 1) == [
+        "11 papers failed, more than the 10 allowed"
+    ]
 
 
 def test_main_effects_right_may_fall_ten_points() -> None:

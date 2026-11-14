@@ -23,6 +23,7 @@ Participants: {{ participants }}
 Duration: {{ duration }}
 Population: {{ population }}
 Abstract: {{ abstract }}
+{{ check_failure }}
 """
 
 REPLY_SCHEMA: dict[str, Any] = load_prompt(PROMPT_NAME).reply_schema

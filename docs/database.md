@@ -417,7 +417,7 @@ The Extractor's structured facts for a graded article: who was studied, what was
 - Numbers are finite (`numeric` would otherwise accept `NaN` and infinities). Ratios have a positive estimate and lower limit, and no unit; mean and risk differences need a unit, and a standardised mean difference may have none.
 - Inconsistent numbers are rejected, not stored, so the interval's "inconsistent numbers" state never comes from this table. An abstract whose numbers can't be stored this way fails the article after the Extractor's retries.
 - That `grade_id` is a graded row for the same article, and `model_call_id` a call about it, spans tables, so the Extractor's code ensures it.
-- That each quote appears in the abstract (ignoring differences in whitespace) and each number appears in its quote needs the source text, so the Extractor's code checks it and asks again, up to 3 calls, before failing the article.
+- That each quote appears in the abstract (ignoring differences in whitespace) and each number appears in its quote needs the source text, so the Extractor's code checks it and asks again, up to 3 calls, before failing the article (on the last call an extra fact that fails is left out instead).
 - An index on `(article_id, id)` finds an article's current extraction, and ones on `grade_id` and `model_call_id` find a grade's or a call's extractions.
 
 ### `extraction_facts`

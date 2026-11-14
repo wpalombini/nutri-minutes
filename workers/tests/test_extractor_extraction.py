@@ -207,6 +207,34 @@ def test_limits_out_of_order_fail_unless_negated_from_words(
         parse_reply(reply, abstract)
 
 
+@pytest.mark.parametrize(
+    ("quote", "estimate", "lower", "upper", "reason"),
+    [
+        # The estimate keeps its minus sign, the limits are negated from words.
+        ("MD \u22124.17 days; 95% CI 1.90-6.44", "-4.17", "-6.44", "-1.90", "separate numbers"),
+        # One limit negated from words, the other quoted with its minus sign.
+        ("MD 4.17 days; 95% CI \u22121.90 to 6.44", "-4.17", "-6.44", "-1.90", "separate numbers"),
+        # An interval crossing zero, stated in words: its flipped upper limit has a minus sign.
+        ("4.17 days shorter; 95% CI \u22120.40 to 6.44", "-4.17", "-6.44", "0.40", "minus sign"),
+    ],
+)
+def test_swapped_limits_need_everything_negated_from_words(
+    quote: str, estimate: str, lower: str, upper: str, reason: str
+) -> None:
+    abstract = f"Recovery changed ({quote})."
+    reply = _difference(
+        abstract,
+        quote,
+        estimate=estimate,
+        ci_lower=lower,
+        ci_upper=upper,
+        ci_level="95",
+        unit="days",
+    )
+    with pytest.raises(ReplyError, match=reason):
+        parse_reply(reply, abstract)
+
+
 def test_a_positive_estimate_quoted_only_with_a_minus_sign_fails() -> None:
     abstract = "Lean mass changed (MD \u22121.2 kg, 95% CI \u22122.0 to \u22120.4)."
     reply = _difference(

@@ -29,5 +29,7 @@ Labels were drafted from the abstracts using the Extractor's prompt. A second la
   - When the only number is an unadjusted estimate and the link didn't hold after adjustment, there is no main effect. The unadjusted number can still be a result fact.
   - A difference on a score given without a unit takes "points" as its unit.
 
-## Known gap
-One row, a time difference stated as "4.17 days" shorter (pmid 42968156), expects -4.17 with limits -6.44 and -1.90: the prompt asks for the negative estimate, and says the larger number becomes the lower limit. The limits appear in the abstract in the opposite order ("1.90-6.44"), which the Extractor's code check accepts only when both limits are negated from words.
+## Differences stated in words
+One row, a time difference stated as "4.17 days" shorter (pmid 42968156), expects -4.17 with limits -6.44 and -1.90: the prompt asks for the negative estimate and says to flip the sign of each limit, so the larger becomes the lower limit. The limits appear in the abstract in the opposite order ("1.90-6.44"), which the Extractor's code check accepts only when the estimate and both limits are negated from words.
+
+Known gap: an interval that crosses zero, stated in words ("1.2 kg less, 95% CI -0.4 to 2.8"), can't pass the check, because the flipped upper limit (0.4) is quoted only with a minus sign. Such articles fail after three calls.

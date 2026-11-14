@@ -1,0 +1,56 @@
+{
+  "model": "anthropic/claude-haiku-5.5",
+  "max_tokens": 2000,
+  "reasoning": {
+    "effort": "none"
+  },
+  "price_caps": {
+    "prompt": "0.12",
+    "completion": "0.60",
+    "request": "0"
+  },
+  "reply_schema": {
+    "type": "object",
+    "properties": {
+      "headline": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "paragraphs": {
+        "type": "array",
+        "maxItems": 4,
+        "items": {
+          "type": "string",
+          "maxLength": 1500
+        }
+      },
+      "limits": {
+        "type": "array",
+        "maxItems": 4,
+        "items": {
+          "type": "string",
+          "maxLength": 300
+        }
+      },
+      "result_sentence": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "absolute_sentence": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "maxLength": 300
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "headline",
+      "paragraphs",
+      "limits",
+      "result_sentence",
+      "absolute_sentence"
+    ]
+  }
+}

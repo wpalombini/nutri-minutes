@@ -36,7 +36,7 @@
     <text x="700" y="200" text-anchor="end">Higher risk</text>
   </g>
   <g font-family="Atkinson Hyperlegible Next, system-ui, sans-serif" font-size="18" fill="#122b27">
-    <text x="20" y="236">Hip fracture risk was 9% lower among people who ate the most dairy.</text>
+    <text x="20" y="236">Hip fracture risk was lower among people who ate the most dairy.</text>
     <text x="20" y="262">Hazard ratio 0.91, 95% confidence interval 0.80 to 1.04. The range</text>
     <text x="20" y="288">includes 1, so no difference is still plausible.</text>
   </g>

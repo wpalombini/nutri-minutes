@@ -195,7 +195,7 @@ def _decimal(reply: dict[str, Any], key: str, pattern: re.Pattern[str]) -> tuple
     raw = _required(reply, key)
     if raw[0] in _MINUS_SIGNS:
         raw = "-" + raw[1:]  # a typographic minus, as abstracts write it
-    elif raw[0] == "+" and len(raw) > 1:
+    elif raw[0] == "+" and raw[1:2] not in ("", *_MINUS_SIGNS, "+"):
         raw = raw[1:]  # an explicit plus, as in "-4.15 to +1.57"
     if not pattern.fullmatch(raw):
         raise ReplyError(f"Reply {key} isn't a plain decimal number")

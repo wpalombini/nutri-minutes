@@ -4,8 +4,8 @@
 interval caption's result and absolute-numbers sentences. `summary_limits` holds the "What this
 study does not show" items the Writer adds after the app's fixed first item. A summary is an
 unchecked draft: the Fact-Checker and the Hype Detector record their results in their own tables,
-and nothing publishes before both pass. That numbers come from the extraction, the reading level
-and the wording rules need the source and the extraction, so the Writer's code checks them.
+and nothing publishes before both pass. That numbers come from the extraction, and that the reading
+level and wording rules hold, needs the source and the extraction, so the Writer's code checks it.
 
 A re-write adds a row instead of changing one. The `pipeline_worker` role can only add rows.
 

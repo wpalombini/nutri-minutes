@@ -1,0 +1,66 @@
+name: extractor-eval
+
+# Runs the Extractor eval against the committed baseline (workers/evals/extractor/baseline.py)
+# on pull requests that could change its extractions. About $0.13 per run on the CI OpenRouter key.
+on:
+  pull_request:
+    paths: &paths
+      - "workers/src/pipeline/prompts/extractor/**"
+      - "workers/src/pipeline/models/**"
+      - "workers/src/pipeline/extractor/**"
+      - "workers/src/pipeline/db/models.py"
+      - "workers/evals/*.py"
+      - "workers/evals/extractor/**"
+      - "workers/pyproject.toml"
+      - "workers/uv.lock"
+      - ".github/workflows/extractor-eval.yml"
+  # Runs on main too, so the abstracts cache is saved where every pull request can restore it.
+  push:
+    branches: [main]
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extractor-eval-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  eval:
+    # Pull requests from forks and Dependabot get no repository secrets.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: workers
+    env:
+      EUROPE_PMC_CONTACT: contact@nutriminutes.com
+      EVAL_BUDGET_USD: "0.25"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.13.5"
+          working-directory: workers
+      - name: Install
+        run: uv sync --locked
+      # Abstracts that can't be stored in the repo are fetched once and cached between runs.
+      - name: Restore abstracts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/eval-abstracts
+          key: extractor-eval-abstracts-${{ hashFiles('workers/evals/extractor/dataset.jsonl') }}
+          restore-keys: extractor-eval-abstracts-
+      - name: Extractor eval
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          EVAL_CACHE_DIR: ${{ runner.temp }}/eval-abstracts
+        run: uv run python -m evals.extractor --check --budget "$EVAL_BUDGET_USD"

@@ -168,10 +168,11 @@ INSERT_FACT = text(
 )
 
 
-def _design(row: Any) -> str:
-    design = str(row.design_category).replace("_", " ")
-    if row.review_includes:
-        return f"{design} of {str(row.review_includes).replace('_', ' ')}"
+def design_text(design_category: str, review_includes: str | None) -> str:
+    """The Grader's design as the prompt shows it, such as "review of randomised trials"."""
+    design = design_category.replace("_", " ")
+    if review_includes:
+        return f"{design} of {review_includes.replace('_', ' ')}"
     return design
 
 
@@ -182,7 +183,7 @@ def _article(row: Any) -> ExtractorArticle:
         abstract=row.abstract,
         publication_types=tuple(row.publication_types),
         grade_id=int(row.grade_id),
-        design=_design(row),
+        design=design_text(str(row.design_category), row.review_includes),
         main_outcome=row.main_outcome,
         participants=row.participants,
         duration=row.duration,
@@ -274,7 +275,7 @@ def ask_model(
     client: ModelClient, article: ExtractorArticle, request: CallRequest
 ) -> tuple[Extraction, int]:
     """Ask the model, calling again when a reply fails the checks. Returns the extraction and the
-    call it came from. Used by runs and, later, the eval."""
+    call it came from. Used by runs and the eval."""
     abstract = article.abstract or ""
     for _ in range(REPLY_ATTEMPTS - 1):
         result = client.call(request)

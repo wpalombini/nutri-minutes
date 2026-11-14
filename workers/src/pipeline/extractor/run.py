@@ -46,10 +46,10 @@ STAGE = "extractor"
 PROMPT_NAME = "extractor/extract"
 SOURCE_BASIS = "abstract"
 """Only abstracts are used for now; reading permitted full text is a later task."""
-DEFAULT_BUDGET_USD = Decimal("2.00")
-"""Per run, unless `MODEL_BUDGET_USD_EXTRACTOR` sets another. An estimate until the eval measures
-the cost per article (about US$0.001 expected on Haiku 5.5). A spent budget stops the run, and
-the rest wait for the next."""
+DEFAULT_BUDGET_USD = Decimal("2.50")
+"""Per run, unless `MODEL_BUDGET_USD_EXTRACTOR` sets another. The eval measured about US$0.0018 an
+article on Haiku 5.5, so a full run of 1,000 articles costs about US$1.80, and this leaves room for
+retries. A spent budget stops the run, and the rest wait for the next."""
 COUNT_KEYS = ("selected", "with_main_effect", "without_main_effect", "failed")
 MAX_ERROR_LENGTH = 500
 REPLY_ATTEMPTS = 3

@@ -109,14 +109,14 @@
           "string",
           "null"
         ],
-        "maxLength": 40
+        "maxLength": 60
       },
       "higher_label": {
         "type": [
           "string",
           "null"
         ],
-        "maxLength": 40
+        "maxLength": 60
       },
       "effect_quote": {
         "type": [

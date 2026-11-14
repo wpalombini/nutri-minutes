@@ -7,9 +7,12 @@ Every fact must be traceable, so the reply is rejected (and the model asked agai
 - the main effect's estimate and limits appear in its quote, and a positive estimate isn't
   quoted only with a minus sign;
 - the interval's level appears in the abstract with a % sign, "per cent" or "percent";
+- with measure "none", no estimate, interval or unit is given (labels are ignored);
 - the main effect fits the shape `extractions` stores: a known measure, an interval that
   contains its estimate, a level from 50 to below 100, ratios above 0 with no unit,
   mean and risk differences with a unit.
+On the last call, a fact in `facts` that fails these checks is left out instead (`parse_reply`'s
+`drop_bad_facts`), so one bad extra fact doesn't fail the article; nothing unchecked is stored.
 The table checks the shape again, but checking it here means a bad reply is asked again instead
 of failing the article on a database error.
 """
@@ -26,19 +29,12 @@ from pipeline.models import ModelCallError
 NO_MEASURE = "none"
 DIFFERENCES_WITH_UNIT = ("mean_difference", "risk_difference")
 MIN_CI_LEVEL, MAX_CI_LEVEL = Decimal(50), Decimal(100)
-EFFECT_FIELDS = (
-    "estimate",
-    "ci_lower",
-    "ci_upper",
-    "ci_level",
-    "unit",
-    "outcome_label",
-    "comparison_label",
-    "lower_label",
-    "higher_label",
-    "effect_quote",
-)
-"""Reply fields that must all be null when the measure is "none"."""
+EFFECT_NUMBERS = ("estimate", "ci_lower", "ci_upper", "ci_level", "unit")
+"""Reply fields that must all be null when the measure is "none". The labels and effect quote are
+ignored then: the model often fills them in for a result it rightly gave no measure, and they are
+never stored without one."""
+EFFECT_LABELS = ("outcome_label", "comparison_label", "lower_label", "higher_label", "effect_quote")
+EFFECT_FIELDS = (*EFFECT_NUMBERS, *EFFECT_LABELS)
 
 _WHITESPACE = re.compile(r"\s+")
 _SEPARATORS = ",\u00a0\u2009\u202f"
@@ -89,6 +85,8 @@ class Extraction:
     comparator_quote: str | None
     effect: MainEffect | None
     facts: tuple[Fact, ...]
+    dropped: tuple[str, ...] = ()
+    """Why each fact left out by `parse_reply(..., drop_bad_facts=True)` failed its checks."""
 
 
 def normalise(text: str) -> str:
@@ -176,17 +174,20 @@ def _check_quote(quote: str, abstract: str, label: str) -> None:
     raise ReplyError(f"The {label} quote starts or ends partway through a number")
 
 
-def _check_numbers(text: str, quote: str, label: str) -> None:
+def _check_numbers(text: str, quote: str, field: str, quote_field: str) -> None:
     for number in numbers_in(text):
         if not appears(number, quote):
-            raise ReplyError(f"{number} in the {label} isn't in its quote")
+            raise ReplyError(
+                f"{number} in {field} isn't in {quote_field}, written the same way: remove it "
+                f"from {field} or quote a passage that contains it, without rounding"
+            )
 
 
 def _quoted(reply: dict[str, Any], key: str, abstract: str) -> tuple[str, str]:
     value = _required(reply, key)
     quote = _required(reply, f"{key}_quote")
     _check_quote(quote, abstract, key)
-    _check_numbers(value, quote, key)
+    _check_numbers(value, quote, key, f"{key}_quote")
     return value, quote
 
 
@@ -194,6 +195,8 @@ def _decimal(reply: dict[str, Any], key: str, pattern: re.Pattern[str]) -> tuple
     raw = _required(reply, key)
     if raw[0] in _MINUS_SIGNS:
         raw = "-" + raw[1:]  # a typographic minus, as abstracts write it
+    elif raw[0] == "+" and len(raw) > 1:
+        raw = raw[1:]  # an explicit plus, as in "-4.15 to +1.57"
     if not pattern.fullmatch(raw):
         raise ReplyError(f"Reply {key} isn't a plain decimal number")
     return raw, Decimal(raw)
@@ -234,7 +237,7 @@ def _distinct_places(
 def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
     measure = reply.get("measure")
     if measure == NO_MEASURE:
-        filled = [key for key in EFFECT_FIELDS if reply.get(key) is not None]
+        filled = [key for key in EFFECT_NUMBERS if reply.get(key) is not None]
         if filled:
             raise ReplyError(f"No measure, but the reply gives {', '.join(filled)}")
         return None
@@ -250,7 +253,11 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
     lower = upper = level = None
     if any(value is not None for value in limits):
         if not all(value is not None for value in limits):
-            raise ReplyError("An interval needs both limits and its level")
+            raise ReplyError(
+                "An interval needs both limits and its level: give ci_level as the abstract "
+                'states it ("95" for "95% CI"), or set ci_lower, ci_upper and ci_level all to '
+                "null if the abstract never states a level"
+            )
         raw_lower, lower = _decimal(reply, "ci_lower", _DECIMAL)
         raw_upper, upper = _decimal(reply, "ci_upper", _DECIMAL)
         raw_level, level = _decimal(reply, "ci_level", _LEVEL)
@@ -297,34 +304,51 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
     )
 
 
-def _facts(reply: dict[str, Any], abstract: str) -> tuple[Fact, ...]:
+def _fact(item: Any, position: int, abstract: str) -> Fact:
+    if not isinstance(item, dict):
+        raise ReplyError(f"Fact {position} isn't an object")
+    kind = item.get("kind")
+    if kind not in EXTRACTION_FACT_KINDS:
+        raise ReplyError(f"Fact {position} has no known kind")
+    fact = _required(item, "fact")
+    quote = _required(item, "quote")
+    _check_quote(quote, abstract, f"fact {position}")
+    _check_numbers(fact, quote, f"fact {position}", f"fact {position}'s quote")
+    return Fact(str(kind), fact, quote)
+
+
+def _facts(
+    reply: dict[str, Any], abstract: str, drop_bad: bool
+) -> tuple[tuple[Fact, ...], tuple[str, ...]]:
     items = reply.get("facts")
     if not isinstance(items, list):
         raise ReplyError("Reply facts aren't a list")
-    facts = []
+    facts, dropped = [], []
     for position, item in enumerate(items, start=1):
-        if not isinstance(item, dict):
-            raise ReplyError(f"Fact {position} isn't an object")
-        kind = item.get("kind")
-        if kind not in EXTRACTION_FACT_KINDS:
-            raise ReplyError(f"Fact {position} has no known kind")
-        fact = _required(item, "fact")
-        quote = _required(item, "quote")
-        _check_quote(quote, abstract, f"fact {position}")
-        _check_numbers(fact, quote, f"fact {position}")
-        facts.append(Fact(str(kind), fact, quote))
-    return tuple(facts)
+        try:
+            facts.append(_fact(item, position, abstract))
+        except ReplyError as exc:
+            if not drop_bad:
+                raise
+            dropped.append(str(exc))
+    return tuple(facts), tuple(dropped)
 
 
-def parse_reply(reply: dict[str, Any], abstract: str) -> Extraction:
+def parse_reply(reply: dict[str, Any], abstract: str, drop_bad_facts: bool = False) -> Extraction:
     """Read the model's reply and check it against the abstract. The client has checked the
-    schema; this checks the meaning. Raises `ReplyError` on the first problem."""
+    schema; this checks the meaning. Raises `ReplyError` on the first problem.
+
+    With `drop_bad_facts`, a fact in `facts` that fails its checks is left out (and its reason
+    kept in `dropped`) instead of failing the reply. Facts are extras, so this is only for the
+    last call; who, what and the main effect must always pass."""
     population, population_quote = _quoted(reply, "population", abstract)
     intervention, intervention_quote = _quoted(reply, "intervention", abstract)
     comparator: str | None = None
     comparator_quote: str | None = None
     if reply.get("comparator") is not None or reply.get("comparator_quote") is not None:
         comparator, comparator_quote = _quoted(reply, "comparator", abstract)
+    effect = _main_effect(reply, abstract)
+    facts, dropped = _facts(reply, abstract, drop_bad_facts)
     return Extraction(
         population=population,
         population_quote=population_quote,
@@ -332,6 +356,7 @@ def parse_reply(reply: dict[str, Any], abstract: str) -> Extraction:
         intervention_quote=intervention_quote,
         comparator=comparator,
         comparator_quote=comparator_quote,
-        effect=_main_effect(reply, abstract),
-        facts=_facts(reply, abstract),
+        effect=effect,
+        facts=facts,
+        dropped=dropped,
     )

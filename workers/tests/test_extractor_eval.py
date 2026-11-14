@@ -232,6 +232,7 @@ def test_run_eval_follows_production_inputs_and_checks(tmp_path: Path) -> None:
         "participants": "1200",
         "duration": "3 years",
         "population": "women aged 65 or older",
+        "check_failure": "",
     }
     assert [r.calls for r in results] == [1, 2, 3, 1, 1]
     assert [r.effect_right for r in results] == [True, True, False, False, True]

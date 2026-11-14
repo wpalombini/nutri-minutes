@@ -16,7 +16,7 @@ the common part is clear.
 
 import logging
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
@@ -55,6 +55,12 @@ MAX_ERROR_LENGTH = 500
 REPLY_ATTEMPTS = 3
 """Calls per article when replies match the schema but fail the checks. The client retries other
 failures itself."""
+CHECK_FAILURE = (
+    "<check_failure>Your previous reply for this paper was rejected by the service's check: "
+    "{reason}. Reply again in full, with this fixed.</check_failure>"
+)
+"""Added to the user message when the model is asked again, so it can fix what failed instead of
+repeating it."""
 
 
 @dataclass(frozen=True)
@@ -89,7 +95,8 @@ class ExtractorArticle:
 
 
 def prompt_inputs(article: ExtractorArticle) -> dict[str, str]:
-    """The template's inputs. The prompt must use exactly these placeholders."""
+    """The template's inputs. The prompt must use exactly these placeholders. `check_failure` is
+    empty on the first call; `ask_model` fills it when asking again."""
     return {
         "title": article.title,
         "abstract": article.abstract or "",
@@ -99,6 +106,7 @@ def prompt_inputs(article: ExtractorArticle) -> dict[str, str]:
         "participants": str(article.participants) if article.participants else "not stated",
         "duration": article.duration or "not stated",
         "population": article.population or "not stated",
+        "check_failure": "",
     }
 
 
@@ -274,8 +282,9 @@ def _store(
 def ask_model(
     client: ModelClient, article: ExtractorArticle, request: CallRequest
 ) -> tuple[Extraction, int]:
-    """Ask the model, calling again when a reply fails the checks. Returns the extraction and the
-    call it came from. Used by runs and the eval."""
+    """Ask the model, calling again when a reply fails the checks, with the reason the last reply
+    failed. On the last call, facts that fail their checks are dropped rather than failing the
+    article. Returns the extraction and the call it came from. Used by runs and the eval."""
     abstract = article.abstract or ""
     for _ in range(REPLY_ATTEMPTS - 1):
         result = client.call(request)
@@ -288,8 +297,18 @@ def ask_model(
                 result.call_id,
                 exc,
             )
+            note = CHECK_FAILURE.format(reason=str(exc).rstrip("."))
+            request = replace(request, inputs={**request.inputs, "check_failure": note})
     result = client.call(request)
-    return parse_reply(result.reply, abstract), result.call_id
+    extraction = parse_reply(result.reply, abstract, drop_bad_facts=True)
+    for reason in extraction.dropped:
+        logger.info(
+            "Extractor run %d: dropped a fact from call %d: %s",
+            request.run_id,
+            result.call_id,
+            reason,
+        )
+    return extraction, result.call_id
 
 
 def _extract_one(

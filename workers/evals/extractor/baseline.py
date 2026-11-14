@@ -5,11 +5,9 @@ CI runs the eval on pull requests that change the Extractor prompt, the Extracto
 client or the evals, and fails when any rule below breaks. The baseline holds the scores only,
 never extracted facts or quotes, which may come from abstracts that can't be reused.
 
-- More sign errors than the baseline (`sign_errors`). Readers would see the result reversed. The
-  aim is none; the first baseline has one, a known gap (`README.md`).
-- More than `MAX_MORE_FAILED` failed papers above the baseline. Production fails those articles,
-  and they get no summary. The first baseline fails most papers; tighten this once the prompt and
-  checks are fixed.
+- Any sign error. Readers would see the result reversed.
+- More than `MAX_FAILED` failed papers. Production fails those articles, and they get no summary.
+  Four runs of the shipped prompt failed 5 to 8 of 56.
 - The share of main effects right, or found, falls more than `MAX_FALL` below the baseline, or
   the share of stated limits found more than `MAX_LIMITATION_FALL`. Absolute numbers are
   reported only: with 5 papers, one paper moves the share by 20 points.
@@ -30,7 +28,7 @@ from evals.extractor.run import Scores
 from pipeline.models import Prompt
 
 BASELINE = Path(__file__).resolve().parent / "baseline.json"
-MAX_MORE_FAILED = 3
+MAX_FAILED = 10
 MAX_FALL = 0.10
 MAX_LIMITATION_FALL = 0.15
 _EPSILON = 1e-9
@@ -84,14 +82,13 @@ def check(scores: Scores, labels: str, baseline: dict[str, Any]) -> list[str]:
             "The dataset's labels changed since the baseline was written. "
             "Refresh it with --write-baseline."
         )
-    if scores.sign_errors > base["sign_errors"]:
+    if scores.sign_errors:
         problems.append(
-            f"{scores.sign_errors} main effects with the wrong sign, more than the baseline's "
-            f"{base['sign_errors']}: {', '.join(scores.sign_error_pmids)}"
+            f"{scores.sign_errors} main effects with the wrong sign: "
+            f"{', '.join(scores.sign_error_pmids)}"
         )
-    allowed_failed = base["failed"] + MAX_MORE_FAILED
-    if scores.failed > allowed_failed:
-        problems.append(f"{scores.failed} papers failed, more than the {allowed_failed} allowed")
+    if scores.failed > MAX_FAILED:
+        problems.append(f"{scores.failed} papers failed, more than the {MAX_FAILED} allowed")
     for key, name, allowed in _SHARES:
         value, base_value = getattr(scores, key), base[key]
         if value is not None and value < base_value - allowed - _EPSILON:

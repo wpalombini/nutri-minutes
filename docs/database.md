@@ -2,7 +2,7 @@
 
 The Postgres schema: what each table holds and why. Change this document in the same PR as any migration. [ADR 0002](adr/0002-database-migrations-and-schema-growth.md) covers migration tooling and how the schema grows.
 
-**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage), `0004` adds `evidence_grades` and `evidence_grade_reasons` for the [Evidence Grader](agents.md#agents), and `0005` adds `extractions` and `extraction_facts` for the [Extractor](agents.md#agents). Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
+**Status:** migration `0001` creates the tables [Scout](agents.md#scout) needs, `0002` adds `model_calls` for the model client ([ADR 0005](adr/0005-model-client-prompts-and-evals.md)), `0003` adds `article_stages` and `triage_decisions` for [Triage](agents.md#triage), `0004` adds `evidence_grades` and `evidence_grade_reasons` for the [Evidence Grader](agents.md#agents), `0005` adds `extractions` and `extraction_facts` for the [Extractor](agents.md#agents), and `0006` adds `summaries` and `summary_limits` for the Writer. Migrations live in `workers/migrations/`, and the models that must match them are in `workers/src/pipeline/db/models.py`.
 
 ## Overview
 
@@ -23,6 +23,10 @@ erDiagram
     evidence_grades ||--o{ extractions : "is the basis of"
     model_calls ||--o{ extractions : "produced"
     extractions ||--o{ extraction_facts : "lists"
+    articles ||--o{ summaries : "has"
+    extractions ||--o{ summaries : "is the basis of"
+    model_calls ||--o{ summaries : "produced"
+    summaries ||--o{ summary_limits : "lists"
 
     articles {
         bigint id PK
@@ -97,6 +101,19 @@ erDiagram
         smallint position PK
         text kind
         text quote
+    }
+    summaries {
+        bigint id PK
+        bigint article_id FK
+        bigint extraction_id FK
+        bigint model_call_id FK
+        text headline
+        text result_sentence
+    }
+    summary_limits {
+        bigint summary_id PK
+        smallint position PK
+        text statement
     }
 ```
 
@@ -433,6 +450,40 @@ The rest of an extraction's facts, each with its quote, in the order the model g
 
 The `pipeline_worker` role can add rows to both tables but not change or delete them.
 
+### `summaries`
+The Writer's plain-English summary of an extracted article, one row per version: what the [study page](../design/screens/study.md) shows from the Writer. A summary is an unchecked draft. The Fact-Checker and the Hype Detector will record their results in their own tables, and nothing publishes before both pass. A re-write, such as after a flag or a new extraction, adds a row and never changes an old one. An article's current summary is its row with the highest `id`, provided its `extraction_id` is still the article's current extraction; after a re-extraction, an older summary is stale until the article is written again.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | `bigint` identity | No | Primary key |
+| `article_id` | `bigint` | No | References `articles` |
+| `run_id` | `bigint` | No | References `pipeline_runs` |
+| `extraction_id` | `bigint` | No | References `extractions`: the facts the summary was written from, and through it the grade |
+| `model_call_id` | `bigint` | No | References `model_calls`: the call that wrote it, which gives the model and prompt version |
+| `source_basis` | `text` | No | Which text it was written from: `abstract` or `full_text`. Only abstracts are used for now. |
+| `headline` | `text` | No | The finding, with its limits. One line. |
+| `body` | `text` | No | "What the study found": plain paragraphs separated by a blank line, with no markup |
+| `result_sentence` | `text` | No | The interval caption's plain result, also the page description. One line. |
+| `absolute_sentence` | `text` | Yes | The caption's absolute numbers, when the study gives them. One line. |
+| `created_at` | `timestamptz` | No | |
+
+**Constraints and indexes:**
+- Every text column is non-empty when set, and the headline and caption sentences have no line breaks.
+- That `extraction_id` is an extraction of the same article, and `model_call_id` a call about it, spans tables, so the Writer's code ensures it.
+- That every number comes from the extraction, the reading level is in its band, the wording rules hold and no long run of words is copied from an abstract we may not reuse needs the extraction and the source, so the Writer's code checks them and asks again, up to 3 calls, before failing the article.
+- An index on `(article_id, id)` finds an article's current summary, and ones on `extraction_id` and `model_call_id` find an extraction's or a call's summaries.
+
+### `summary_limits`
+A summary's "What this study does not show" items, in order. The app adds the [fixed first item](../design/components/limits-block.md#purpose-and-content) for some designs, so these never repeat it.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `summary_id` | `bigint` | No | References `summaries`. Part of the primary key. |
+| `position` | `smallint` | No | From 1. Part of the primary key. |
+| `statement` | `text` | No | One limit in plain words. Not empty, one line. |
+
+How many limits a summary has spans rows, so the Writer's code checks it. The `pipeline_worker` role can add rows to both tables but not change or delete them.
+
 ## How Scout writes to these tables
 **Matching:** Scout looks for an existing article by DOI, PMID or PMCID.
 - **No match:** insert a new article.
@@ -443,7 +494,7 @@ The `pipeline_worker` role can add rows to both tables but not change or delete 
 
 ## Roles and access
 Migrations run as the role that owns the schema. Migration `0001` also creates a `pipeline_worker` group role, which can't log in, so the migrating role needs `CREATEROLE` unless the group role already exists. On managed Postgres without it, create the role first. The migration lock covers one database only, so don't run the first migration on two databases on the same server at the same time.
-- **`pipeline_worker`:** can select, insert and update the Scout tables and `article_stages`, and select and insert into `pipeline_run_errors`, `model_calls`, `triage_decisions`, `evidence_grades`, `evidence_grade_reasons`, `extractions` and `extraction_facts`. It can't delete rows, edit logged errors, model calls or decisions, or change the schema.
+- **`pipeline_worker`:** can select, insert and update the Scout tables and `article_stages`, and select and insert into `pipeline_run_errors`, `model_calls`, `triage_decisions`, `evidence_grades`, `evidence_grade_reasons`, `extractions`, `extraction_facts`, `summaries` and `summary_limits`. It can't delete rows, edit logged errors, model calls or decisions, or change the schema.
 - **Login roles:** created outside migrations, with their passwords kept out of the repo, then granted a group role. Both are kept up to date by `infra/postgres/login-roles.sql` (see `docs/operations.md`). The workers' login role is `pipeline_runner`, granted `pipeline_worker`. The API's is `api_runner`, limited to 10 connections, which has no group role and no access to any table until the published views and its group role are added.
 - **Server-wide roles:** roles belong to the whole Postgres server, not one database. A downgrade revokes the role's access but doesn't drop it, because it may have access to other databases.
 - **API access:** the web app and future clients reach the database only through the API ([ADR 0003](adr/0003-database-api-for-the-web-app.md)), which connects as `api_runner`. Its group role, added with the first published view, reads published views only, never base tables (see "Tables to come"). It will also get write access to the tables the web app owns, such as accounts and billing, when they are added.
@@ -465,7 +516,6 @@ Each agent's or feature's tables are added by their own migration when it's buil
 
 | Agent or area | Will store |
 |---|---|
-| Writer | Summary versions |
 | Fact-Checker and Hype Detector | Checks and flags per version of the checked text (summaries, Editor text and scripts) |
 | Contradiction Tracker | Links between findings |
 | Editor | Research packs |

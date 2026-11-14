@@ -24,6 +24,7 @@ erDiagram
     model_calls ||--o{ extractions : "produced"
     extractions ||--o{ extraction_facts : "lists"
     articles ||--o{ summaries : "has"
+    pipeline_runs ||--o{ summaries : "wrote"
     extractions ||--o{ summaries : "is the basis of"
     model_calls ||--o{ summaries : "produced"
     summaries ||--o{ summary_limits : "lists"
@@ -105,6 +106,7 @@ erDiagram
     summaries {
         bigint id PK
         bigint article_id FK
+        bigint run_id FK
         bigint extraction_id FK
         bigint model_call_id FK
         text headline
@@ -451,7 +453,7 @@ The rest of an extraction's facts, each with its quote, in the order the model g
 The `pipeline_worker` role can add rows to both tables but not change or delete them.
 
 ### `summaries`
-The Writer's plain-English summary of an extracted article, one row per version: what the [study page](../design/screens/study.md) shows from the Writer. A summary is an unchecked draft. The Fact-Checker and the Hype Detector will record their results in their own tables, and nothing publishes before both pass. A re-write, such as after a flag or a new extraction, adds a row and never changes an old one. An article's current summary is its row with the highest `id`, provided its `extraction_id` is still the article's current extraction; after a re-extraction, an older summary is stale until the article is written again.
+The Writer's plain-English summary of an extracted article, one row per version: what the [study page](../design/screens/study.md) shows from the Writer. A summary is an unchecked draft. The Fact-Checker and the Hype Detector will record their results in their own tables, and nothing publishes before both pass. A re-write, such as after a flag or a new extraction, adds a row and never changes an old one. An article's latest summary is its row with the highest `id`, provided its `extraction_id` is still the article's current extraction; after a re-extraction, an older summary is stale until the article is written again. The latest summary may still be an unchecked draft: which version publishes will come from the Fact-Checker's and Hype Detector's results.
 
 | Column | Type | Null | Notes |
 |---|---|---|---|
@@ -462,16 +464,16 @@ The Writer's plain-English summary of an extracted article, one row per version:
 | `model_call_id` | `bigint` | No | References `model_calls`: the call that wrote it, which gives the model and prompt version |
 | `source_basis` | `text` | No | Which text it was written from: `abstract` or `full_text`. Only abstracts are used for now. |
 | `headline` | `text` | No | The finding, with its limits. One line. |
-| `body` | `text` | No | "What the study found": plain paragraphs separated by a blank line, with no markup |
+| `body` | `text` | No | "What the study found": 2 to 4 plain paragraphs separated by a blank line, with no markup. The study page also allows subheadings and links; the Writer produces neither for now, and the API serves each paragraph as a paragraph block. |
 | `result_sentence` | `text` | No | The interval caption's plain result, also the page description. One line. |
 | `absolute_sentence` | `text` | Yes | The caption's absolute numbers, when the study gives them. One line. |
 | `created_at` | `timestamptz` | No | |
 
 **Constraints and indexes:**
 - Every text column is non-empty when set, and the headline and caption sentences have no line breaks.
-- That `extraction_id` is an extraction of the same article, and `model_call_id` a call about it, spans tables, so the Writer's code ensures it.
-- That every number comes from the extraction, the reading level is in its band, the wording rules hold and no long run of words is copied from an abstract we may not reuse needs the extraction and the source, so the Writer's code checks them and asks again, up to 3 calls, before failing the article.
-- An index on `(article_id, id)` finds an article's current summary, and ones on `extraction_id` and `model_call_id` find an extraction's or a call's summaries.
+- That `extraction_id` is an extraction of the same article, `model_call_id` a call about it and `source_basis` the extraction's own, spans tables, so the Writer's code ensures it.
+- That the body has 2 to 4 paragraphs, every number comes from the extraction, the reading level is in its band, the wording rules hold and no long run of words is copied from an abstract we may not reuse needs the extraction and the source, so the Writer's code checks them and asks again, up to 3 calls, before failing the article.
+- An index on `(article_id, id)` finds an article's latest summary, and ones on `extraction_id` and `model_call_id` find an extraction's or a call's summaries.
 
 ### `summary_limits`
 A summary's "What this study does not show" items, in order. The app adds the [fixed first item](../design/components/limits-block.md#purpose-and-content) for some designs, so these never repeat it.

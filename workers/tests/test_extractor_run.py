@@ -219,6 +219,32 @@ def test_a_reply_that_fails_the_checks_is_asked_again(clean_engine: Engine, prom
     assert second.startswith("<check_failure>") and "0.8" in second
 
 
+def test_each_call_gets_the_last_reply_s_reason(clean_engine: Engine, prompt: Prompt) -> None:
+    with clean_engine.begin() as conn:
+        insert_graded(conn, 1)
+    replies = iter(
+        [extracted(estimate="0.8"), extracted(population_quote="Not in it"), extracted()]
+    )
+    client = LoggedFakeClient(clean_engine, lambda _: next(replies))
+    run_extractor(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
+
+    notes = [request.inputs["check_failure"] for request in client.requests]
+    assert notes[0] == "" and "0.8" in notes[1] and "population quote" in notes[2]
+
+
+def test_a_bad_main_effect_still_fails_on_the_last_call(
+    clean_engine: Engine, prompt: Prompt
+) -> None:
+    with clean_engine.begin() as conn:
+        insert_graded(conn, 1)
+    bad = fact("result", "Bone density rose by 2.4%.", "Bone density rose by 1.2% (p = 0.03).")
+    client = LoggedFakeClient(clean_engine, lambda _: extracted(estimate="0.8", facts=[bad]))
+    result = run_extractor(clean_engine, client, prompt, FakeNotifier(), SETTINGS)
+
+    assert result is not None and result.status == "partial"
+    assert _extractions(clean_engine) == []
+
+
 def test_the_last_call_drops_bad_facts(clean_engine: Engine, prompt: Prompt) -> None:
     with clean_engine.begin() as conn:
         insert_graded(conn, 1)

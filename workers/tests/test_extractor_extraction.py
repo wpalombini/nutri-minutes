@@ -101,7 +101,7 @@ def test_estimate_and_limits_must_be_in_the_effect_quote() -> None:
     _fails("upper limit 1.2", ci_upper="1.2")
 
 
-@pytest.mark.parametrize("value", ["0.80.1", "1e3", "0,80", "0.80%", "+", ""])
+@pytest.mark.parametrize("value", ["0.80.1", "1e3", "0,80", "0.80%", "+", "+-0.80", ""])
 def test_numbers_must_be_plain_decimals(value: str) -> None:
     _fails("estimate", estimate=value)
 

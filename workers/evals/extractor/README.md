@@ -30,4 +30,4 @@ Labels were drafted from the abstracts using the Extractor's prompt. A second la
   - A difference on a score given without a unit takes "points" as its unit.
 
 ## Known gap
-One row, a time difference stated as "4.17 days" shorter (pmid 42968156), expects -4.17 with limits -6.44 and -1.90: the prompt asks for the negative estimate, and the limits follow from it. The Extractor's code check rejects that answer today, because the limits appear in the abstract in the opposite order ("1.90-6.44"). Production fails such articles the same way, after three calls. Until the check accepts swapped limits for a negated difference, and the prompt says how to write them, the eval counts this row as a miss.
+One row, a time difference stated as "4.17 days" shorter (pmid 42968156), expects -4.17 with limits -6.44 and -1.90: the prompt asks for the negative estimate, and says the larger number becomes the lower limit. The limits appear in the abstract in the opposite order ("1.90-6.44"), which the Extractor's code check accepts only when both limits are negated from words.

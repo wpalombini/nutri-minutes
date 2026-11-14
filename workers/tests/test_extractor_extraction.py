@@ -164,6 +164,49 @@ def test_a_negative_difference_stated_in_words() -> None:
     parse_reply(reply, abstract)
 
 
+def test_a_difference_in_words_with_an_interval_swaps_the_limits() -> None:
+    # Shaped like pmid 42968156: a shorter time given as a positive difference and interval.
+    abstract = (
+        "Recovery was shorter with the diet (difference, 4.17 days; 95% confidence interval "
+        "[CI], 1.90-6.44; p < 0.001)."
+    )
+    reply = _difference(
+        abstract,
+        "difference, 4.17 days; 95% confidence interval [CI], 1.90-6.44",
+        estimate="-4.17",
+        ci_lower="-6.44",
+        ci_upper="-1.90",
+        ci_level="95",
+        unit="days",
+    )
+    effect = parse_reply(reply, abstract).effect
+    assert effect is not None
+    assert (effect.estimate, effect.ci_lower, effect.ci_upper) == (
+        Decimal("-4.17"),
+        Decimal("-6.44"),
+        Decimal("-1.90"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("quote", "lower", "upper"),
+    [
+        ("MD 1.2 kg, 95% CI 2.0 to 0.4", "0.4", "2.0"),  # positive limits, wrong order
+        ("MD \u22121.2 kg, 95% CI \u22120.4 to \u22122.0", "-2.0", "-0.4"),  # minus signs
+    ],
+)
+def test_limits_out_of_order_fail_unless_negated_from_words(
+    quote: str, lower: str, upper: str
+) -> None:
+    abstract = f"Lean mass changed ({quote})."
+    estimate = "-1.2" if lower.startswith("-") else "1.2"
+    reply = _difference(
+        abstract, quote, estimate=estimate, ci_lower=lower, ci_upper=upper, ci_level="95"
+    )
+    with pytest.raises(ReplyError, match="three separate numbers"):
+        parse_reply(reply, abstract)
+
+
 def test_a_positive_estimate_quoted_only_with_a_minus_sign_fails() -> None:
     abstract = "Lean mass changed (MD \u22121.2 kg, 95% CI \u22122.0 to \u22120.4)."
     reply = _difference(

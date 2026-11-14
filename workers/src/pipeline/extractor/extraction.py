@@ -199,26 +199,34 @@ def _decimal(reply: dict[str, Any], key: str, pattern: re.Pattern[str]) -> tuple
     return raw, Decimal(raw)
 
 
-def _quoted_number(raw: str, quote: str, label: str) -> set[int]:
-    """Where a reported number appears in the effect quote. Raises unless it appears there, with
-    a sign that doesn't contradict it."""
-    digits = raw.removeprefix("-")
-    found = _occurrences(digits, quote)
+def _quoted_number(raw: str, quote: str, label: str) -> dict[int, bool]:
+    """Where a reported number appears in the effect quote, each place mapped to whether it is a
+    negative number written without its minus sign (negated from words). Raises unless it appears
+    there, with a sign that doesn't contradict it."""
+    negative = raw.startswith("-")
+    found = _occurrences(raw.removeprefix("-"), quote)
     if not found:
         raise ReplyError(f"The {label} {raw} isn't in the effect quote as written")
     # A difference stated in words ("1.2 kg less") is negative without a minus sign, so only a
     # positive number quoted with nothing but a minus sign is a contradiction.
-    if not raw.startswith("-"):
+    if not negative:
         found = [m for m in found if not _has_minus(m)]
         if not found:
             raise ReplyError(f"The {label} {raw} is quoted with a minus sign")
-    return {m.start() for m in found}
+    return {m.start(): negative and not _has_minus(m) for m in found}
 
 
-def _distinct_places(estimate: set[int], lower: set[int], upper: set[int]) -> bool:
-    """Whether the estimate and limits can come from three different places in the quote, the
-    lower limit before the upper, so one number is never reported as two of them."""
-    return any(e not in (lo, up) and lo < up for e in estimate for lo in lower for up in upper)
+def _distinct_places(estimate: set[int], lower: dict[int, bool], upper: dict[int, bool]) -> bool:
+    """Whether the estimate and limits can come from three different places in the quote, so one
+    number is never reported as two of them. The lower limit comes before the upper, except when
+    both are negated from words: "4.17 days shorter (95% CI 1.90-6.44)" is -4.17 (-6.44 to
+    -1.90), so negating swaps the limits' order."""
+    return any(
+        e not in (lo, up) and (lo < up or (lo > up and lower[lo] and upper[up]))
+        for e in estimate
+        for lo in lower
+        for up in upper
+    )
 
 
 def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
@@ -246,7 +254,7 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
         raw_level, level = _decimal(reply, "ci_level", _LEVEL)
         lower_at = _quoted_number(raw_lower, quote, "lower limit")
         upper_at = _quoted_number(raw_upper, quote, "upper limit")
-        if not _distinct_places(estimate_at, lower_at, upper_at):
+        if not _distinct_places(set(estimate_at), lower_at, upper_at):
             raise ReplyError("The estimate and limits aren't three separate numbers in the quote")
         level_pattern = rf"(?<![\d.]){re.escape(raw_level)}(?:\s?%|\s+per\s?cent\b)"
         if not re.search(level_pattern, _number_form(abstract), re.IGNORECASE):

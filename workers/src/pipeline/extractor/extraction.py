@@ -216,13 +216,15 @@ def _quoted_number(raw: str, quote: str, label: str) -> dict[int, bool]:
     return {m.start(): negative and not _has_minus(m) for m in found}
 
 
-def _distinct_places(estimate: set[int], lower: dict[int, bool], upper: dict[int, bool]) -> bool:
+def _distinct_places(
+    estimate: dict[int, bool], lower: dict[int, bool], upper: dict[int, bool]
+) -> bool:
     """Whether the estimate and limits can come from three different places in the quote, so one
     number is never reported as two of them. The lower limit comes before the upper, except when
-    both are negated from words: "4.17 days shorter (95% CI 1.90-6.44)" is -4.17 (-6.44 to
-    -1.90), so negating swaps the limits' order."""
+    the estimate and both limits are negated from words: "4.17 days shorter (95% CI 1.90-6.44)"
+    is -4.17 (-6.44 to -1.90), so negating swaps the limits' order."""
     return any(
-        e not in (lo, up) and (lo < up or (lo > up and lower[lo] and upper[up]))
+        e not in (lo, up) and (lo < up or (lo > up and estimate[e] and lower[lo] and upper[up]))
         for e in estimate
         for lo in lower
         for up in upper
@@ -254,7 +256,7 @@ def _main_effect(reply: dict[str, Any], abstract: str) -> MainEffect | None:
         raw_level, level = _decimal(reply, "ci_level", _LEVEL)
         lower_at = _quoted_number(raw_lower, quote, "lower limit")
         upper_at = _quoted_number(raw_upper, quote, "upper limit")
-        if not _distinct_places(set(estimate_at), lower_at, upper_at):
+        if not _distinct_places(estimate_at, lower_at, upper_at):
             raise ReplyError("The estimate and limits aren't three separate numbers in the quote")
         level_pattern = rf"(?<![\d.]){re.escape(raw_level)}(?:\s?%|\s+per\s?cent\b)"
         if not re.search(level_pattern, _number_form(abstract), re.IGNORECASE):

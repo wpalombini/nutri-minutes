@@ -678,3 +678,61 @@ class ExtractionFact(Base):
         CheckConstraint(_in_list("kind", EXTRACTION_FACT_KINDS), name="kind"),
         CheckConstraint("length(fact) > 0 AND length(quote) > 0", name="not_empty"),
     )
+
+
+class Summary(Base):
+    """A plain-English summary of an extracted article: one version, added, never written over.
+
+    An unchecked draft until the Fact-Checker and the Hype Detector pass it. Numbers, reading
+    level and wording are checked by the Writer's code, because they need the extraction.
+    """
+
+    __tablename__ = "summaries"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    article_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("articles.id"))
+    run_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("pipeline_runs.id"))
+    extraction_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("extractions.id"))
+    model_call_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("model_calls.id"))
+    source_basis: Mapped[str] = mapped_column(Text)
+    headline: Mapped[str] = mapped_column(Text)
+    body: Mapped[str] = mapped_column(Text)
+    result_sentence: Mapped[str] = mapped_column(Text)
+    absolute_sentence: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint(_in_list("source_basis", SOURCE_BASES), name="source_basis"),
+        # A null column makes its term null, which a check accepts: only empty text fails.
+        CheckConstraint(
+            "length(headline) > 0 AND length(body) > 0 AND length(result_sentence) > 0 "
+            "AND length(absolute_sentence) > 0",
+            name="not_empty",
+        ),
+        # The headline and caption sentences are each shown as one line of text.
+        CheckConstraint(
+            "headline !~ '[\\r\\n]' AND result_sentence !~ '[\\r\\n]' "
+            "AND absolute_sentence !~ '[\\r\\n]'",
+            name="one_line",
+        ),
+        Index(None, "article_id", "id"),
+        Index(None, "extraction_id"),
+        Index(None, "model_call_id"),
+    )
+
+
+class SummaryLimit(Base):
+    """A "What this study does not show" item, after the app's fixed first item."""
+
+    __tablename__ = "summary_limits"
+
+    summary_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("summaries.id"), primary_key=True
+    )
+    position: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    statement: Mapped[str] = mapped_column(Text)
+
+    __table_args__ = (
+        CheckConstraint("position >= 1", name="position"),
+        CheckConstraint("length(statement) > 0 AND statement !~ '[\\r\\n]'", name="statement"),
+    )

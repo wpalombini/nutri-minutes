@@ -17,6 +17,8 @@ EXPECTED_TABLES = {
     "evidence_grade_reasons",
     "extractions",
     "extraction_facts",
+    "summaries",
+    "summary_limits",
 }
 
 

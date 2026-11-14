@@ -17,6 +17,22 @@
 - `note`: why the label was chosen, in a few words.
 - `abstract` (optional): stored only for CC BY and CC0 papers, as in the Grader dataset. Every other abstract is fetched from Europe PMC by PMID and cached outside the repo (`evals/abstracts.py`).
 
+## Running it
+From `workers/`: `uv run python -m evals.extractor` (options as in `CLAUDE.md`). Each paper goes through production's path: the `grader` fields become the prompt inputs production builds from a grade, and the reply passes the Extractor's checks, asked again up to three times.
+
+Scores:
+- **Main effects right:** the measure, estimate, limits and level match `expected` or an `also_accepted` alternative, each number written exactly as labelled ("0.8" isn't "0.80"). "No main effect" is right when a label says so.
+- **Main effects found:** the extraction has a main effect exactly when a label does, whatever its numbers.
+- **Sign errors:** an estimate that is a label's with the opposite sign.
+- **Absolute numbers and stated limits found:** the share of papers with `has_absolute` or `has_limitation` whose extraction has that kind of fact, with counts of such facts on other papers.
+- Units are compared ignoring case, spaces and "²" versus "2", and reported only.
+- A failed paper counts as wrong everywhere. The summary also gives calls, papers asked again and the cost per paper.
+
+CI (`extractor-eval`) blocks a pull request on more sign errors than `baseline.json`, more than 3 failed papers above it, main effects right or found falling more than 10 points below `baseline.json`, or stated limits found falling more than 15 points. Absolute numbers are reported only: one of the 5 papers moves the share by 20 points. The baseline also stores a hash of the labels, so any relabel marks it stale.
+
+## First baseline (Haiku 5.5)
+Two runs on 2026-11-14: most papers fail all three calls (34 and 36 of 56), so main effects right is only 39% and 32%. The baseline is the lower run. Failures, both runs together: 17 replies with no measure but filled effect labels, 17 population quotes not word for word in the abstract, 14 fact numbers or quotes not in the quote or abstract, 9 intervals with limits but no level. One sign error (pmid 42968156, "4.17 days shorter" as +4.17), the known gap from #80. 42–45 papers needed more than one call; US$0.00225 per paper.
+
 ## How the papers were chosen
 The 56 papers the Grader dataset labels gradable, since the Extractor only reads graded articles. By the Grader dataset's labels they cover every design: 14 reviews, 14 randomised trials, 16 observational studies, 2 non-randomised trials, 5 animal and 5 lab studies. `grader` keeps production's design even where it differs: production graded three of the observational studies (pmids 42968090, 42969229, 42997011) as non-randomised trials.
 

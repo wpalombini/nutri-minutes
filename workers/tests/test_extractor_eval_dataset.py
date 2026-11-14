@@ -16,7 +16,7 @@ from pipeline.db.models import (
     REUSABLE_LICENCE_CODES,
     REVIEW_INCLUDES,
 )
-from pipeline.extractor.extraction import NO_MEASURE
+from pipeline.extractor.extraction import NO_MEASURE, appears
 
 DATASET = Path(__file__).resolve().parents[1] / "evals" / "extractor" / "dataset.jsonl"
 GRADER_DATASET = Path(__file__).resolve().parents[1] / "evals" / "grader" / "dataset.jsonl"
@@ -170,3 +170,15 @@ def test_abstracts_only_for_open_licences() -> None:
         if "abstract" in row:
             assert row["licence"] in REUSABLE_LICENCE_CODES, _id(row)
             assert isinstance(row["abstract"], str) and row["abstract"].strip(), _id(row)
+
+
+def test_effect_numbers_are_in_stored_abstracts() -> None:
+    """Each expected number appears, without its sign, in the abstract when the row stores it."""
+    for row in ROWS:
+        if "abstract" not in row:
+            continue
+        for effect in (row["expected"], *row["also_accepted"]):
+            for key in ("estimate", "ci_lower", "ci_upper", "ci_level"):
+                value = effect.get(key)
+                if value is not None:
+                    assert appears(value.removeprefix("-"), row["abstract"]), (_id(row), key)
